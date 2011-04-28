@@ -1,4 +1,4 @@
-SUBDIRS = debian messages
+SUBDIRS = . messages
 
 pkgdatadir = @datadir@/zorp/pylib/Zorp
 pkglibdir = @libdir@/zorp

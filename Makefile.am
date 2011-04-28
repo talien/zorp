@@ -1,4 +1,4 @@
-SUBDIRS = lib libproxy modules zorp pylib doc debian zorpctl scripts tests
+SUBDIRS = lib libproxy modules zorp pylib doc zorpctl scripts tests
 DIST_SUBDIRS = $(SUBDIRS)
 
 pkgconfigdir = $(libdir)/pkgconfig

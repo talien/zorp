@@ -562,7 +562,6 @@ doc/Makefile
 doc/examples/Makefile
 doc/man/Makefile
 modules/Makefile
-debian/Makefile
 scripts/Makefile
 tests/Makefile
 tests/python/Makefile
@@ -572,27 +571,17 @@ tests/kzorp/Makefile
 tests/tools/Makefile
 
 modules/pop3/Makefile
-modules/pop3/debian/Makefile
 modules/pop3/messages/Makefile
 modules/anypy/Makefile
-modules/anypy/debian/Makefile
 modules/http/Makefile
-modules/http/debian/Makefile
 modules/http/messages/Makefile
 modules/http/tests/Makefile
 modules/smtp/Makefile
-modules/smtp/debian/Makefile
 modules/smtp/tests/Makefile
 modules/finger/Makefile
-modules/finger/debian/Makefile
 modules/telnet/Makefile
-modules/telnet/debian/Makefile
 modules/whois/Makefile
-modules/whois/debian/Makefile
 modules/ftp/Makefile
-modules/ftp/debian/Makefile
 modules/ftp/tests/Makefile
 modules/plug/Makefile
-modules/plug/debian/Makefile
-
 )
