@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: policy.h,v 1.35 2004/08/05 14:14:24 sasa Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_POLICY_H_INCLUDED
@@ -125,20 +123,10 @@ const gchar *z_verdict_str(ZVerdict verdict);
 gboolean z_policy_var_parse_str(PyObject *val, gchar **result);
 gboolean z_policy_var_parse_boolean(PyObject *val, gboolean *result);
 gboolean z_policy_var_parse_int(PyObject *val, gint *result);
+gboolean z_policy_var_parse_uint(PyObject *val, guint *result);
 gboolean z_policy_var_parse_int64(PyObject *val, gint64 *result);
+gboolean z_policy_var_parse_uint64(PyObject *val, guint64 *result);
 gboolean z_policy_var_parse_size(PyObject *val, gsize *result);
-
-static inline gboolean
-z_policy_var_parse_uint(PyObject *val, guint *result)
-{
-  return z_policy_var_parse_int(val, (gint *) result);
-}
-
-static inline gboolean
-z_policy_var_parse_uint64(PyObject *val, guint64 *result)
-{
-  return z_policy_var_parse_int64(val, (gint64 *) result);
-}
 
 static inline gboolean 
 z_policy_var_parse_ssize(PyObject *val, gssize *result)

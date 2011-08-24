@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: authprovider.c,v 1.19 2003/11/26 12:04:35 bazsi Exp $
- *
  * Author  : Bazsi
  * Auditor :
  * Last audited version:
@@ -41,11 +39,14 @@
  * NOTE: this function requires the Python lock to be held.
  **/
 gboolean
-z_auth_provider_check_passwd(ZAuthProvider *self,
-                             gchar *session_id,
-                             gchar *username,
-                             gchar *passwd,
-                             gchar ***groups,
-                             ZProxy *proxy)
+z_auth_provider_check_passwd(
+                             ZAuthProvider *self G_GNUC_UNUSED,
+                             gchar *session_id G_GNUC_UNUSED,
+                             gchar *username G_GNUC_UNUSED,
+                             gchar *passwd G_GNUC_UNUSED,
+                             gchar ***groups G_GNUC_UNUSED,
+                             ZProxy *proxy G_GNUC_UNUSED
+                            )
 {
+  return FALSE;
 }

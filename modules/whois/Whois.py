@@ -18,8 +18,6 @@
 ## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ##
 ##
-## $Id: Whois.py,v 1.10 2004/06/15 12:28:48 sasa Exp $
-##
 ## Author  : Bazsi
 ## Auditor :
 ## Last audited version: 1.1

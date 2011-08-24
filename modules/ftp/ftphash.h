@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: ftphash.h,v 1.14 2004/05/18 16:34:39 sasa Exp $
- *
  ***************************************************************************/
 
 

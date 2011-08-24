@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: anypy.c,v 1.28 2003/10/13 09:40:54 bazsi Exp $
- *
  * Author: Bazsi
  * Auditor: Bazsi
  * Last audited version: 1.14

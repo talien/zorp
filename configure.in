@@ -16,7 +16,6 @@ dnl makes use of in addition to the standard CFLAGS/LDFLAGS/etc. These are:
 dnl
 dnl RELEASE_TAG        - Debian release tag which is put to debian/changelog
 dnl SNAPSHOT_VERSION   - snapshot version to add to version number
-dnl BINARY_BRANCH      - the value is added to all source/binary packages
 dnl SOURCE_REVISION    - Revision of the source-tree, will added to the version string
 dnl
 
@@ -28,21 +27,22 @@ dnl Definitions
 PACKAGE=zorp-pro
 VERSION=`cat $srcdir/VERSION`
 ZORP_PRODUCT_NAME="Zorp Professional"
-ZORP_LICENSE_VERSION="3.3"
+ZORP_LICENSE_VERSION="3.4"
 
 dnl ***************************************************************************
 dnl Dependencies
 
 GLIB_MIN_VERSION="2.2.1"
-ZORPLL_MIN_VERSION="3.9.0.1"
+ZORPLL_MIN_VERSION="3.9.1.0"
 ZORPLIC_MIN_VERSION="4.0.0"
-ZORPMISC_MIN_VERSION="4.0.0.2"
+ZORPMISC_MIN_VERSION="4.0.1.0"
 OPENSSL_MIN_VERSION="0.9.8"
 PYTHON_MIN_VERSION="2.6"
 OSIP_MIN_VERSION="2.2.1"
 OSIP_MAX_VERSION="3.4"
 # all samba libs declare themselves as version 0
 WBCLIENT_MIN_VERSION=0
+UUID_MIN_VERSION=2.17
 
 dnl ***************************************************************************
 dnl Initial setup
@@ -87,17 +87,6 @@ fi
 
 if test -z "$RELEASE_TAG"; then
         RELEASE_TAG=zorp30dbg
-fi
-
-if test -n "$BINARY_BRANCH"; then
-        if echo $BINARY_BRANCH | grep '^\-' > /dev/null; then
-                BINARY_BRANCH="$BINARY_BRANCH"
-        else
-                BINARY_BRANCH="-$BINARY_BRANCH"
-        fi
-        PACKAGE=${PACKAGE}${BINARY_BRANCH}
-else
-        BINARY_BRANCH=""
 fi
 
 AM_CONFIG_HEADER(zorpconfig.h)
@@ -181,6 +170,7 @@ dnl ***************************************************************************
 dnl Checks for programs.
 
 AC_PROG_CC
+AC_PROG_CC_C99
 AC_PROG_CPP
 AC_DISABLE_STATIC
 AM_PROG_LIBTOOL
@@ -325,15 +315,16 @@ if test "$ZORP_PACKAGE_LICENSE" = "pro"; then
         PKG_CHECK_MODULES(XMLSEC, xmlsec1-openssl >= 1.0.0 libxml-2.0 libxslt,,
                 AC_MSG_ERROR(Cannot find libxmlsec1 libxml-2.0 or libxslt))
 
-	XMLSEC_LIBS="$XMLSEC_LIBS -L$PYTHON_PREFIX/lib/python$PYTHON_VERSION/site-packages -L/usr/lib/python-support/python-libxml2/python$PYTHON_VERSION/ -L/usr/lib/python$PYTHON_VERSION/site-packages -lxml2mod"
-
 	PKG_CHECK_MODULES(WBCLIENT, wbclient >= $WBCLIENT_MIN_VERSION,,
 		AC_MSG_ERROR(Cannot find Samba wbclient library version >= $WBCLIENT_MIN_VERSION: is pkg-config in path?))
 
+	AC_CHECK_LIB(pcap, pcap_open_live, PCAP_LIBS="$PCAP_LIBS -lpcap")
+
+	PKG_CHECK_MODULES(UUID, uuid >= $UUID_MIN_VERSION,,
+		AC_MSG_ERROR(Cannot find uuid library version >= $UUID_MIN_VERSION: is pkg-config in path?))
+
 	AC_CHECK_HEADERS(google/coredumper.h)
 	AC_CHECK_LIB(coredumper, WriteCoreDump, COREDUMP_LIBS="$COREDUMP_LIBS -lcoredumper")
-
-	AC_CHECK_LIB(pcap, pcap_open_live, PCAP_LIBS="$PCAP_LIBS -lpcap")
 
 fi
 
@@ -443,7 +434,7 @@ AC_DEFINE_UNQUOTED(ZORP_LIBDIR, "`zorpeval $libdir/zorp`", [libdir])
 AC_DEFINE_UNQUOTED(ZORP_STATEDIR, "`zorpeval $localstatedir`", [localstatedir])
 AC_DEFINE_UNQUOTED(ZORP_PIDFILEDIR, "`zorpeval $pidfiledir`", [pidfiledir])
 
-CFLAGS="$CFLAGS -Wall -W -Werror-implicit-function-declaration -Wno-pointer-sign -g -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+CFLAGS="$CFLAGS -Wall -W -Werror -Werror-implicit-function-declaration -Wno-pointer-sign -g -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 
 dnl ***************************************************************************
 dnl Export results
@@ -477,7 +468,6 @@ dnl ***************************************************************************
 dnl Size check of pointers
 AC_CHECK_SIZEOF(void *)
 
-AC_SUBST(BINARY_BRANCH)
 AC_SUBST(RELEASE_TAG)
 AC_SUBST(SNAPSHOT_VERSION)
 AC_SUBST(SOURCE_REVISION)
@@ -554,7 +544,9 @@ AC_SUBST(DEPS_LIBS)
 AC_SUBST(ZLIB_LIBS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(OPENSSL_LIBS)
-AC_SUBST(OPENSSL_CPPFLAGS)
+AC_SUBST(OPENSSL_CLAGS)
+AC_SUBST(UUID_LIBS)
+AC_SUBST(UUID_CLAGS)
 AC_SUBST(PCAP_LIBS)
 
 AC_SUBST(LIBZORP_LIBS)
@@ -580,7 +572,7 @@ AC_DEFINE_UNQUOTED(ZORP_CONFIG_DATE, "$date", [Configuration date])
 if test -r module.list; then
 	MODULE_DIRS="`cat module.list`"
 else
-	MODULE_DIRS="anypy finger ftp http plug whois telnet"
+	MODULE_DIRS="anypy finger ftp http plug pop3 smtp telnet whois"
 fi
 
 AC_SUBST(MODULE_DIRS)
@@ -629,9 +621,14 @@ AC_SUBST(OSIP_MAX_VERSION)
 AC_SUBST(CURRDATE)
 AC_SUBST(pidfiledir)
 
+if test "$ZORP_PACKAGE_LICENSE" = "pro"; then
+PRO_FILES="solbuild/Makefile zorpaddr/Makefile zorpblgen/Makefile"
+else
+PRO_FILES=
+fi
+
 AC_OUTPUT(
 zorp-config
-solbuild/Makefile
 
 Makefile 
 zorp/Makefile 
@@ -643,7 +640,6 @@ libproxy/Makefile
 libproxy/zorp/Makefile
 libproxy/zorp/proxy/Makefile
 zorpctl/Makefile
-zorpblgen/Makefile
 pylib/Makefile 
 pylib/Zorp/Makefile 
 pylib/kznf/Makefile
@@ -654,12 +650,12 @@ doc/man/Makefile
 modules/Makefile
 debian/Makefile
 scripts/Makefile
-zorpaddr/Makefile
 tests/Makefile
 tests/python/Makefile
 tests/python/runtest.sh
 tests/unit/Makefile
 tests/kzorp/Makefile
+$PRO_FILES
 
- modules/anypy/Makefile modules/anypy/debian/Makefile modules/finger/Makefile modules/finger/debian/Makefile modules/ftp/Makefile modules/ftp/debian/Makefile modules/ftp/tests/Makefile modules/http/Makefile modules/http/messages/Makefile modules/http/debian/Makefile modules/http/tests/Makefile modules/plug/Makefile modules/plug/debian/Makefile modules/whois/Makefile modules/whois/debian/Makefile modules/telnet/Makefile modules/telnet/debian/Makefile
+ modules/anypy/Makefile modules/anypy/debian/Makefile modules/finger/Makefile modules/finger/debian/Makefile modules/ftp/Makefile modules/ftp/tests/Makefile modules/ftp/debian/Makefile modules/http/Makefile modules/http/tests/Makefile modules/http/messages/Makefile modules/http/debian/Makefile modules/plug/Makefile modules/plug/debian/Makefile modules/pop3/Makefile modules/pop3/messages/Makefile modules/pop3/debian/Makefile modules/smtp/Makefile modules/smtp/tests/Makefile modules/smtp/debian/Makefile modules/telnet/Makefile modules/telnet/debian/Makefile modules/whois/Makefile modules/whois/debian/Makefile
 )

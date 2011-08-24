@@ -11,10 +11,20 @@
 #
 # This file was automatically customized by dh-make on Tue,  9 May 2000 07:17:22 +0200
 
+### BEGIN INIT INFO
+# Provides:          zorp-pro
+# Required-Start:    $local_fs $syslog
+# Required-Stop:     $local_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+### END INIT INFO
+
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 ZORPCTL=/usr/sbin/zorpctl
 
 test -x $ZORPCTL || exit 0
+
+. /lib/lsb/init-functions
 
 set -e
 
@@ -24,24 +34,34 @@ case "$1" in
 	$ZORPCTL start $@ || true
 	;;
   stop)
-  	shift
+  	shift 
 	$ZORPCTL stop $@ || true
 	;;
-  reload-or-restart)
-  	shift
-	$ZORPCTL reload-or-restart $@ || true
-	;;
-  reload|force-reload)
-        shift
-	$ZORPCTL reload $@ || true
-	;;
-  restart)
-        shift
+  #reload)
+	#
+	#	If the daemon can reload its config files on the fly
+	#	for example by sending it SIGHUP, do it here.
+	#
+	#	If the daemon responds to changes in its config file
+	#	directly anyway, make this a do-nothing entry.
+	#
+	# echo "Reloading $DESC configuration files."
+	# start-stop-daemon --stop --signal 1 --quiet --pidfile \
+	#	/var/run/$NAME.pid --exec $DAEMON
+  #;;
+  restart|force-reload)
+	#
+	#	If the "reload" option is implemented, move the "force-reload"
+	#	option to the "reload" entry above. If not, "force-reload" is
+	#	just the same as "restart".
+	#
+	shift
 	$ZORPCTL restart $@ || true
 	;;
   *)
 	N=/etc/init.d/$NAME
-	echo "Usage: $N {start|stop|restart|reload|force-reload|reload-or-restart}" >&2
+	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	log_action_msg "Usage: $N {start|stop|restart|force-reload}"
 	exit 1
 	;;
 esac

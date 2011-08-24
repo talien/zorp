@@ -29,26 +29,25 @@
 #ifndef ZORP_PROXY_COMMON_H_INCLUDED
 #define ZORP_PROXY_COMMON_H_INCLUDED
 
-
 /* a two-way connection between streams */
 
 /* endpoint indexes */
-enum
-{
-  EP_CLIENT,
-  EP_SERVER,
-  EP_MAX
-};
+typedef enum _ZEndpoint
+  {
+    EP_CLIENT,
+    EP_SERVER,
+    EP_MAX
+  } ZEndpoint;
 
 #define EP_OTHER(ep) (1-(ep))
 #define EP_STR(ep)   ((ep) == EP_CLIENT ? "client" : "server")
 
-enum
-{
-  EP_DIR_IN,
-  EP_DIR_OUT,
-  EP_DIR_MAX
-};
+typedef enum _ZDirection
+  {
+    EP_DIR_IN,
+    EP_DIR_OUT,
+    EP_DIR_MAX
+  } ZDirection;
 
 #define EP_DIR_OTHER(ep) (1-(ep))
 #define EP_DIR_STR(ep)   ((ep) == EP_DIR_IN ? "input" : "output")

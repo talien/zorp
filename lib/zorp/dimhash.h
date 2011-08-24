@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: dimhash.h,v 1.7 2002/01/21 10:27:29 sasa Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_DIMHASH_H_INCLUDED

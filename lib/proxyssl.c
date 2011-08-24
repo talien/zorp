@@ -37,6 +37,20 @@
 #include <zorp/source.h>
 #include <zorp/error.h>
 
+/**
+ * Create a new SSL handshake object.
+ *
+ * @param proxy         the proxy instance
+ * @param stream        the stream we're to handshake on
+ * @param side          the side the handshake is to be made on
+ *                      (determines the SSL parameters to be used)
+ *
+ * This function creates a handshake object with the parameters passed in.
+ * The object returned is not reference-counted, but 'garbage-collected'
+ * when freeing destroying @proxy.
+ *
+ * @return the new handshake object (cannot return NULL)
+ */
 ZProxySSLHandshake *
 z_proxy_ssl_handshake_new(ZProxy * proxy, ZStream *stream, gint side)
 {
@@ -48,16 +62,26 @@ z_proxy_ssl_handshake_new(ZProxy * proxy, ZStream *stream, gint side)
   z_proxy_enter(proxy);
 
   self = g_new0(ZProxySSLHandshake, 1);
-  z_refcount_set(&self->ref_cnt, 1);
   self->proxy = z_proxy_ref(proxy);
   self->stream = z_stream_ref(stream);
   self->side = side;
   self->session = NULL;
   self->timeout = NULL;
 
+  /* append the handshake to the list of handshakes done by this proxy */
+  proxy->ssl_opts.handshakes = g_list_append(proxy->ssl_opts.handshakes, self);
+
   z_proxy_return(proxy, self);
 }
 
+/**
+ * Destroy a handshake object.
+ *
+ * @param self          the handshake object to be destroyed
+ *
+ * Destroys a handshake object by freeing/dereferencing all associated objects
+ * and then freeing the structure.
+ */
 static void
 z_proxy_ssl_handshake_destroy(ZProxySSLHandshake *self)
 {
@@ -74,6 +98,9 @@ z_proxy_ssl_handshake_destroy(ZProxySSLHandshake *self)
   if (self->session)
     z_ssl_session_unref(self->session);
 
+  if (self->ssl_context)
+    SSL_CTX_free(self->ssl_context);
+
   z_stream_unref(self->stream);
   g_free(self);
 
@@ -82,25 +109,18 @@ z_proxy_ssl_handshake_destroy(ZProxySSLHandshake *self)
   z_proxy_unref(p);
 }
 
-ZProxySSLHandshake *
-z_proxy_ssl_handshake_ref(ZProxySSLHandshake *self)
-{
-  z_refcount_inc(&self->ref_cnt);
-  return self;
-}
-
-gboolean
-z_proxy_ssl_handshake_unref(ZProxySSLHandshake *self)
-{
-  if (self && z_refcount_dec(&self->ref_cnt))
-    {
-      z_proxy_ssl_handshake_destroy(self);
-      return TRUE;
-    }
-
-  return FALSE;
-}
-
+/**
+ * Set the handshake completion callback for a handshake.
+ *
+ * @param self          the handshake object
+ * @param cb            the callback function
+ * @param user_data     user data passed to the callback
+ * @param user_data_notify destroy notify callback used to free @user_data
+ *
+ * This function sets the completion callback and its associated arguments to
+ * be used when the SSL handshake has been completed. Since @user_data might
+ * be refcounted we always use @user_data_notify when freeing @user_data.
+ */
 static void
 z_proxy_ssl_handshake_set_callback(ZProxySSLHandshake *self, ZProxySSLCallbackFunc cb,
                                    gpointer user_data, GDestroyNotify user_data_notify)
@@ -110,6 +130,16 @@ z_proxy_ssl_handshake_set_callback(ZProxySSLHandshake *self, ZProxySSLCallbackFu
   self->completion_user_data_notify = user_data_notify;
 }
 
+/**
+ * Call the SSL handshake completion callback *once*.
+ *
+ * @param self          the handshake object
+ *
+ * Calls the completion callback set by z_proxy_ssl_handshake_set_callback().
+ *
+ * After the call it clears all info regarding the callback so that it
+ * won't be called again.
+ */
 static void
 z_proxy_ssl_handshake_call_callback(ZProxySSLHandshake *self)
 {
@@ -118,6 +148,10 @@ z_proxy_ssl_handshake_call_callback(ZProxySSLHandshake *self)
 
   if (self->completion_user_data && self->completion_user_data_notify)
     (self->completion_user_data_notify)(self->completion_user_data);
+
+  self->completion_cb = NULL;
+  self->completion_user_data = NULL;
+  self->completion_user_data_notify = NULL;
 }
 
 static void
@@ -351,6 +385,7 @@ void
 z_proxy_ssl_free_vars(ZProxy *self)
 {
   gint ep;
+  GList *p;
 
   z_enter();
 
@@ -371,6 +406,14 @@ z_proxy_ssl_free_vars(ZProxy *self)
           self->ssl_opts.ssl_sessions[ep] = NULL;
         }
     }
+
+  for (p = self->ssl_opts.handshakes; p; p = p->next)
+    {
+      z_proxy_ssl_handshake_destroy((ZProxySSLHandshake *) p->data);
+    }
+
+  g_list_free(self->ssl_opts.handshakes);
+  self->ssl_opts.handshakes = NULL;
 
   z_leave();
 }
@@ -632,12 +675,12 @@ z_proxy_ssl_app_verify_cb(X509_STORE_CTX *ctx, void *user_data)
   else
     success = z_proxy_ssl_callback(self, side, "verify_cert", z_policy_var_build("(i)", side), &verdict);
 
+  z_policy_unlock(self->thread);
   if (!success)
     {
-      z_policy_unlock(self->thread);
-      z_proxy_return(self, FALSE);
+      ok = 0;
+      goto exit;
     }
-  z_policy_unlock(self->thread);
 
   if (verdict == PROXY_SSL_HS_ACCEPT)
     {
@@ -686,6 +729,7 @@ z_proxy_ssl_app_verify_cb(X509_STORE_CTX *ctx, void *user_data)
       ok = 0;
     }
 
+exit:
   z_proxy_return(self, ok);
 }
 
@@ -1026,14 +1070,6 @@ done:
   return TRUE;
 }
 
-static void
-z_proxy_ssl_handshake_destroy_notify(gpointer data)
-{
-  ZProxySSLHandshake *self = (ZProxySSLHandshake *) data;
-
-  z_proxy_ssl_handshake_unref(self);
-}
-
 /**
  * Save stream state and set up our callbacks driving the SSL handshake.
  *
@@ -1064,16 +1100,16 @@ z_proxy_ssl_setup_stream(ZProxySSLHandshake *handshake,
 
   /* set up our own callbacks doing the handshake */
   z_stream_set_callback(handshake->stream, G_IO_IN, z_proxy_ssl_handshake_cb,
-                        z_proxy_ssl_handshake_ref(handshake), z_proxy_ssl_handshake_destroy_notify);
+                        handshake, NULL);
   z_stream_set_callback(handshake->stream, G_IO_OUT, z_proxy_ssl_handshake_cb,
-                        z_proxy_ssl_handshake_ref(handshake), z_proxy_ssl_handshake_destroy_notify);
+                        handshake, NULL);
 
   z_stream_set_nonblock(handshake->stream, TRUE);
 
   /* set up our timeout source */
   handshake->timeout = z_timeout_source_new(handshake->proxy->ssl_opts.handshake_timeout);
   g_source_set_callback(handshake->timeout, z_proxy_ssl_handshake_timeout,
-                        z_proxy_ssl_handshake_ref(handshake), z_proxy_ssl_handshake_destroy_notify);
+                        handshake, NULL);
   g_source_attach(handshake->timeout, z_proxy_group_get_context(proxy_group));
 
   /* attach stream to the poll of the proxy group */
@@ -1219,10 +1255,25 @@ z_proxy_ssl_setup_handshake(ZProxySSLHandshake *handshake)
   SSL *tmpssl;
   ZSSLSession *ssl;
   int verify_mode = 0;
+  gsize buffered_bytes;
 
   z_proxy_enter(self);
 
   z_proxy_log(self, CORE_DEBUG, 6, "Performing SSL handshake; side='%s'", EP_STR(side));
+
+  /* check for cases where plain text injection is possible: before
+   * starting the SSL handshake all stream buffers above the SSL
+   * stream *must* be empty, otherwise it would be possible for the
+   * proxy to read bytes sent *before* the SSL handshake in a context
+   * where it thinks that all following communication is
+   * SSL-protected
+   */
+  if ((buffered_bytes = z_stream_get_buffered_bytes(handshake->stream)) > 0)
+    {
+      z_proxy_log(self, CORE_ERROR, 1, "Protocol error: possible clear text injection, "
+                  "buffers above the SSL stream are not empty; bytes='%zu'", buffered_bytes);
+      z_proxy_return(self, FALSE);
+    }
 
   if (strcmp(self->ssl_opts.ssl_method[side]->str, "SSLv23") == 0)
     {
@@ -1281,7 +1332,9 @@ z_proxy_ssl_setup_handshake(ZProxySSLHandshake *handshake)
     SSL_CTX_set_client_cert_cb(ctx, z_proxy_ssl_client_cert_cb); /* instead of specifying key here */
 
   /* For server side, the z_proxy_ssl_app_verify_callback_cb sets up
-     trusted CA list. It calls verify_cert callback for both sides. */
+     trusted CA list. It calls verify_cert callback for both sides.
+
+     Releasing the handshake reference is done by the callback. */
 
   SSL_CTX_set_cert_verify_callback(ctx, z_proxy_ssl_app_verify_cb, handshake);
 
@@ -1298,12 +1351,22 @@ z_proxy_ssl_setup_handshake(ZProxySSLHandshake *handshake)
   tmpssl = SSL_new(ctx);
   SSL_set_options(tmpssl, SSL_MODE_ENABLE_PARTIAL_WRITE);
   SSL_set_app_data(tmpssl, handshake);
-  SSL_CTX_free(ctx);
+
+  /* Give the SSL context to the handshake class after
+     cleaning up the current one */
+
+  if (handshake->ssl_context)
+    SSL_CTX_free(handshake->ssl_context);
+  handshake->ssl_context = ctx;
+
   if (!tmpssl)
     {
       z_proxy_log(self, CORE_ERROR, 1, "Error allocating SSL struct; side='%s'", EP_STR(side));
       z_proxy_return(self, FALSE);
     }
+
+  if (handshake->session)
+    z_ssl_session_unref(handshake->session);
 
   ssl = handshake->session = z_ssl_session_new_ssl(tmpssl);
   SSL_free(tmpssl);
@@ -1342,6 +1405,7 @@ z_proxy_ssl_perform_handshake(ZProxySSLHandshake *handshake)
 {
   ZProxy *self = handshake->proxy;
   gboolean res;
+  gsize buffered_bytes;
 
   z_proxy_enter(self);
 
@@ -1349,6 +1413,18 @@ z_proxy_ssl_perform_handshake(ZProxySSLHandshake *handshake)
     z_proxy_return(self, FALSE);
 
   res = z_proxy_ssl_do_handshake(handshake, self->flags & ZPF_NONBLOCKING);
+
+  /* SSL plain injection check: although we do check that the stream
+   * buffers above the SSL stream are empty, but if there's a bug
+   * somewhere in the SSL handshake code/polling/etc. it still might
+   * be possible that we have buffered data above the SSL layer.
+   */
+  if ((buffered_bytes = z_stream_get_buffered_bytes(handshake->stream)) > 0)
+    {
+      z_proxy_log(self, CORE_ERROR, 1, "Internal error, buffers above the SSL "
+                  "stream are not empty after handshake; bytes='%zu'", buffered_bytes);
+      z_proxy_return(self, FALSE);
+    }
 
   z_proxy_return(self, res);
 }
@@ -1495,8 +1571,8 @@ z_proxy_ssl_init_completed(ZProxySSLHandshake *handshake, gpointer user_data)
  * handshake where the nonblocking init callback of the proxy is called as a continuation
  * after the handshake.
  *
- * calling z_proxy_ssl_init_stream().
  * In all other cases the function falls back to doing a semi-nonblocking handshake by
+ * calling z_proxy_ssl_init_stream().
  *
  * @return TRUE if the setup (and possible handshake) succeeded, FALSE otherwise
  */
@@ -1522,9 +1598,7 @@ z_proxy_ssl_init_stream_nonblocking(ZProxy *self, gint side)
 
           handshake = z_proxy_ssl_handshake_new(self, self->endpoints[side], side);
           res = z_proxy_ssl_perform_handshake_async(handshake, z_proxy_ssl_init_completed,
-                                                    z_proxy_ssl_handshake_ref(handshake),
-                                                    z_proxy_ssl_handshake_destroy_notify);
-          z_proxy_ssl_handshake_unref(handshake);
+                                                    handshake, NULL);
         }
       else
         {
@@ -1615,15 +1689,12 @@ z_proxy_ssl_request_handshake(ZProxy *self, gint side, gboolean forced)
 
   if (!rc || !handshake->session)
     {
-      z_proxy_ssl_handshake_unref(handshake);
       z_proxy_return(self, rc);
     }
 
   if (self->ssl_opts.ssl_sessions[side])
     z_proxy_ssl_clear_session(self, side);
   self->ssl_opts.ssl_sessions[side] = z_ssl_session_ref(handshake->session);
-
-  z_proxy_ssl_handshake_unref(handshake);
 
   if (side == EP_SERVER)
     z_proxy_ssl_register_host_iface(self);
@@ -1644,8 +1715,6 @@ z_proxy_ssl_request_handshake(ZProxy *self, gint side, gboolean forced)
       if (self->ssl_opts.ssl_sessions[side])
         z_proxy_ssl_clear_session(self, side);
       self->ssl_opts.ssl_sessions[side] = z_ssl_session_ref(handshake->session);
-
-      z_proxy_ssl_handshake_unref(handshake);
 
       if (side == EP_SERVER)
         z_proxy_ssl_register_host_iface(self);

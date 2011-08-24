@@ -32,4 +32,3 @@ extern ZClass ZProxySslHostIface__class;
 ZProxyIface *z_proxy_ssl_host_iface_new(ZProxy *owner);
 
 #endif
-

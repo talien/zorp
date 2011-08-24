@@ -303,10 +303,9 @@ def create_query_params_attr(type, proto, saddr, sport, daddr, dport, iface):
 ###########################################################################
 # helper functions to assemble kzorp messages
 ###########################################################################
-def create_start_msg(type, name, config_cookie=0):
+def create_start_msg(name, config_cookie=0):
         m = NfnetlinkMessage(socket.AF_NETLINK, 0, 0)
         m.append_attribute(create_name_attr(KZA_INSTANCE_NAME, name))
-        m.append_attribute(create_int8_attr(KZA_TR_PARAMS, type))
         if (config_cookie > 0):
                 m.append_attribute(create_int64_attr(KZA_CONFIG_COOKIE, config_cookie))
         return m

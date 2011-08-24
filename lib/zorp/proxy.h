@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: proxy.h,v 1.82 2004/06/11 12:57:39 bazsi Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_PROXY_H_INCLUDED
@@ -78,6 +76,7 @@ enum
 #define Z_VAR_TYPE_DIMHASH      0x00000800      /* variable is a multidimensional hash */
 #define Z_VAR_TYPE_ALIAS        0x00000900      /* variable is an alias of another variable */
 #define Z_VAR_TYPE_OBSOLETE     0x00000A00      /* variable is an obsolete alias of another variable */
+#define Z_VAR_TYPE_INT64        0x00000B00      /* variable is an int64 */
 
 
 typedef struct _ZProxyParams ZProxyParams;
@@ -116,11 +115,11 @@ struct _ZChannelProps
 struct _ZProxy
 {
   ZObject super;
-  guint16 status;
-  guint16 flags;
   gchar session_id[MAX_SESSION_ID];
   ZThread *proxy_thread;
   GThreadPriority proxy_pri;
+  guint16 status;
+  guint16 flags;
   ZPolicyThread *thread;
   ZPolicyObj *handler;
   ZPolicyDict *dict;
@@ -128,8 +127,6 @@ struct _ZProxy
   ZStream *endpoints[EP_MAX];
   ZPolicyObj *py_endpoints[EP_MAX];
 
-  ZChannelProps channel_props[EP_MAX];
-  gboolean channel_props_set[EP_MAX];
   GString *language;
 
   /* a pointer to the parent proxy */
@@ -141,6 +138,9 @@ struct _ZProxy
   GList *interfaces;
 
   ZProxySsl ssl_opts;
+
+  gboolean channel_props_set[EP_MAX];
+  ZChannelProps channel_props[EP_MAX];
 };
 
 extern ZClass ZProxy__class;
@@ -161,6 +161,13 @@ typedef ZProxy *(*ZProxyCreateFunc)(ZProxyParams *params);
     z_object_check_compatible((ZObject *) self, Z_CLASS(ZProxy));	\
     /*NOLOG*/ 								\
     z_log_data_dump(((ZProxy *)self)->session_id, class, level, buf, len); \
+  } while (0)
+
+#define z_proxy_pktbuf_data_dump(self, class, level, pktbuf)             \
+  do {									\
+    z_object_check_compatible((ZObject *) self, Z_CLASS(ZProxy));	\
+    /*NOLOG*/ 								\
+    z_pktbuf_data_dump(((ZProxy *)self)->session_id, class, level, pktbuf); \
   } while (0)
 
 #define z_proxy_log_text_dump(self, class, level, buf, len)             \
@@ -205,6 +212,7 @@ ZProxyGroup *z_proxy_get_group(ZProxy *self);
 void z_proxy_set_group(ZProxy *self, ZProxyGroup *proxy_group);
 
 /* misc helper functions */
+gboolean z_proxy_set_server_address(ZProxy *self, const gchar *host, gint port);
 gint z_proxy_connect_server(ZProxy *self, const gchar *host, gint port);
 gint z_proxy_user_authenticated(ZProxy *self, const gchar *entity, gchar const **groups);
 

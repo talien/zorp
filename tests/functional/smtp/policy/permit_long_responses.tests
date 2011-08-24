@@ -1,0 +1,19 @@
+
+StartGlobalInfo
+	Tags bug6078
+EndGlobalInfo
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+		self.max_response_length = 10
+		self.permit_long_responses = TRUE
+EndPolicy
+
+S2P: "220 ESMTP\r\n"
+P2C: "220 ESMTP\r\n"
+C2P: "EHLO bb\r\n"
+P2S: "EHLO bb\r\n"
+S2P: "250 response longer than 10 characters\r\n"
+P2C: "250 respon\r\n"
+.

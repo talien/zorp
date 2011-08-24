@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: modules.h,v 1.5 2002/01/21 10:27:30 sasa Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_MODULES_H_INCLUDED

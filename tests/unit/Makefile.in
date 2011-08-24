@@ -34,7 +34,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 check_PROGRAMS = pystruct$(EXEEXT) test_audit$(EXEEXT) \
-	test_szig$(EXEEXT) test_bllookup$(EXEEXT)
+	test_szig$(EXEEXT) test_bllookup$(EXEEXT) \
+	test_dynexpect$(EXEEXT)
 TESTS = pystruct$(EXEEXT) test_audit$(EXEEXT) test_szig$(EXEEXT) \
 	test_bllookup.sh
 subdir = tests/unit
@@ -56,6 +57,9 @@ test_audit_LDADD = $(LDADD)
 am_test_bllookup_OBJECTS = test_bllookup.$(OBJEXT)
 test_bllookup_OBJECTS = $(am_test_bllookup_OBJECTS)
 test_bllookup_LDADD = $(LDADD)
+am_test_dynexpect_OBJECTS = test_dynexpect.$(OBJEXT)
+test_dynexpect_OBJECTS = $(am_test_dynexpect_OBJECTS)
+test_dynexpect_LDADD = $(LDADD)
 am_test_szig_OBJECTS = test_szig.$(OBJEXT)
 test_szig_OBJECTS = $(am_test_szig_OBJECTS)
 test_szig_LDADD = $(LDADD)
@@ -73,9 +77,11 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(pystruct_SOURCES) $(test_audit_SOURCES) \
-	$(test_bllookup_SOURCES) $(test_szig_SOURCES)
+	$(test_bllookup_SOURCES) $(test_dynexpect_SOURCES) \
+	$(test_szig_SOURCES)
 DIST_SOURCES = $(pystruct_SOURCES) $(test_audit_SOURCES) \
-	$(test_bllookup_SOURCES) $(test_szig_SOURCES)
+	$(test_bllookup_SOURCES) $(test_dynexpect_SOURCES) \
+	$(test_szig_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -88,7 +94,6 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BINARY_BRANCH = @BINARY_BRANCH@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -147,7 +152,7 @@ NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OPENSSL_CFLAGS = @OPENSSL_CFLAGS@
-OPENSSL_CPPFLAGS = @OPENSSL_CPPFLAGS@
+OPENSSL_CLAGS = @OPENSSL_CLAGS@
 OPENSSL_LIBS = @OPENSSL_LIBS@
 OPENSSL_MIN_VERSION = @OPENSSL_MIN_VERSION@
 OSIP_CFLAGS = @OSIP_CFLAGS@
@@ -167,6 +172,8 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PCAP_LIBS = @PCAP_LIBS@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PYTHON = @PYTHON@
 PYTHON_MIN_VERSION = @PYTHON_MIN_VERSION@
 RANLIB = @RANLIB@
@@ -179,6 +186,9 @@ SOCK_LIBS = @SOCK_LIBS@
 SOURCE_REVISION = @SOURCE_REVISION@
 STRIP = @STRIP@
 TESTCASES = @TESTCASES@
+UUID_CFLAGS = @UUID_CFLAGS@
+UUID_CLAGS = @UUID_CLAGS@
+UUID_LIBS = @UUID_LIBS@
 VERSION = @VERSION@
 WBCLIENT_CFLAGS = @WBCLIENT_CFLAGS@
 WBCLIENT_LIBS = @WBCLIENT_LIBS@
@@ -257,6 +267,7 @@ pystruct_SOURCES = pystruct.c
 test_audit_SOURCES = test_audit.c
 test_szig_SOURCES = test_szig.c
 test_bllookup_SOURCES = test_bllookup.c
+test_dynexpect_SOURCES = test_dynexpect.c
 EXTRA_DIST = pystruct.py
 all: all-am
 
@@ -310,6 +321,9 @@ test_audit$(EXEEXT): $(test_audit_OBJECTS) $(test_audit_DEPENDENCIES)
 test_bllookup$(EXEEXT): $(test_bllookup_OBJECTS) $(test_bllookup_DEPENDENCIES) 
 	@rm -f test_bllookup$(EXEEXT)
 	$(LINK) $(test_bllookup_OBJECTS) $(test_bllookup_LDADD) $(LIBS)
+test_dynexpect$(EXEEXT): $(test_dynexpect_OBJECTS) $(test_dynexpect_DEPENDENCIES) 
+	@rm -f test_dynexpect$(EXEEXT)
+	$(LINK) $(test_dynexpect_OBJECTS) $(test_dynexpect_LDADD) $(LIBS)
 test_szig$(EXEEXT): $(test_szig_OBJECTS) $(test_szig_DEPENDENCIES) 
 	@rm -f test_szig$(EXEEXT)
 	$(LINK) $(test_szig_OBJECTS) $(test_szig_LDADD) $(LIBS)
@@ -323,6 +337,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pystruct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_audit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_bllookup.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_dynexpect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_szig.Po@am__quote@
 
 .c.o:

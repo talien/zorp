@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: telnet.c,v 1.49 2004/08/25 12:59:31 bazsi Exp $
- *
  * Author: Hidden
  * Auditor:
  * Last audited version:
@@ -46,6 +44,10 @@
 
 #include <ctype.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
 
 static TelnetOptions telnet_options_table[] =
 {
@@ -276,7 +278,7 @@ telnet_check_suboption(TelnetProxy *self, guint ep)
   guint                 res;
   TelnetOptionFunction  check_func;
   ZIOBuffer             *sbuf = &self->suboptions[ep];
-  guchar                buf[TELNET_BUFFER_SIZE + 1];
+  gchar                 buf[TELNET_BUFFER_SIZE + 1];
   guint                 i, j;
 
   z_proxy_enter(self);
@@ -298,7 +300,7 @@ telnet_check_suboption(TelnetProxy *self, guint ep)
       g_string_assign(self->policy_name, "");
       g_string_assign(self->policy_value, buf);
       /* call policy check */
-      res = telnet_policy_suboption(self, buf[0], "", buf);
+      res = telnet_policy_suboption(self, (guchar) buf[0], "", buf);
     }
   else
     {
@@ -399,7 +401,7 @@ telnet_process_command(TelnetProxy *self, guint ep)
    * allow negotiated commands
    * these were allowed during a negotiation
    */
-  g_snprintf(cmd_str, sizeof(cmd_str), "%hu", self->command[ep]);
+  g_snprintf(cmd_str, sizeof(cmd_str), "%hhu", self->command[ep]);
   z_policy_lock(self->super.thread);
   res = g_hash_table_lookup(self->negotiation, cmd_str);
   if (res != NULL)
@@ -845,6 +847,8 @@ static gboolean
 telnet_init_streams(TelnetProxy *self)
 {
   gboolean ret = TRUE;
+  int fd;
+  int one = 1;
 
   z_proxy_enter(self);
   if (!self->super.endpoints[EP_CLIENT] ||
@@ -876,6 +880,9 @@ telnet_init_streams(TelnetProxy *self)
                     TRUE);
   self->super.endpoints[EP_CLIENT]->timeout = -2;
 
+  fd = z_stream_get_fd (self->super.endpoints[EP_CLIENT]);
+  setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof (one));
+
   z_stream_set_nonblock(self->super.endpoints[EP_SERVER], TRUE);
   z_stream_set_callback(self->super.endpoints[EP_SERVER],
                         G_IO_IN,
@@ -892,6 +899,9 @@ telnet_init_streams(TelnetProxy *self)
                     G_IO_IN,
                     TRUE);
   self->super.endpoints[EP_SERVER]->timeout = -2;
+
+  fd = z_stream_get_fd (self->super.endpoints[EP_SERVER]);
+  setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof (one));
 
   z_poll_add_stream(self->poll, self->super.endpoints[EP_CLIENT]);
   z_poll_add_stream(self->poll, self->super.endpoints[EP_SERVER]);

@@ -1,4 +1,5 @@
+sbin_SCRIPTS=kzorp
+EXTRA_DIST=kzorp
 if PRO
-
-EXTRA_DIST = genlutable.sh
+EXTRA_DIST=$(EXTRA_DIST) genlutable.sh
 endif

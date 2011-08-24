@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: telnet.h,v 1.16 2004/07/28 14:36:07 sasa Exp $
- *
  * Author: Hidden
  * Auditor:
  * Last audited version:
@@ -390,7 +388,7 @@
 #define DO_OPTION               3
 #define DONT_OPTION             4
 
-#define TELNET_BUFFER_SIZE      1024
+#define TELNET_BUFFER_SIZE      16384
 #define TELNET_SUBOPTION_SIZE   (TELNET_BUFFER_SIZE - 4) /* IAC SB code + 1 byte */
 
 #define TELNET_CHECK_OK         1

@@ -1,0 +1,434 @@
+StartGlobalInfo
+        Tags bug17025
+EndGlobalInfo
+
+StartPolicy
+    def config(self):
+        SmtpProxy.config(self)
+        self.relay_domains=("*",)
+        self.relay_check=FALSE
+        self.language="hu"
+        self.permit_omission_of_angle_brackets=TRUE
+EndPolicy
+
+# Testcase 0 - RFC compliant operation
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: <sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To: <receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n.\r\n"
+P2S: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 1 - No '<' '>' at all
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: sender@senderhost.org\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To: receiver@receiverhost.org\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n.\r\n"
+P2S: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 2 - '<' '>' only in MAIL and ' ' at the end of RCPT
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: <sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To: receiver@receiverhost.org \r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "DATA\r\n"
+P2C: "503 Invalid command in this state\r\n"
+C2P: "asdf\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "asdfa\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "sdfas\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "neszeneszenesze\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: ".\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 2.1 - '<' '>' only in MAIL
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: <sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To: receiver@receiverhost.org\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n.\r\n"
+P2S: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 3 - '<' '>' only in RCPT
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: sender@senderhost.org\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To: <receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n.\r\n"
+P2S: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 3.1 - '<' '>' only in RCPT and SIZE at the end of MAIL
+
+S2P: "220 receiverhost.org ESMTP postfix\r\n"
+P2C: "220 receiverhost.org ESMTP postfix\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250-receiverhost.org\r\n250-PIPELINING\r\n250-SIZE 10240000\r\n250-ETRN\r\n250 8BITMIME\r\n"
+P2C: "250-receiverhost.org\r\n250-PIPELINING\r\n250-SIZE 10240000\r\n250-ETRN\r\n250 8BITMIME\r\n"
+C2P: "MAIL From: sender@senderhost.org SIZE=10037\r\n"
+P2S: "MAIL From:<sender@senderhost.org> SIZE=10037\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To: <receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n.\r\n"
+P2S: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 3.2 - '<' '>' only in RCPT and ' ' at the end of MAIL
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: sender@senderhost.org \r\n"
+P2S: "MAIL From:<sender@senderhost.org> \r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To: <receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n.\r\n"
+P2S: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 4 - '<' in MAIL and '>' in RCPT
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: <sender@senderhost.org\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "RCPT To: <receiver@receiverhost.org>\r\n"
+P2C: "503 Invalid command in this state\r\n"
+C2P: "DATA\r\n"
+P2C: "503 Invalid command in this state\r\n"
+C2P: "asdf\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "asdfa\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "sdfas\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "neszeneszenesze\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: ".\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+
+.
+
+# Testcase 5 - '>' in MAIL and '<' in RCPT
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: sender@senderhost.org>\r\n"
+P2C: "500 Invalid command\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: "RCPT To: <receiver@receiverhost.org>\r\n"
+P2C: "503 Invalid command in this state\r\n"
+C2P: "DATA\r\n"
+P2C: "503 Invalid command in this state\r\n"
+C2P: "asdf\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "asdfa\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "sdfas\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "neszeneszenesze\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: ".\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 6 - '<,>' in the middle of the address in MAIL and RCPT
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: sen<der@senderhost.org\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "RCPT To: receiver@receiv>erhost.org\r\n"
+P2C: "503 Invalid command in this state\r\n"
+C2P: "DATA\r\n"
+P2C: "503 Invalid command in this state\r\n"
+C2P: "asdf\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "asdfa\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "sdfas\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "neszeneszenesze\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: ".\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 7 - '<,>' in the middle of the address RCPT
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: <sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To: receiver@receiver>host.org\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "DATA\r\n"
+P2C: "503 Invalid command in this state\r\n"
+C2P: "asdf\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "asdfa\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "sdfas\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "neszeneszenesze\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: ".\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 8 - '>' in the word RCPT
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From: <sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "R>CPT To: <receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n.\r\n"
+P2S: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Testcase 9 - '>' in the word MAIL
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "M>AIL From: <sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To: <receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n.\r\n"
+P2S: "asdf\r\nasdfa\r\nsdfas\r\nneszeneszenesze\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.

@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: szig.h,v 1.6 2003/09/24 09:56:42 bazsi Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_SZIG_H_INCLUDED
@@ -46,6 +44,7 @@ enum
   Z_SZIG_AUTH_PENDING_BEGIN,
   Z_SZIG_AUTH_PENDING_FINISH,
   Z_SZIG_SERVICE_COUNT,
+  Z_SZIG_CONNECTION_START,
   Z_SZIG_MAX
 };
 

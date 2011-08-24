@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: plugsession.h,v 1.4 2003/05/28 12:18:57 bazsi Exp $
- *
  ***************************************************************************/
 #ifndef ZORP_PLUGSESSION_H_INCLUDED
 #define ZORP_PLUGSESSION_H_INCLUDED
@@ -47,6 +45,7 @@ typedef struct _ZPlugSessionData
                            guint64 server_bytes, guint64 server_pkts,
                            gpointer user_data);
   void (*finish)(ZPlugSession *self, gpointer user_data);
+  void (*timeout_cb) (ZPlugSession *self, gpointer user_data);
 } ZPlugSessionData;
 
 gboolean z_plug_session_start(ZPlugSession *self, ZPoll *poll);

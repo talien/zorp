@@ -1,0 +1,50 @@
+
+StartGlobalInfo
+	Tags bug9459
+EndGlobalInfo
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+                drop_all_prg = "/bin/cat >/dev/null; /bin/echo -en '0 SETVERDICT\\\\nn[]Verdict\\\\nnZ_DROP\\\\nn[]Description\\\\nnMert csak\\\\nn\\\\nn'>&3; read alma <&3"
+                self.request_stack["DATA"] = (SMTP_STK_MIME, drop_all_prg)
+		self.relay_domains = ('receiverhost.org',)
+
+
+EndPolicy
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "NOOP\r\n"
+S2P: "250 noop okay\r\n"
+P2C: "354 Go on, send your message\r\n"
+C2P: "Subject: test\r\n\
+From: Sender User <seus at senderhost.org>\r\n\
+Date: 15-Sept-03 12:15:44\r\n\
+To: Receiver User <reus at receiverhost.org>\r\n\
+\r\n\
+<body of message>\r\n\
+.\r\n"
+P2S: "RSET\r\n"
+S2P: "250 rset OK\r\n"
+P2C: "250 Message discarded (Mert csak)\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.

@@ -2,8 +2,6 @@
 # This file is sourced by zorpctl and contains default settings
 # for various parameters.
 #
-# $Id: zorpctl.conf,v 1.5 2004/05/07 17:59:20 bazsi Exp $
-#
 
 # specifies whether --auto-restart is default
 AUTO_RESTART=1

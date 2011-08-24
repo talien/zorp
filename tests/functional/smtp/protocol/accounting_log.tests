@@ -1,0 +1,137 @@
+StartGlobalInfo
+	Tags bug8586
+EndGlobalInfo
+
+# In fact, these cases don't test anything but produce situations where
+# some certain 'Accounting' log messages are produced.
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+                self.relay_domains = ('receiverhost.org')
+EndPolicy
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+P2C: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+C2P: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+P2S: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "250 Borsodi\r\n"
+P2C: "250 Borsodi\r\n"
+.
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+P2C: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+C2P: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+P2S: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "451 Soproni\r\n"
+P2C: "451 Soproni\r\n"
+.
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+P2C: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+C2P: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+P2S: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "503 Staropramen\r\n"
+P2C: "503 Staropramen\r\n"
+.
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+P2C: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+C2P: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+P2S: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "999 Csapviz\r\n"
+P2C: "421 Service not available, closing transmission channel.\r\n"
+.

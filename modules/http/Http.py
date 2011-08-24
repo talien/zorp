@@ -18,8 +18,6 @@
 ## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ##
 ##
-## $Id: Http.py,v 1.66 2004/07/22 14:47:40 bazsi Exp $
-##
 ## Author  : Bazsi
 ## Auditor : 
 ## Last audited version:
@@ -970,6 +968,12 @@ class MyHttp(HttpProxy):
       <description>
         Action codes for HTTP headers
       </description>
+      <tuple action="HTTP_HDR_ABORT">
+        <args/>
+        <description>
+          Terminate the connection.
+        </description>
+      </tuple>
       <tuple action="HTTP_HDR_ACCEPT">
         <args/>
         <description>

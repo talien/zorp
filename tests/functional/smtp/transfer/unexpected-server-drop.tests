@@ -1,0 +1,59 @@
+
+StartGlobalInfo
+        Tags bug12918
+EndGlobalInfo
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+                self.relay_domains = ('receiverhost.org',)
+
+
+EndPolicy
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "592 Almafa az en viragom\r\n"
+S2P: Disconnect
+P2C: "500 Invalid command\r\n"
+C2P: "QUIT\r\n"
+P2C: "421 Service not available, closing transmission channel.\r\n"
+.
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "592 Almafa az en viragom\r\n"
+P2C: "500 Invalid command\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: Disconnect
+P2C: "421 Service not available, closing transmission channel.\r\n"
+.

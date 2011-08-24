@@ -22,7 +22,5 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: pysatyr.h,v 1.8 2002/04/05 14:55:54 sasa Exp $
- *
  ***************************************************************************/
 

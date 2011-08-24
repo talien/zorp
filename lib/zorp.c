@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: zorp.c,v 1.15 2004/07/05 07:59:55 bazsi Exp $
- *
  * Author  : Bazsi
  * Auditor :
  * Last audited version:

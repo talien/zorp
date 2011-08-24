@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: zasauth.c,v 1.43 2004/07/26 12:31:58 sasa Exp $
- *
  * Author  : SaSA
  * Auditor :
  * Last audited version:

@@ -3,8 +3,6 @@
  * Copyright (c) 2000, 2001 BalaBit IT Ltd, Budapest, Hungary
  * All rights reserved.
  *
- * $Id: sysdep.h,v 1.11 2004/02/18 09:05:29 sasa Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_SYSDEP_H_INCLUDED

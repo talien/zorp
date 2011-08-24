@@ -2,8 +2,6 @@
 ##
 ##  COPYRIGHTHERE
 ##
-## $Id: Finger.py,v 1.19 2004/06/15 12:28:47 sasa Exp $
-##
 ## Author  : Bazsi
 ## Auditor : 
 ## Last audited version:

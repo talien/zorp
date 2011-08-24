@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: pysatyr.c,v 1.50 2004/07/02 10:03:33 bazsi Exp $
- *
  * Author  : SaSa
  * Auditor : bazsi
  * Last audited version: 1.38

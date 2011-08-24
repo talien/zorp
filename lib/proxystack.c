@@ -175,7 +175,136 @@ z_proxy_stack_fds(ZProxy *self, gint client_fd, gint server_fd, gint control_fd,
   return TRUE;
 }
 
+/**
+ * z_proxy_control_stream_read:
+ * @stream: stream to read from
+ * @cond: I/O condition which triggered this call
+ * @user_data: ZProxy instance as a generic pointer
+ *
+ * This function is registered as the read callback for control channels
+ * of stacked programs.
+ **/
+static gboolean
+z_proxy_control_stream_read(ZStream *stream, GIOCondition cond G_GNUC_UNUSED, gpointer user_data)
+{
+  ZStackedProxy *stacked = (ZStackedProxy *) user_data;
+  ZProxy *proxy = stacked->proxy;
+  GIOStatus st;
+  gboolean success = FALSE;
+  ZCPCommand *request = NULL, *response = NULL;
+  ZCPHeader *hdr1, *hdr2;
+  guint cp_sid;
+  ZProxyIface *iface = NULL;
+  const gchar *fail_reason = "Unknown reason";
+  gboolean result = TRUE;
 
+  z_enter();
+  g_static_mutex_lock(&stacked->destroy_lock);
+  if (stacked->destroyed)
+    {
+      /* NOTE: this stacked proxy has already been destroyed, but a callback
+         was still pending, make sure we don't come back again. Note that
+         our arguments except stacked might already be freed. */
+      result = FALSE;
+      goto exit_unlock;
+    }
+
+  if (!stacked->control_proto)
+    stacked->control_proto = z_cp_context_new(stream);
+
+  st = z_cp_context_read(stacked->control_proto, &cp_sid, &request);
+  if (st == G_IO_STATUS_AGAIN)
+    goto exit_unlock;
+  if (st != G_IO_STATUS_NORMAL)
+    {
+      /* FIXME: hack, returning FALSE should be enough but it causes
+         the poll loop to spin, see bug #7219 */
+      z_stream_set_cond(stream, G_IO_IN, FALSE);
+      result = FALSE;
+      goto exit_unlock;
+    }
+  
+  response = z_cp_command_new("RESULT");
+  if (cp_sid != 0)
+    {
+      fail_reason = "Non-zero session-id";
+      goto error;
+    }
+
+  z_log(NULL, CORE_DEBUG, 6, "Read request from stack-control channel; request='%s'", request->command->str);
+  if (strcmp(request->command->str, "SETVERDICT") == 0
+     )
+    {
+      ZProxyStackIface *siface;
+      
+      iface = z_proxy_find_iface(proxy, Z_CLASS(ZProxyStackIface));
+      if (!iface)
+        {
+          fail_reason = "Proxy does not support Stack interface";
+          goto error;
+        }
+        
+      siface = (ZProxyBasicIface *) iface;
+      if (strcmp(request->command->str, "SETVERDICT") == 0)
+        {
+          ZVerdict verdict;
+
+          hdr1 = z_cp_command_find_header(request, "Verdict");
+          hdr2 = z_cp_command_find_header(request, "Description");
+          if (!hdr1)
+            {
+              fail_reason = "No Verdict header in SETVERDICT request";
+              goto error;
+            }
+
+	  if (strcmp(hdr1->value->str, "Z_ACCEPT") == 0)
+	    verdict = Z_ACCEPT;
+	  else if (strcmp(hdr1->value->str, "Z_REJECT") == 0)
+            verdict = Z_REJECT;
+	  else if (strcmp(hdr1->value->str, "Z_DROP") == 0)
+            verdict = Z_DROP;
+	  else if (strcmp(hdr1->value->str, "Z_ERROR") == 0)
+	    verdict = Z_ERROR;
+	  else
+	    verdict = Z_UNSPEC;
+          
+          z_proxy_stack_iface_set_verdict(iface, verdict, hdr2 ? hdr2->value->str : NULL);
+        }
+    }
+  else
+    {
+      fail_reason = "Unknown request received";
+      goto error;
+    }
+  success = TRUE;
+
+ error:
+  z_cp_command_add_header(response, g_string_new("Status"), g_string_new(success ? "OK" : "Failure"), FALSE);
+  if (!success)
+    {
+      z_cp_command_add_header(response, g_string_new("Fail-Reason"), g_string_new(fail_reason), FALSE);
+      z_log(NULL, CORE_DEBUG, 6, "Error processing control channel request; request='%s', reason='%s'", request ? request->command->str : "None", fail_reason);
+    }
+
+  z_log(NULL, CORE_DEBUG, 6, "Responding on stack-control channel; response='%s'", response->command->str);
+  if (z_cp_context_write(stacked->control_proto, 0, response) != G_IO_STATUS_NORMAL)
+    {
+      /* this should not have happened */
+      z_log(NULL, CORE_ERROR, 1, "Internal error writing response to stack-control channel;");
+      success = FALSE;
+    }
+
+  if (iface)
+    z_object_unref(&iface->super);
+  if (request)
+    z_cp_command_free(request);
+  if (response)
+    z_cp_command_free(response);
+
+ exit_unlock:
+  g_static_mutex_unlock(&stacked->destroy_lock);
+  z_return(result);
+}
 
 
 
@@ -277,8 +406,6 @@ z_proxy_stack_tuple(ZProxy *self, ZPolicyObj *tuple, ZStackedProxy **stacked, ZP
   guint stack_method;
   ZPolicyObj *arg = NULL;
   gboolean success = FALSE;
-  ZSockAddr *sa;
-  const gchar *stack_info, *provider_name;
   
   if (!z_policy_tuple_get_verdict(tuple, &stack_method) ||
       z_policy_seq_length(tuple) < 2)
@@ -406,6 +533,24 @@ z_stacked_proxy_new(ZStream *client_stream, ZStream *server_stream, ZStream *con
     self->child_proxy = z_proxy_ref(child_proxy);
 
 
+  if (control_stream)
+    {
+      g_snprintf(buf, sizeof(buf), "%s/control", proxy->session_id);
+      z_stream_set_name(control_stream, buf);
+
+      self->control_stream = z_stream_push(z_stream_push(control_stream, 
+                                                         z_stream_line_new(NULL, 4096, ZRL_EOL_NL|ZRL_TRUNCATE)), 
+                                           z_stream_buf_new(NULL, 4096, Z_SBF_IMMED_FLUSH));
+      
+      z_stream_set_callback(self->control_stream, G_IO_IN, z_proxy_control_stream_read, z_stacked_proxy_ref(self), (GDestroyNotify) z_stacked_proxy_unref);
+      z_stream_set_cond(self->control_stream, G_IO_IN, TRUE);
+
+      /* NOTE: this has to be called after complete initialization of
+       * this instance as the callback might be called before
+       * ZStackedProxy is actually initialized */
+
+      z_stream_attach_source(self->control_stream, NULL);
+    }
    
   z_proxy_leave(proxy);
   return self;

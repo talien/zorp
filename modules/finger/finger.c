@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: finger.c,v 1.42 2004/07/22 09:02:51 bazsi Exp $
- *
  * Author: Bazsi
  * Auditor:
  * Last audited version:

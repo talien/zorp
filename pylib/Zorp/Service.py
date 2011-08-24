@@ -47,7 +47,7 @@
     <section>
     <title>Naming services</title>
     <para>
-      The name of the service must be a unique identifier; dispatchers refer to this unique ID.      
+      The name of the service must be a unique identifier; dispatchers refer to this unique ID.
     </para>
     <para>Use clear, informative, and consistent service names. Include the following information in
             the service name:</para>
@@ -112,7 +112,7 @@ default_router = None
 default_chainer = None
 
 class AbstractService:
-	"""
+        """
         <class maturity="stable" abstract="yes">
           <summary>
             Class encapsulating the abstract Service properties.
@@ -129,16 +129,16 @@ class AbstractService:
             <attributes>
               <attribute>
                 <name>name</name>
-		<type><string/></type>
+                <type><string/></type>
                 <description>The name of the service.</description>
               </attribute>
             </attributes>
           </metainfo>
         </class>
-	"""
-	
-	def __init__(self, name):
-		"""
+        """
+
+        def __init__(self, name):
+                """
                 <method maturity="stable">
                   <summary>
                     Constructor to initialize an instance of the AbstractService class.
@@ -264,8 +264,8 @@ class Service(AbstractService):
               of traffic is permitted.
             </para>
             <note><para>The Service class transfers application-level (proxy)
-             services. To transfer connections on the packet-filter level, 
-             use the <link linkend="python.Service.PFService">PFService</link> 
+             services. To transfer connections on the packet-filter level,
+             use the <link linkend="python.Service.PFService">PFService</link>
              class.</para></note>
            <example>
            <title>Service example</title>
@@ -404,27 +404,27 @@ def demo_instance() :
               </attribute>
               <attribute>
                 <name>instance_id</name>
-		<type><integer/></type>
+                <type><integer/></type>
                 <description>The sequence number of the last session started</description>
               </attribute>
               <attribute>
-		<name>keepalive</name>
-		<type><integer/></type>
-		<description>
-		  The TCP keepalive option, one of the Z_KEEPALIVE_NONE,
-		  Z_KEEPALIVE_CLIENT, Z_KEEPALIVE_SERVER,
-		  Z_KEEPALIVE_BOTH values.
-		</description>
-	      </attribute>
+                <name>keepalive</name>
+                <type><integer/></type>
+                <description>
+                  The TCP keepalive option, one of the Z_KEEPALIVE_NONE,
+                  Z_KEEPALIVE_CLIENT, Z_KEEPALIVE_SERVER,
+                  Z_KEEPALIVE_BOTH values.
+                </description>
+              </attribute>
             </attributes>
           </metainfo>
         </class>
-	"""
+        """
 
         keepalive = Z_KEEPALIVE_NONE
 
         def __init__(self, name, proxy_class, router=None, chainer=None, snat_policy=None, snat=None, dnat_policy=None, dnat=None, authentication_policy=None, authorization_policy=None, max_instances=0, max_sessions=0, auth_name=None, resolver_policy=None, auth=None, auth_policy=None, keepalive=None):
-		"""
+                """
                 <method maturity="stable">
                   <summary>
                     Constructor to initialize a Service instance.
@@ -640,22 +640,22 @@ def demo_instance() :
                         # current Authentication support
                         self.authentication_policy = getAuthenticationPolicy(authentication_policy)
 
-                        
-		self.auth_name = auth_name or name
-		
-		if resolver_policy:
-			self.resolver_policy = getResolverPolicy(resolver_policy)
-		else:
-			self.resolver_policy = ResolverPolicy(None, DNSResolver())
 
-		self.max_instances = max_instances
-		self.max_sessions = max_sessions
-		self.num_instances = 0
-		self.proxy_group = ProxyGroup(self.max_sessions)
-		self.lock = thread.allocate_lock()
+                self.auth_name = auth_name or name
 
-	def startInstance(self, session):
-		"""
+                if resolver_policy:
+                        self.resolver_policy = getResolverPolicy(resolver_policy)
+                else:
+                        self.resolver_policy = ResolverPolicy(None, DNSResolver())
+
+                self.max_instances = max_instances
+                self.max_sessions = max_sessions
+                self.num_instances = 0
+                self.proxy_group = ProxyGroup(self.max_sessions)
+                self.lock = thread.allocate_lock()
+
+        def startInstance(self, session):
+                """
                 <method internal="yes">
                   <summary>
                     Start a service instance.
@@ -676,66 +676,70 @@ def demo_instance() :
                     </arguments>
                   </metainfo>
                 </method>
-		"""
-		if self.max_instances != 0 and self.num_instances >= self.max_instances:
-			raise LimitException
-		
-		self.lock.acquire()
-		self.num_instances = self.num_instances + 1
-		self.lock.release()
+                """
+                if self.max_instances != 0 and self.num_instances >= self.max_instances:
+                        raise LimitException, "Instance limit reached"
 
-		session.started = 1
-		session.name = self.name
-		instance_id = getInstanceId(self.name)
+                self.lock.acquire()
+                self.num_instances = self.num_instances + 1
+                self.lock.release()
 
-		# NOTE: the instance id calculation is now based in C to create
-		# unique session IDs even after policy reload
-		# instance_id = self.instance_id
-		# self.instance_id = self.instance_id + 1
-		
-		session.setServiceInstance(instance_id)
+                session.started = 1
+                session.name = self.name
+                instance_id = getInstanceId(self.name)
 
-		timestamp = str(time.time())
+                # NOTE: the instance id calculation is now based in C to create
+                # unique session IDs even after policy reload
+                # instance_id = self.instance_id
+                # self.instance_id = self.instance_id + 1
 
-		szigEvent(Z_SZIG_SERVICE_COUNT,
-			    (Z_SZIG_TYPE_PROPS,
-			       (self.name, {
-				 'session_number': instance_id + 1,
-				 'sessions_running': self.num_instances,
-				 'last_started': timestamp,
-				 }
-			 )))
+                session.setServiceInstance(instance_id)
 
-		szigEvent(Z_SZIG_CONNECTION_PROPS,
-		           (Z_SZIG_TYPE_CONNECTION_PROPS,
-		              (self.name, instance_id, 0, 0, {
-			        'started': timestamp,
-			        'session_id': session.session_id,
-		                'proxy_module': self.proxy_class.name,
-		                'proxy_class': self.proxy_class.__name__,
-		                'client_address': str(session.client_address),
-		                'client_local': str(session.client_local),
-		                'client_zone': session.client_zone.getName(),
-		                }
-		         )))
+                timestamp = str(time.time())
 
+                szigEvent(Z_SZIG_SERVICE_COUNT,
+                            (Z_SZIG_TYPE_PROPS,
+                               (self.name, {
+                                 'session_number': instance_id + 1,
+                                 'sessions_running': self.num_instances,
+                                 'last_started': timestamp,
+                                 }
+                         )))
 
-		## LOG ##
-		# This message reports that a new proxy instance is started.
-		##
-		log(session.session_id, CORE_SESSION, 3, "Starting proxy instance; client_fd='%d', client_address='%s', client_zone='%s', client_local='%s', client_protocol='%s'", (session.client_stream.fd, session.client_address, session.client_zone, session.client_local, session.protocol_name))
-		ss = StackedSession(session, self.chainer)
-		session.client_stream.name = session.session_id + '/' + self.proxy_class.name + '/client'
-		
-		proxy = self.proxy_class(ss)
-		if not self.proxy_group.start(proxy):
-			self.proxy_group = ProxyGroup(self.max_sessions)
-			if not self.proxy_group.start(proxy):
-				raise RuntimeError, "Error starting proxy in group"
-		return TRUE
+                szigEvent(Z_SZIG_CONNECTION_PROPS,
+                           (Z_SZIG_TYPE_CONNECTION_PROPS,
+                              (self.name, instance_id, 0, 0, {
+                                'started': timestamp,
+                                'session_id': session.session_id,
+                                'proxy_module': self.proxy_class.name,
+                                'proxy_class': self.proxy_class.__name__,
+                                'client_address': str(session.client_address),
+                                'client_local': str(session.client_local),
+                                'client_zone': session.client_zone.getName(),
+                                }
+                         )))
 
-	def stopInstance(self, session):
-		"""
+                szigEvent(Z_SZIG_CONNECTION_START,
+                            (Z_SZIG_TYPE_PROPS,
+                               (self.name, {}
+                         )))
+
+                ## LOG ##
+                # This message reports that a new proxy instance is started.
+                ##
+                log(session.session_id, CORE_SESSION, 3, "Starting proxy instance; client_fd='%d', client_address='%s', client_zone='%s', client_local='%s', client_protocol='%s'", (session.client_stream.fd, session.client_address, session.client_zone, session.client_local, session.protocol_name))
+                ss = StackedSession(session, self.chainer)
+                session.client_stream.name = session.session_id + '/' + self.proxy_class.name + '/client'
+
+                proxy = self.proxy_class(ss)
+                if not self.proxy_group.start(proxy):
+                        self.proxy_group = ProxyGroup(self.max_sessions)
+                        if not self.proxy_group.start(proxy):
+                                raise RuntimeError, "Error starting proxy in group"
+                return TRUE
+
+        def stopInstance(self, session):
+                """
                 <method internal="yes">
                   <summary>
                     Function called when a session terminates.
@@ -756,31 +760,31 @@ def demo_instance() :
                     </arguments>
                   </metainfo>
                 </method>
-		"""
-		if session.started:
-			self.lock.acquire()
-			self.num_instances = self.num_instances - 1
-			self.lock.release()
+                """
+                if session.started:
+                        self.lock.acquire()
+                        self.num_instances = self.num_instances - 1
+                        self.lock.release()
 
-			szigEvent(Z_SZIG_SERVICE_COUNT,
-				   (Z_SZIG_TYPE_PROPS,
-				    (self.name, {
-				      'sessions_running': self.num_instances,
-				      }
-				 )))
+                        szigEvent(Z_SZIG_SERVICE_COUNT,
+                                   (Z_SZIG_TYPE_PROPS,
+                                    (self.name, {
+                                      'sessions_running': self.num_instances,
+                                      }
+                                 )))
 
                         szigEvent(Z_SZIG_CONNECTION_STOP, (Z_SZIG_TYPE_CONNECTION_PROPS, (self.name, session.instance_id, 0, 0, {})))
 
-		## LOG ##
-		# This message reports that a new proxy instance is stopped.
-		##
-		log(session.session_id, CORE_SESSION, 4, "Ending proxy instance;")
+                ## LOG ##
+                # This message reports that a new proxy instance is stopped.
+                ##
+                log(session.session_id, CORE_SESSION, 4, "Ending proxy instance;")
 
-	def buildKZorpMessage(self):
-		"""<method internal="yes">
+        def buildKZorpMessage(self):
+                """<method internal="yes">
                 </method>
-                """	
-		return [(kznf.kznfnetlink.KZNL_MSG_ADD_SERVICE, kznf.kznfnetlink.create_add_proxyservice_msg(self.name))];
+                """
+                return [(kznf.kznfnetlink.KZNL_MSG_ADD_SERVICE, kznf.kznfnetlink.create_add_proxyservice_msg(self.name))];
 
 
 class PFService(AbstractService):
@@ -788,15 +792,15 @@ class PFService(AbstractService):
         <class maturity="stable">
           <summary>
             Class encapsulating a packet-filter service definition.
-          </summary>          
-          <description>       
+          </summary>
+          <description>
           <note><para>The PFService class transfers packet-filter level
-             services. To transfer connections on the application-level (proxy), 
-             use the <link linkend="python.Service.Service">PFService</link> 
-             class.</para></note>   
+             services. To transfer connections on the application-level (proxy),
+             use the <link linkend="python.Service.Service">PFService</link>
+             class.</para></note>
            <example>
            <title>PFService example</title>
-           <para>The following packet-filtering service transfers TCP connections 
+           <para>The following packet-filtering service transfers TCP connections
            that arrive to port <parameter>5555</parameter>.
            </para>
            <synopsis>PFService(name="intranet_PF5555_internet", router=TransparentRouter(forge_addr=FALSE))</synopsis>
@@ -812,7 +816,7 @@ InetZone('intranet', [],
     outbound_services=[
         "intranet_PF5555_internet"])
 
-def demo() :    
+def demo() :
     PFService(name="intranet_PF5555_internet", router=TransparentRouter(forge_addr=FALSE))
     Dispatcher(transparent=TRUE, bindto=DBIface(protocol=ZD_PROTO_TCP, port=55555, iface="eth0", ip="192.168.0.15"), rule_port="55555", service="intranet_PF5555_internet")</synopsis>
            </example>
@@ -847,10 +851,10 @@ def demo() :
              </attributes>
           </metainfo>
         </class>
-        
+
         """
-	def __init__(self, name, router=None, snat_policy=None, dnat_policy=None):
-		"""
+        def __init__(self, name, router=None, snat_policy=None, dnat_policy=None):
+                """
                 <method maturity="stable">
                   <summary>
                     Constructor to initialize a PFService instance.
@@ -862,25 +866,25 @@ def demo() :
                   </description>
                   </method>
                   """
-		AbstractService.__init__(self, name)
-		self.router = router or default_router or TransparentRouter()
-		self.snat_policy = getNATPolicy(snat_policy)
-		self.dnat_policy = getNATPolicy(dnat_policy)
-		
-	def buildKZorpMessage(self):
-		"""<method internal="yes">
+                AbstractService.__init__(self, name)
+                self.router = router or default_router or TransparentRouter()
+                self.snat_policy = getNATPolicy(snat_policy)
+                self.dnat_policy = getNATPolicy(dnat_policy)
+
+        def buildKZorpMessage(self):
+                """<method internal="yes">
                 </method>
                 """
-		def addNATMappings(messages, nat_type, nat_policy):
+                def addNATMappings(messages, nat_type, nat_policy):
                         if nat_type == NAT_SNAT:
                                 msg_type = kznf.kznfnetlink.KZNL_MSG_ADD_SERVICE_NAT_SRC
                         else:
                                 msg_type = kznf.kznfnetlink.KZNL_MSG_ADD_SERVICE_NAT_DST
-			if nat_policy:
-				nat_mapping = nat_policy.getKZorpMapping()
-				for mapping in nat_mapping:
-					messages.append((msg_type, kznf.kznfnetlink.create_add_service_nat_msg(self.name, mapping)))
-				
+                        if nat_policy:
+                                nat_mapping = nat_policy.getKZorpMapping()
+                                for mapping in nat_mapping:
+                                        messages.append((msg_type, kznf.kznfnetlink.create_add_service_nat_msg(self.name, mapping)))
+
                 if isinstance(self.router, TransparentRouter):
                         flags = kznf.kznfnetlink.KZF_SVC_TRANSPARENT
                         router_target_ip = None
@@ -897,10 +901,10 @@ def demo() :
                 if self.router.forge_addr:
                         flags = flags | kznf.kznfnetlink.KZF_SVC_FORGE_ADDR
 
-		messages = []
-		messages.append((kznf.kznfnetlink.KZNL_MSG_ADD_SERVICE, kznf.kznfnetlink.create_add_pfservice_msg(self.name, flags, router_target_ip, router_target_port)))
+                messages = []
+                messages.append((kznf.kznfnetlink.KZNL_MSG_ADD_SERVICE, kznf.kznfnetlink.create_add_pfservice_msg(self.name, flags, router_target_ip, router_target_port)))
                 if self.snat_policy:
                         addNATMappings(messages, NAT_SNAT, self.snat_policy)
                 if self.dnat_policy:
                         addNATMappings(messages, NAT_DNAT, self.dnat_policy)
-		return messages
+                return messages

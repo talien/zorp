@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id$
- *
  * Author  : Bazsi
  * Auditor : 
  * Last audited version:
@@ -46,6 +44,7 @@ typedef enum
   Z_VT_INT8,            /* variable is an int8 */
   Z_VT_INT16,	        /* variable is an int16 */
   Z_VT_INT32,	        /* variable is an int32 */
+  Z_VT_INT64,	        /* variable is an int64 */
   Z_VT_STRING,	        /* variable is a string, represented as a GString */
   Z_VT_CSTRING,         /* variable is a string, represented as a C character buffer and size */
   Z_VT_IP,              /* variable is an ip address, represented as struct in_addr */

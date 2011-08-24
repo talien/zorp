@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: pysockaddr.c,v 1.41 2004/09/13 12:26:53 bazsi Exp $
- *
  * Author  : bazsi
  * Auditor : kisza
  * Last audited version: 1.4

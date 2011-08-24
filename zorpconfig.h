@@ -132,10 +132,10 @@
 #define STDC_HEADERS 1
 
 /* Zorp package version */
-#define VERSION "3.9.0"
+#define VERSION "3.9.2"
 
 /* Configuration date */
-#define ZORP_CONFIG_DATE "2011/02/16"
+#define ZORP_CONFIG_DATE "2011/08/13"
 
 /* datadir */
 #define ZORP_DATADIR "/home/coroner/zwa/install/zorp-mainline-4.0/share/zorp"
@@ -144,7 +144,7 @@
 #define ZORP_LIBDIR "/home/coroner/zwa/install/zorp-mainline-4.0/lib/zorp"
 
 /* Required license version */
-#define ZORP_LICENSE_VERSION "3.3"
+#define ZORP_LICENSE_VERSION "3.4"
 
 /* pidfiledir */
 #define ZORP_PIDFILEDIR "/home/coroner/zwa/install/zorp-mainline-4.0/var/run/zorp/"
@@ -153,7 +153,7 @@
 #define ZORP_PRODUCT_NAME "Zorp Professional"
 
 /* Zorp source revision number */
-#define ZORP_SOURCE_REVISION "ssh+git://coroner@git.balabit//var/scm/git/zorp/zorp-core--mainline--4.0#master#fcb59dd06e0805ce995b8d94cc8c12096e385365"
+#define ZORP_SOURCE_REVISION "ssh+git://coroner@git.balabit//var/scm/git/zorp/zorp-core--mainline--4.0#master#c52537337d6add922cdb65a04767d8a74b2eef12"
 
 /* localstatedir */
 #define ZORP_STATEDIR "/home/coroner/zwa/install/zorp-mainline-4.0/var"

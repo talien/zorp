@@ -18,8 +18,6 @@
 ## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ##
 ##
-## $Id: AnyPy.py,v 1.12 2003/12/08 17:44:20 bazsi Exp $
-##
 ## Author  : Bazsi
 ## Auditor : kisza
 ## Last audited version: 1.2

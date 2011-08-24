@@ -68,8 +68,11 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libzorpproxy_la_LIBADD =
-am_libzorpproxy_la_OBJECTS = dottransfer.lo transfer2.lo \
-	errorloader.lo
+am__libzorpproxy_la_SOURCES_DIST = dottransfer.c errorloader.c \
+	transfer2.c polling_proxy.c
+@PRO_TRUE@am__objects_1 = polling_proxy.lo
+am_libzorpproxy_la_OBJECTS = dottransfer.lo errorloader.lo \
+	transfer2.lo $(am__objects_1)
 libzorpproxy_la_OBJECTS = $(am_libzorpproxy_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -85,7 +88,7 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libzorpproxy_la_SOURCES)
-DIST_SOURCES = $(libzorpproxy_la_SOURCES)
+DIST_SOURCES = $(am__libzorpproxy_la_SOURCES_DIST)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -134,7 +137,6 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BINARY_BRANCH = @BINARY_BRANCH@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -193,7 +195,7 @@ NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OPENSSL_CFLAGS = @OPENSSL_CFLAGS@
-OPENSSL_CPPFLAGS = @OPENSSL_CPPFLAGS@
+OPENSSL_CLAGS = @OPENSSL_CLAGS@
 OPENSSL_LIBS = @OPENSSL_LIBS@
 OPENSSL_MIN_VERSION = @OPENSSL_MIN_VERSION@
 OSIP_CFLAGS = @OSIP_CFLAGS@
@@ -213,6 +215,8 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PCAP_LIBS = @PCAP_LIBS@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PYTHON = @PYTHON@
 PYTHON_MIN_VERSION = @PYTHON_MIN_VERSION@
 RANLIB = @RANLIB@
@@ -225,6 +229,9 @@ SOCK_LIBS = @SOCK_LIBS@
 SOURCE_REVISION = @SOURCE_REVISION@
 STRIP = @STRIP@
 TESTCASES = @TESTCASES@
+UUID_CFLAGS = @UUID_CFLAGS@
+UUID_CLAGS = @UUID_CLAGS@
+UUID_LIBS = @UUID_LIBS@
 VERSION = @VERSION@
 WBCLIENT_CFLAGS = @WBCLIENT_CFLAGS@
 WBCLIENT_LIBS = @WBCLIENT_LIBS@
@@ -300,8 +307,15 @@ top_srcdir = @top_srcdir@
 zorp_srcdir = @zorp_srcdir@
 SUBDIRS = . zorp
 lib_LTLIBRARIES = libzorpproxy.la
+@PRO_FALSE@libzorpproxy_la_PRO_SOURCES = 
+@PRO_TRUE@libzorpproxy_la_PRO_SOURCES = \
+@PRO_TRUE@	polling_proxy.c
+
 libzorpproxy_la_SOURCES = \
-	dottransfer.c transfer2.c errorloader.c
+	dottransfer.c			\
+	errorloader.c			\
+	transfer2.c                     \
+        $(libzorpproxy_la_PRO_SOURCES)
 
 all: all-recursive
 
@@ -379,6 +393,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dottransfer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/errorloader.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/polling_proxy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/transfer2.Plo@am__quote@
 
 .c.o:

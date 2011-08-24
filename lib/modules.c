@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: modules.c,v 1.13 2004/01/05 10:54:26 bazsi Exp $
- *
  * Author  : Bazsi
  * Auditor :
  * Last audited version:

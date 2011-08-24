@@ -1,5 +1,5 @@
 /* C code produced by gperf version 3.0.3 */
-/* Command-line: /usr/bin/gperf -e ';' -t -N z_logtag_lookup_gperf logtags.gperf  */
+/* Command-line: /usr/bin/gperf -e , -t -N z_logtag_lookup_gperf logtags.gperf  */
 /* Computed positions: -k'1-2,6,$' */
 
 #if !((' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) \

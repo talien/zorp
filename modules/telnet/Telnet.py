@@ -18,8 +18,6 @@
 ## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ##
 ##
-## $Id: Telnet.py,v 1.21 2004/07/28 14:36:07 sasa Exp $
-##
 ## Author  : hidden
 ## Auditor :
 ## Last audited version:

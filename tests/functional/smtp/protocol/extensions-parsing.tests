@@ -1,0 +1,81 @@
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+                self.relay_domains = ('receiverhost.org')
+EndPolicy
+
+StartInfo
+	Tags bug5148
+EndInfo
+
+# Extended HELO testing
+# bug5148
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+P2C: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+C2P: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+P2S: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+.
+
+StartInfo
+	Tags bug6111
+EndInfo
+
+# case insensitivity of mail extensions
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250-server\r\n\
+250-PiPeLiNiNG\r\n\
+250-SIzE 10240000\r\n\
+250-EtRN\r\n\
+250 8bitMIME\r\n"
+P2C: "250-server\r\n\
+250-PiPeLiNiNG\r\n\
+250-SIzE 10240000\r\n\
+250-EtRN\r\n\
+250 8bitMIME\r\n"
+C2P: "MAIL From:<sender@senderhost.org> sIzE=10000 bOdY=7BIT\r\n"
+P2S: "MAIL From:<sender@senderhost.org> SIZE=10000 BODY=7BIT\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+.

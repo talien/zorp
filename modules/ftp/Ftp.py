@@ -18,11 +18,9 @@
 ## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ##
 ##
-## $Id: Ftp.py,v 1.94 2004/07/19 16:56:01 sasa Exp $
-##
 ## Author  : sasa
-## Auditor :  
-## Last audited version: 
+## Auditor :
+## Last audited version:
 ## Notes:
 ##
 ############################################################################
@@ -38,7 +36,7 @@
   <section>
     <title>The FTP protocol</title>
     <para>
-      File Transfer Protocol (FTP) is a protocol to transport files via a reliable TCP 
+      File Transfer Protocol (FTP) is a protocol to transport files via a reliable TCP
     connection between a client and a server.
       FTP uses two reliable TCP connections to transfer files:
       a simple TCP connection (usually referred to as the Control Channel) to transfer control information and a secondary TCP connection (usually
@@ -46,11 +44,11 @@
       uses a command/response based approach, i.e. the client issues a command
       and the server responds with a 3-digit status code and associated
       status information in text format. The Data Channel can be initiated either from
-      the client or the server; the Control Channel is always started from the client. 
+      the client or the server; the Control Channel is always started from the client.
     </para>
     <para>
       The client is required to authenticate itself before other commands
-      can be issued. This is performed using the USER and PASS commands 
+      can be issued. This is performed using the USER and PASS commands
       specifying username and password, respectively.
     </para>
     <section>
@@ -69,7 +67,7 @@
         Certain commands (for example RETR, STOR or LIST) also have a data
         attachment which is transferred to the peer. Data attachments are
         transferred in a separate TCP connection. This connection is
-        established on-demand on a random, unprivileged port when a data transfer 
+        established on-demand on a random, unprivileged port when a data transfer
         command is issued.
       </para>
       <para>
@@ -119,8 +117,8 @@ QUIT
       <section id="ftp_commands">
         <title>Configuring policies for FTP commands and responses</title>
           <para>
-            Changing the default behavior of commands can be done by 
-            using the hash attribute <parameter>request</parameter>, indexed by the command name (e.g.: USER or PWD). There is a similar attribute for responses called <parameter>response</parameter>, indexed by the command name and the response code. 
+            Changing the default behavior of commands can be done by
+            using the hash attribute <parameter>request</parameter>, indexed by the command name (e.g.: USER or PWD). There is a similar attribute for responses called <parameter>response</parameter>, indexed by the command name and the response code.
 	     The possible values of these hashes are shown in the tables below. See <xref linkend="proxy_policies"/> for details. When looking up entries of the <parameter>response</parameter> attribute hash, the lookup precedence described in <xref linkend="proxy_response_codes"/> is used.
 	    <inline type="actiontuple" target="action.ftp.req"/>
 	    <inline type="actiontuple" target="action.ftp.rsp"/>
@@ -146,7 +144,7 @@ class AnonFtp(FtpProxy):
           All responses are rejected by default, even though this is not permitted by
           RFC 959. Therefore, the FtpProxy sends an "500 Error parsing answer"
           to the client. The responses can be either enabled one by one, or all of them at once by using ("*","*") in the policy.
-        </para> 
+        </para>
       </section>
       <section id="ftp_features">
         <title>Configuring policies for FTP features and FTPS support</title>
@@ -326,7 +324,7 @@ class FtpsProxy(FtpProxy):
 	  Terminate the connection.
 	</description>
        </tuple>
-    </actiontuple>  
+    </actiontuple>
     <actiontuple maturity="stable" id="action.ftp.rsp" action_enum="enum.ftp.rsp">
       <description>
 	Action codes for responses in FTP
@@ -929,7 +927,7 @@ class AbstractFtpProxy(Proxy):
                 <read/>
               </runtime>
               <description>
-                In active mode the server connects the client. By default this must be from Command Channel port minus one (FTP_ACTIVE_MINUSONE). Alternatively, connection can also be performed either from port number 20 (FTP_ACTIVE_TWENTY) or from a random port (FTP_ACTIVE_RANDOM).  
+                In active mode the server connects the client. By default this must be from Command Channel port minus one (FTP_ACTIVE_MINUSONE). Alternatively, connection can also be performed either from port number 20 (FTP_ACTIVE_TWENTY) or from a random port (FTP_ACTIVE_RANDOM).
               </description>
             </attribute>
             <attribute>
@@ -1179,7 +1177,7 @@ class AbstractFtpProxy(Proxy):
 			del self.session.ftp_data_stop
 		except AttributeError:
 			pass
-	
+
 	def bounceCheck(self, remote, side, connect):
 		"""<method maturity="stable" internal="yes">
                   <summary>
@@ -1235,7 +1233,6 @@ class AbstractFtpProxy(Proxy):
 			ret = FALSE
 
 		return ret
-		
 
 	def loadAnswers(self):
 		"""<method internal="yes">
@@ -1638,7 +1635,7 @@ class AbstractFtpProxy(Proxy):
 				stack_proxy = self.request_stack["*"]
 			except:
 				stack_proxy =  (FTP_STK_NONE, None)
-		
+
 		if type(stack_proxy) == type(()):
 			while 1:
 				stack_type = stack_proxy[0]
@@ -1651,9 +1648,8 @@ class AbstractFtpProxy(Proxy):
 					return stack_proxy
 		else:
 			return (FTP_STK_NONE, None)
-                
-		return stack_proxy
 
+		return stack_proxy
 
 	def parseInbandAuth(self, command, parameter):
 		"""<method internal="yes">
@@ -1708,7 +1704,7 @@ class AbstractFtpProxy(Proxy):
 			else:
 				# none of the above forms allow @-s except as separators
 				raise ParseInbandAuthError, "too many \"@\"-s in USER parameter"
-			
+
 			if ats in (1, 2):
 				try:
 					self.hostname, port_s = hostname_port.split(':')
@@ -1827,7 +1823,7 @@ class FtpProxyAnonRO(AbstractFtpProxy):
                   <description>
                     <para>
                       It enables a minimal set of commands for a working anonymous Download-Only FTP proxy, and sets permit_unknown_commands to FALSE.
-                    </para> 
+                    </para>
                   </description>
                   <metainfo>
                     <arguments/>
@@ -1919,7 +1915,7 @@ class FtpProxyAnonRW(AbstractFtpProxy):
                       It enables a minimal set of commands for a working Anonymous
                       FTP proxy, and sets permit_unknown_commands to FALSE.
                     </para>
-		   
+
                   </description>
                   <metainfo>
                     <arguments/>
@@ -1969,7 +1965,7 @@ class FtpProxyRW(AbstractFtpProxy):
                   </summary>
                   <description>
                     <para>
-                      It enables a minimal set of commands for a working FTP proxy, and sets <parameter>permit_unknown_commands</parameter> to FALSE.  
+                      It enables a minimal set of commands for a working FTP proxy, and sets <parameter>permit_unknown_commands</parameter> to FALSE.
                     </para>
                   </description>
                   <metainfo>
@@ -2009,4 +2005,3 @@ class FtpProxyMinimal(FtpProxyRO):
         </class>
         """
 	pass
-

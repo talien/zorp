@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: pydispatch.h,v 1.1 2002/09/05 10:19:49 bazsi Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_PYDISPATCH_H_INCLUDED

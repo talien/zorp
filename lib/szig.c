@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: szig.c,v 1.32 2004/07/02 10:03:33 bazsi Exp $
- *
  * Author  : SaSa
  * Auditor :
  * Last audited version:
@@ -2157,6 +2155,9 @@ z_szig_init(const gchar *instance_name)
   memset(event_desc, 0, sizeof(event_desc));
   szig_queue = g_async_queue_new();
   
+  z_szig_register_handler(Z_SZIG_CONNECTION_START, z_szig_agr_count_inc, "zorp.stats.sessions_running", NULL);
+  z_szig_register_handler(Z_SZIG_CONNECTION_STOP, z_szig_agr_count_dec, "zorp.stats.sessions_running", NULL);
+
   z_szig_register_handler(Z_SZIG_THREAD_START, z_szig_agr_count_inc, "zorp.stats.threads_running", NULL);
   z_szig_register_handler(Z_SZIG_THREAD_STOP,  z_szig_agr_count_dec, "zorp.stats.threads_running", NULL);
   z_szig_register_handler(Z_SZIG_THREAD_START, z_szig_agr_count_inc, "zorp.stats.thread_number", NULL);

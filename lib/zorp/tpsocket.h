@@ -3,8 +3,6 @@
  * Copyright (c) 2000, 2001, 2002 BalaBit IT Ltd, Budapest, Hungary
  * All rights reserved.
  *
- * $Id: tpsocket.h,v 1.8 2004/02/18 09:05:29 sasa Exp $
- *
  * Author  : Bazsi
  * Auditor :
  * Last audited version:

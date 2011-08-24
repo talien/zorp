@@ -22,14 +22,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: proxy.h,v 1.82 2004/06/11 12:57:39 bazsi Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_PROXYSTACK_H_INCLUDED
 #define ZORP_PROXYSTACK_H_INCLUDED
 
 #include <zorp/proxy.h>
+#include <zorp/zcp.h>
 
 typedef struct _ZStackedProxy ZStackedProxy;
 
@@ -47,6 +46,7 @@ struct _ZStackedProxy
   guint32 flags;
   ZStream *downstreams[EP_MAX];
   ZStream *control_stream;
+  ZCPContext *control_proto;
   ZProxy *proxy;
   ZProxy *child_proxy;
 };

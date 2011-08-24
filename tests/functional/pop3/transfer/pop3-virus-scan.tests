@@ -1,0 +1,136 @@
+StartGlobalInfo
+	Tags virus bug10796
+EndGlobalInfo
+
+StartPolicy
+        def config(self):
+                Pop3Proxy.config(self)
+		self.response_stack["RETR"] = (POP3_STK_MIME, "/bin/cat >/dev/null; /bin/echo -en '0 SETVERDICT\\\\nn[]Verdict\\\\nnZ_REJECT\\\\nn[]Description\\\\nn Nem nyert\\\\nn\\\\nn'>&3; read alma <&3")
+		self.reject_by_mail = FALSE
+EndPolicy
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK 2 320\r\n"
+P2C: "+OK 2 320\r\n"
+C2P: "RETR 1\r\n"
+P2S: "RETR 1\r\n"
+S2P: "+OK message follows\r\n" \
+"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*\r\n" \
+".\r\n"
+P2C: "-ERR Content rejected ( Nem nyert)\r\n"
+.
+
+StartPolicy
+        def config(self):
+                Pop3Proxy.config(self)
+		self.response_stack["RETR"] = (POP3_STK_MIME, "/bin/cat >/dev/null; /bin/echo -en '0 SETVERDICT\\\\nn[]Verdict\\\\nnZ_REJECT\\\\nn[]Description\\\\nn Nem nyert\\\\nn\\\\nn'>&3; read alma <&3")
+		self.reject_by_mail = TRUE
+EndPolicy
+
+StartInfo
+	Tags qqq
+EndInfo
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK 2 320\r\n"
+P2C: "+OK 2 320\r\n"
+C2P: "RETR 1\r\n"
+P2S: "RETR 1\r\n"
+S2P: "+OK 684 octets\r\n\
+From: Szalay Attila <sasa@balabit.hu>\r\n\
+To: <almafa1@korte.hu>\r\n\
+    <almafa2@korte.hu>\r\n\
+	<almafa3@korte.hu>\r\n\
+Subject: dfgdfgdgfdgdfgfdgdfgfdgdfgfdgdf dfg df dfg fgdf dfdf gdf gfdgfdd gdgfd gdfgdf gdf gdfgdfg dfgdfgdf gfdg dfgdfg fdg dfgdfg dfgdf gdf gdfg dfg dfgdfgfd\r\n\
+  dgfdfs dfgfd gdfgfd gfd gdfgfdg dfgfdg dfg dfgdf gfdg dfgd f gfdg dfg dfg df fdg dfg dfg dfgd fgdf gdff dgdfg df\r\n\
+Content-Type: TEXT/PLAIN\r\n\
+Content-Transfer-Encoding: 7bit\r\n\
+\r\n\
+X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*\r\n\
+.\r\n"
+P2C: "+OK " $NIHIL1 " octets\r\n\
+From: Szalay Attila <sasa@balabit.hu>\r\n\
+To: <almafa1@korte.hu>\r\n\
+    <almafa2@korte.hu>\r\n\
+	<almafa3@korte.hu>\r\n\
+Subject: dfgdfgdgfdgdfgfdgdfgfdgdfgfdgdf dfg df dfg fgdf dfdf gdf gfdgfdd gdgfd gdfgdf gdf gdfgdfg dfgdfgdf gfdg dfgdfg fdg dfgdfg dfgdf gdf gdfg dfg dfgdfgfd\r\n\
+  dgfdfs dfgfd gdfgfd gfd gdfgfdg dfgfdg dfg dfgdf gfdg dfgd f gfdg dfg dfg df fdg dfg dfg dfgd fgdf gdff dgdfg df\r\n\
+Content-Type: TEXT/PLAIN\r\n\
+Content-Transfer-Encoding: 7bit\r\n\
+\r\n\
+" $NIHIL2 "\
+\r\n\
+Content rejected ( Nem nyert)\r\n\
+.\r\n"
+.
+
+StartPolicy
+        def config(self):
+                Pop3Proxy.config(self)
+		self.response_stack["RETR"] = (POP3_STK_MIME, "/bin/cat >/dev/null; /bin/echo -en '0 SETVERDICT\\\\nn[]Verdict\\\\nnZ_ERROR\\\\nn[]Description\\\\nn Nem nyert\\\\nn\\\\nn'>&3; read alma <&3")
+		self.reject_by_mail = TRUE
+EndPolicy
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK 2 320\r\n"
+P2C: "+OK 2 320\r\n"
+C2P: "RETR 1\r\n"
+P2S: "RETR 1\r\n"
+S2P: "+OK message follows\r\n" \
+"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*\r\n" \
+".\r\n"
+P2C: "-ERR Error occurred while transferring data ( Nem nyert)\r\n"
+.
+
+
+StartPolicy
+        def config(self):
+                Pop3Proxy.config(self)
+		self.response_stack["RETR"] = (POP3_STK_POLICY, self.doStack)
+
+	def doStack(self, cmd):
+		if cmd != 'RETR':
+			raise ValueError, "Command should be RETR"
+		return (POP3_STK_DATA, PlugProxy)
+EndPolicy
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK 2 320\r\n"
+P2C: "+OK 2 320\r\n"
+C2P: "RETR 1\r\n"
+P2S: "RETR 1\r\n"
+S2P: "+OK message follows\r\n" \
+"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*\r\n" \
+".\r\n"
+P2C: "+OK message follows\r\n" \
+"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*\r\n" \
+".\r\n"
+.

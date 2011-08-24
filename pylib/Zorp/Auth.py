@@ -420,7 +420,7 @@ class InbandAuthentication(AbstractAuthentication):
               InbandAuthentication class using the <parameter>auth</parameter> parameter.
             </para>
             <warning>
-              <para>Inband authentication is currently supported only for the Http and Ftp proxy classes. </para>
+              <para>Inband authentication is currently supported only for the Http, Ftp, and Socks proxy classes. </para>
             </warning>
           </description>
           <metainfo>

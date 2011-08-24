@@ -1,0 +1,34 @@
+
+StartGlobalInfo
+	Tags bug2137
+EndGlobalInfo
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+		self.require_crlf = FALSE
+EndPolicy
+
+S2P: "220 ESMTP\n"
+P2C: "220 ESMTP\r\n"
+C2P: "EHLO bb\n"
+P2S: "EHLO bb\r\n"
+S2P: "250 ok\r\n"
+P2C: "250 ok\r\n"
+C2P: "QUIT\n"
+P2S: "QUIT\r\n"
+S2P: "221 Bye\r\n"
+P2C: "221 Bye\r\n"
+.
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+		self.require_crlf = TRUE
+EndPolicy
+
+S2P: "220 ESMTP\r\n"
+P2C: "220 ESMTP\r\n"
+C2P: "EHLO bb\n"
+P2C: "421 Service not available, closing transmission channel.\r\n"
+.

@@ -7,8 +7,8 @@
 ## $Id: Pssl.py,v 1.28 2004/09/23 13:26:46 bazsi Exp $
 ##
 ## Author  : Bazsi
-## Auditor : 
-## Last audited version: 
+## Auditor :
+## Last audited version:
 ## Notes:
 ##
 ############################################################################
@@ -34,7 +34,7 @@
         PsslProxy is a module built for inspecting SSL/TLS connections. SSL/TLS connections initiated from the client are terminated on the firewall; and two separate SSL/TLS connections are built: one between the client and the firewall, and one between the firewall and the server. If both connections are accepted by the local security policy (the certificates are valid, and only the allowed encryption algorithms are used), PsslProxy stacks a proxy to inspect the protocol embedded into the secure channel. The PsslProxy functions as a PlugProxy if no protocol proxy is stacked.
       </para>
       <para>
-      Several configuration examples and considerations are discussed in the 
+      Several configuration examples and considerations are discussed in the
 	Technical White Paper and Tutorial <emphasis>Proxying secure channels - the Secure Socket Layer</emphasis>, available at the BalaBit Documentation Page <ulink url="http://www.balabit.com/support/documentation/">http://www.balabit.com/support/documentation/</ulink>.
       </para>
       <section>
@@ -134,7 +134,7 @@
           </listitem>
           <listitem>
             <para>
-              verify_cert -- This function is called to finalize the verification process. 
+              verify_cert -- This function is called to finalize the verification process.
               The function expects two parameters: self, side.
             </para>
           </listitem>
@@ -196,17 +196,17 @@
             </para>
           </listitem>
         </itemizedlist>
-	
+
 	<para>
 	Zorp uses X.509 certificates to provide a convenient and efficient way to
 	manage and distribute certificates and keys used by the various components and proxies of the managed Zorp
 	hosts. It is mainly aimed at providing certificates required for the secure communication between the different
-	parts of the firewall system, e.g. Zorp hosts and ZMS engine (the actual communication is realized by agents).	
+	parts of the firewall system, e.g. Zorp hosts and ZMS engine (the actual communication is realized by agents).
 	</para>
 	<para>
 	Certificates of trusted CAs (and their accompanying CRLs) are used in Zorp to validate the certificates of servers accessed by the clients. The hashes and structures below are used by the various certificate-related attributes of the Zorp Pssl proxy, particularly the ones of <parameter>certificate</parameter> type.
 	</para>
-	
+
       <section>
         <title>X.509 Certificate Names</title>
         <para>
@@ -273,11 +273,11 @@
       <inline type="enum" target="enum.pssl.verify"/>
       <para>
       The <parameter>server_check_subject</parameter> can be used to compare the domain name
-      provided in the <parameter>Subject</parameter> field of the server certificate to 
+      provided in the <parameter>Subject</parameter> field of the server certificate to
       application level information about the server. Currently it can compare the <parameter>Subject</parameter> field to the domain name of the HTTP request in HTTPS
        communication. If the <parameter>server_check_subject</parameter> is set to
         <parameter>TRUE</parameter> and <parameter>server_verify_type</parameter> is
-	 <parameter>SSL_VERIFY_REQUIRED_UNTRUSTED</parameter> or  <parameter>SSL_VERIFY_REQUIRED_TRUSTED</parameter>, the HTTP proxy stacked into SSL 
+	 <parameter>SSL_VERIFY_REQUIRED_UNTRUSTED</parameter> or  <parameter>SSL_VERIFY_REQUIRED_TRUSTED</parameter>, the HTTP proxy stacked into SSL
 	 will deny access to the page and return an error if the <parameter>Subject</parameter> field does not match the domain name of the URL.
       </para>
       </section>
@@ -295,11 +295,11 @@
           the selected protocol. Only one constant can be specified. Zorp
           currently supports the SSL versions 2 and 3 and the TLS v1
           protocols.
-	 <inline type="enum" target="enum.pssl.method"/>	 
-        </para>	
+	 <inline type="enum" target="enum.pssl.method"/>
+        </para>
 	<warning>
 	 <para>
-	 The OpenSSL implementation of the SSL protocol (used by Zorp) has an important feature regarding method selection: it allows automatical fallbacks if one side 
+	 The OpenSSL implementation of the SSL protocol (used by Zorp) has an important feature regarding method selection: it allows automatical fallbacks if one side
 	 does not support the selected method. That means that even if <parameter>PSSL_METHOD_SSLv3</parameter> is specified, the communication might fall back to SSLv2 if one f the communicating parties does not support v3. To explicitly deny a protocol, set the appropriate <parameter>client_disable_proto_*</parameter> or <parameter>server_disable_proto_*</parameter> attribute to <parameter>TRUE</parameter>. In Zorp SSLv2 is disabled by default.
 	 </para>
 	 </warning>
@@ -322,7 +322,7 @@
           Cipher specifications as defined above are sorted by key length,
           the cipher providing the best key length will be the most preferred.
         </para>
-      </section>      
+      </section>
     </section>
     <section>
       <title>Related standards</title>
@@ -522,7 +522,6 @@ import types
 import thread
 import string
 import fcntl
-from sets import ImmutableSet
 
 PSSL_ERROR	= 'pssl.error'
 PSSL_DEBUG	= 'pssl.debug'
@@ -589,7 +588,7 @@ class AbstractPsslProxy(AbstractPlugProxy):
 		</runtime>
                 <description>
                   Allow data transfer in the client->server direction.
-                </description> 
+                </description>
               </attribute>
               <attribute maturity="stable">
                 <name>copy_to_client</name>
@@ -606,7 +605,7 @@ class AbstractPsslProxy(AbstractPlugProxy):
 		</runtime>
                 <description>
                   Allow data transfer in the server->client direction.
-                </description> 
+                </description>
               </attribute>
               <attribute maturity="stable">
 		<name>bandwidth_to_client</name>
@@ -721,7 +720,7 @@ class AbstractPsslProxy(AbstractPlugProxy):
 		</runtime>
                 <description>
                   Accept any kind of verification failure when UNTRUSTED verify_type is set.
-		  E.g.: accept expired, self-signed, etc. certificates. 
+		  E.g.: accept expired, self-signed, etc. certificates.
                 </description>
               </attribute>
               <attribute maturity="stable">
@@ -986,23 +985,6 @@ class AbstractPsslProxy(AbstractPlugProxy):
 		</runtime>
                 <description>
                   Specifies the allowed ciphers on the client side.
-                </description>
-              </attribute>
-              <attribute maturity="stable">
-                <name>client_enable_renegotiation</name>
-                <type>
-                  <boolean/>
-                </type>
-                <default>FALSE</default>
-                <conftime>
-                  <read/>
-                  <write/>
-                </conftime>
-                <runtime>
-                  <read/>
-                </runtime>
-                <description>
-                  If set to TRUE, the client can request the renegotiation of the SSL connection.
                 </description>
               </attribute>
               <attribute maturity="stable">
@@ -1289,24 +1271,7 @@ class AbstractPsslProxy(AbstractPlugProxy):
                   checked against application
                   layer information
                   (e.g.: whether it matches the
-                  hostname in the URL). See also <xref linkend="certificate_verification"/>. 
-                </description>
-              </attribute>
-              <attribute maturity="stable">
-                <name>server_enable_renegotiation</name>
-                <type>
-                  <boolean/>
-                </type>
-                <default>TRUE</default>
-                <conftime>
-                  <read/>
-                  <write/>
-                </conftime>
-                <runtime>
-                  <read/>
-                </runtime>
-                <description>
-                  If set to TRUE, the server can request the renegotiation of the SSL connection.
+                  hostname in the URL). See also <xref linkend="certificate_verification"/>.
                 </description>
               </attribute>
             </attributes>
@@ -1315,7 +1280,7 @@ class AbstractPsslProxy(AbstractPlugProxy):
         """
 	name = "plug"
 
-        compat_attributes = ImmutableSet(( \
+        compat_attributes = frozenset(( \
                 'handshake_timeout', \
                 'permit_invalid_certificates', \
                 'handshake_seq', \
@@ -1383,7 +1348,7 @@ class AbstractPsslProxy(AbstractPlugProxy):
 
 	def __init__(self, session):
 		"""<method internal="yes">
-        	  <summary>
+		  <summary>
                     Constructor to initialize a PsslProxy instance.
                   </summary>
                   <description>
@@ -1775,7 +1740,7 @@ class PsslProxy(AbstractPsslProxy):
                 <description>
                   An instance of a X509KeyManager or derived class to generate keys
                   automatically based on the keys on one of the other peers. Use
-                  X509KeyBridge to generate certificates automatically with a 
+                  X509KeyBridge to generate certificates automatically with a
                   firewall hosted local CA.
                 </description>
               </attribute>
@@ -1816,6 +1781,3 @@ class PsslProxy(AbstractPsslProxy):
         </class>
         """
 	key_generator = None
-
-
-
