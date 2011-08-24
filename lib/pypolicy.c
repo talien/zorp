@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: pypolicy.c,v 1.68 2004/08/16 10:32:58 bazsi Exp $
- *
  * Author  : Bazsi
  * Auditor : kisza
  * Last audited version: 1.20
@@ -357,7 +355,7 @@ z_policy_var_parse_str(PyObject *val, gchar **result)
  * its reference.  This function can be used to quickly parse Python values
  * this way:
  * 
- * z_policy_var_parse_int(z_global_getattr("config.module.boolean_variable"), &c_variable_boolean);
+ * z_policy_var_parse_boolean(z_global_getattr("config.module.boolean_variable"), &c_variable_boolean);
  **/
 gboolean
 z_policy_var_parse_boolean(PyObject *val, gboolean *result)
@@ -366,7 +364,7 @@ z_policy_var_parse_boolean(PyObject *val, gboolean *result)
   gint intval = 0;
   
   success = z_policy_var_parse_int(val, &intval);
-  *result = intval;
+  *result = !!intval;
   return success;
 }
 
@@ -399,6 +397,34 @@ z_policy_var_parse_int(PyObject *val, gint *result)
 }
 
 /**
+ * z_policy_var_parse_uint:
+ * @val: PyObject to parse
+ * @result: result
+ *
+ * This function tries to parse @val as an unsigned integer and puts the parsed value
+ * into @result.  It always consumes @val, thus the caller loses
+ * its reference.  This function can be used to quickly parse Python values
+ * this way:
+ *
+ * z_policy_var_parse_uint(z_global_getattr("config.module.integer_variable"), &vc_variable_integer);
+ **/
+gboolean
+z_policy_var_parse_uint(PyObject *val, guint *result)
+{
+  gboolean res = TRUE;
+
+  if (val)
+    {
+      if (!z_policy_var_parse(val, "I", result))
+        {
+          res = FALSE;
+        }
+      Py_XDECREF(val);
+    }
+  return res;
+}
+
+/**
  * z_policy_var_parse_size:
  * @val: PyObject to parse
  * @result: result
@@ -408,7 +434,7 @@ z_policy_var_parse_int(PyObject *val, gint *result)
  * its reference.  This function can be used to quickly parse Python values
  * this way:
  * 
- * z_policy_var_parse_int(z_global_getattr("config.module.gsize_variable"), &c_variable_gsize);
+ * z_policy_var_parse_size(z_global_getattr("config.module.gsize_variable"), &c_variable_gsize);
  **/
 gboolean
 z_policy_var_parse_size(PyObject *val, gsize *result)
@@ -449,21 +475,49 @@ z_policy_var_parse_size(PyObject *val, gsize *result)
  * @val: PyObject to parse
  * @result: result
  *
- * This function tries to parse @val as an integer and puts the parsed value
+ * This function tries to parse @val as a (signed) 64-bit wide integer and puts the parsed value
  * into @result.  It always consumes @val, thus the caller loses
  * its reference.  This function can be used to quickly parse Python values
  * this way:
  * 
- * z_policy_var_parse_int(z_global_getattr("config.module.int64_variable"), &c_variable_gint64);
+ * z_policy_var_parse_int64(z_global_getattr("config.module.int64_variable"), &c_variable_gint64);
  **/
 gboolean
 z_policy_var_parse_int64(PyObject *val, gint64 *result)
 {
   gboolean res = TRUE;
-  
+
   if (val)
     {
       if (!z_policy_var_parse(val, "L", result))
+        {
+          res = FALSE;
+        }
+      Py_XDECREF(val);
+    }
+  return res;
+}
+
+/**
+ * z_policy_var_parse_uint64:
+ * @val: PyObject to parse
+ * @result: result
+ *
+ * This function tries to parse @val as an unsigned 64-bit wide integer and puts the parsed value
+ * into @result.  It always consumes @val, thus the caller loses
+ * its reference.  This function can be used to quickly parse Python values
+ * this way:
+ *
+ * z_policy_var_parse_uint64(z_global_getattr("config.module.int64_variable"), &c_variable_gint64);
+ **/
+gboolean
+z_policy_var_parse_uint64(PyObject *val, guint64 *result)
+{
+  gboolean res = TRUE;
+
+  if (val)
+    {
+      if (!z_policy_var_parse(val, "K", result))
         {
           res = FALSE;
         }
@@ -498,36 +552,39 @@ z_policy_call_object(PyObject *func, PyObject *args, gchar *session_id)
   if (!res)
     {
       PyObject *m = PyImport_AddModule("sys");
-      
-      if (!PyString_Check(PyErr_Occurred()))
+      PyObject *exc, *value, *tb, *what_str;
+      PyErr_Fetch(&exc, &value, &tb);
+      what_str = PyString_FromString("what");
+
+      if (PyObject_HasAttr(value, what_str))
         {
-          PyErr_Print();
-        }
-      else
-        {
-          PyObject *exc, *value, *tb, *str;
-          
-          PyErr_Fetch(&exc, &value, &tb);
-          PyErr_NormalizeException(&exc, &value, &tb);
-          
-          str = PyObject_Str(value);
-          if (!str)
+          PyObject *what = PyObject_GetAttr(value, what_str);
+          PyObject *detail_str = PyString_FromString("detail");
+          if (PyObject_HasAttr(value, detail_str))
             {
-              /*NOLOG*/
-              z_log(session_id, CORE_ERROR, 3, "%s;", PyString_AsString(exc));
+              PyObject *detail = PyObject_GetAttr(value, detail_str);
+              z_log(session_id, CORE_ERROR, 3, "%s; reason='%s'", PyString_AsString(what), PyString_AsString(detail));
+              Py_XDECREF(detail);
             }
           else
             {
-              /*NOLOG*/
-              z_log(session_id, CORE_ERROR, 3, "%s; reason='%s'", PyString_AsString(exc), PyString_AsString(str));
+              z_log(session_id, CORE_ERROR, 3, "%s;", PyString_AsString(what));
             }
-          
+          Py_XDECREF(what);
+          Py_XDECREF(detail_str);
           Py_XDECREF(exc);
           Py_XDECREF(value);
           Py_XDECREF(tb);
-          Py_XDECREF(str);
         }
-      PyObject_SetAttrString(m, "last_traceback", Py_None); 
+      else
+        {
+          PyErr_Restore(exc, value, tb);
+          PyErr_Print();
+        }
+
+      Py_XDECREF(what_str);
+
+      PyObject_SetAttrString(m, "last_traceback", Py_None);
     }
 
   return res;

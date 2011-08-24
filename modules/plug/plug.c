@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: plug.c,v 1.89 2004/07/22 09:47:36 bazsi Exp $
- *
  * Author: Balazs Scheidler <bazsi@balabit.hu>
  * Auditor:
  * Last audited version:
@@ -73,6 +71,8 @@ plug_packet_stat_event(ZPlugSession *session,
                        gpointer user_data);
 static void
 plug_finish(ZPlugSession *session, gpointer user_data);
+static void
+plug_timeout(ZPlugSession *session, gpointer user_data);
                        
 void
 plug_config_set_defaults(PlugProxy *self)
@@ -85,6 +85,7 @@ plug_config_set_defaults(PlugProxy *self)
   self->session_data.buffer_size = PLUG_DEFAULT_BUFSIZE;
   self->session_data.packet_stats = plug_packet_stat_event;
   self->session_data.finish = plug_finish;
+  self->session_data.timeout_cb = plug_timeout;
   
   if (self->super.parent_proxy)
     self->session_data.shutdown_soft = TRUE;
@@ -200,6 +201,14 @@ plug_finish(ZPlugSession *session G_GNUC_UNUSED, gpointer user_data)
   PlugProxy *self = (PlugProxy *) user_data;
   
   z_proxy_nonblocking_stop(&self->super);
+}
+
+static void
+plug_timeout(ZPlugSession *session G_GNUC_UNUSED, gpointer user_data)
+{
+  PlugProxy *self = (PlugProxy *) user_data;
+
+  z_proxy_log (self, PLUG_SESSION, 3, "Connection timed out; timeout='%d'", self->session_data.timeout);
 }
 
 static gboolean

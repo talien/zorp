@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: pyattach.h,v 1.1 2002/10/08 10:43:41 bazsi Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_PYATTACH_H_INCLUDED

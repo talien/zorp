@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: httpproto.c,v 1.8 2002/07/22 14:31:15 sasa Exp $
- *
  * Author: Balazs Scheidler <bazsi@balabit.hu>
  * Auditor: 
  * Last audited version: 

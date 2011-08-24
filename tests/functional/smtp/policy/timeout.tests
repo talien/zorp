@@ -1,0 +1,30 @@
+StartGlobalInfo
+        Tags timeout D-01046 bug12123
+EndGlobalInfo
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+                self.require_crlf = FALSE
+                self.timeout = 15000
+EndPolicy
+
+S2P: "220 ESMTP\n"
+P2C: "220 ESMTP\r\n"
+C2P: "EHLO bb\n"
+P2S: "EHLO bb\r\n"
+S2P: "250"
+A=time.sleep(16)
+S2P: " ok\r\n"
+P2C: "421 Service not available, closing transmission channel.\r\n"
+P2C: Disconnect
+.
+
+S2P: "220 ESMTP\n"
+P2C: "220 ESMTP\r\n"
+C2P: "EHL"
+A=time.sleep(16)
+C2P: "O bb\n"
+P2C: "421 Service not available, closing transmission channel.\r\n"
+P2S: Disconnect
+.

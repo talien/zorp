@@ -59,7 +59,7 @@ C2P: IAC DO 1
 P2S: IAC DO 1
 S2P: IAC WILL 1
 P2C: IAC WILL 1
-C2P: "alma" IAC SB 1 "a"x8192 IAC SE "korte"
+C2P: "alma" IAC SB 1 "a"x17000 IAC SE "korte"
 P2S: "alma"
 P2C: Disconnect
 .

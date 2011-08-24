@@ -18,8 +18,6 @@
 ## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ##
 ##
-## $Id: Plug.py,v 1.32 2004/06/15 12:28:47 sasa Exp $
-##
 ## Author  : Bazsi
 ## Auditor : kisza
 ## Last audited version: 1.10

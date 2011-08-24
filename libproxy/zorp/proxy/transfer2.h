@@ -64,10 +64,10 @@ struct _ZTransfer2
   ZObject super;
   ZProxy *owner;
   ZPoll *poll;
-  ZTransfer2Buffer buffers[2];
-  ZStream *endpoints[2];
-  ZStreamContext transfer_contexts[2];
-  ZStreamContext proxy_contexts[2];
+  ZTransfer2Buffer buffers[EP_MAX];
+  ZStream *endpoints[EP_MAX];
+  ZStreamContext transfer_contexts[EP_MAX];
+  ZStreamContext proxy_contexts[EP_MAX];
   gsize buffer_size;
   glong timeout, progress_interval;
   guint32 flags;

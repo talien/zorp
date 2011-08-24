@@ -1,0 +1,226 @@
+StartPolicy
+	def config(self):
+		self.request["*"] = POP3_REQ_ACCEPT
+		self.timeout = 2000
+		self.request["STAT"] = (POP3_REQ_POLICY, self.test)
+		self.request["LIST"] = (POP3_REQ_POLICY, self.test2)
+	def test(self,command):
+		print self.username
+		print type(self.username)
+		if self.username == "mrose":
+			self.request_command = "LIST"
+		return POP3_REQ_ACCEPT
+	def test2(self,command):
+		print self.password
+		print type(self.password)
+		if self.password == "secret":
+			self.request_param = "5"
+		return POP3_REQ_ACCEPT			
+EndPolicy
+
+#Timeout check moved to timeout.tests
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "LIST\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP barmi c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP barmi c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK barmi's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK barmi's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER barmi\r\n"
+P2S: "USER barmi\r\n"
+S2P: "+OK barmi is a real hoopy frood\r\n"
+P2C: "+OK barmi is a real hoopy frood\r\n"
+C2P: "PASS secret\r\n"
+P2S: "PASS secret\r\n"
+S2P: "+OK barmi's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK barmi's maildrop has 2 messages (320 octets)\r\n"
+C2P: "LIST 1\r\n"
+P2S: "LIST 5\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER barmi\r\n"
+P2S: "USER barmi\r\n"
+S2P: "+OK barmi is a real hoopy frood\r\n"
+P2C: "+OK barmi is a real hoopy frood\r\n"
+C2P: "PASS secret1\r\n"
+P2S: "PASS secret1\r\n"
+S2P: "+OK barmi's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK barmi's maildrop has 2 messages (320 octets)\r\n"
+C2P: "LIST 1\r\n"
+P2S: "LIST 1\r\n"
+.
+
+StartPolicy
+	def config(self):
+		self.request["*"] = POP3_REQ_ACCEPT
+		self.max_request_line_length = 10
+		self.max_response_line_length = 15
+EndPolicy
+
+S2P: "+OK POP3 server\r\n"
+P2C: "+OK POP3 server\r\n"
+C2P: "USER barmi\r\n"
+P2S: "USER barmi\r\n"
+S2P: "+OK bar is a rea\r\n"
+P2C: "-ERR Error in protocol\r\n"
+P2C: Disconnect
+P2S: Disconnect
+.
+
+
+S2P: "+OK POP3 server\r\n"
+P2C: "+OK POP3 server\r\n"
+C2P: "USER barmi\r\n"
+P2S: "USER barmi\r\n"
+S2P: "+OK bar is a re\r\n"
+P2C: "+OK bar is a re\r\n"
+C2P: "PASS secret\r\n"
+P2S: Disconnect
+P2C: "-ERR Invalid co"
+P2C: Disconnect
+.
+
+StartPolicy
+	def config(self):
+		self.request["*"] = POP3_REQ_ACCEPT
+		self.max_username_length = 5
+		self.max_password_length = 5
+EndPolicy
+
+S2P: "+OK POP3 serv\r\n"
+P2C: "+OK POP3 serv\r\n"
+C2P: "USER barmi\r\n"
+P2S: "USER barmi\r\n"
+S2P: "+OK bar is a \r\n"
+P2C: "+OK bar is a \r\n"
+C2P: "PASS 12345\r\n"
+P2S: "PASS 12345\r\n"
+.
+
+S2P: "+OK POP3 serv\r\n"
+P2C: "+OK POP3 serv\r\n"
+C2P: "USER barmi1\r\n"
+P2C: "-ERR Invalid command.\r\n"
+.
+
+S2P: "+OK POP3 serv\r\n"
+P2C: "+OK POP3 serv\r\n"
+C2P: "USER barmi\r\n"
+P2S: "USER barmi\r\n"
+S2P: "+OK bar is a \r\n"
+P2C: "+OK bar is a \r\n"
+C2P: "PASS 123456\r\n"
+P2C: "-ERR Invalid command.\r\n"
+.
+
+StartPolicy
+	def config(self):
+		self.request["*"] = POP3_REQ_ACCEPT
+		self.request["STAT"] = (POP3_REQ_POLICY, self.semmi, self.test)
+		self.request["LIST"] = (POP3_REQ_POLICY, self.semmi, self.test2)
+
+	def semmi(self, command):
+		return POP3_REQ_ACCEPT
+
+	def test(self,command):
+		if self.response_value == "+OK":
+			self.response_value = "-ERR"
+		return POP3_RSP_ACCEPT
+	def test2(self,command):
+		if self.response_param == "valami":
+			self.response_param = "valami_mas"
+		return POP3_RSP_ACCEPT	
+EndPolicy
+
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK fittyerfutty\r\n"
+P2C: "-ERR fittyerfutty\r\n"
+C2P: "LIST\r\n"
+P2S: "LIST\r\n"
+S2P: "-ERR valami\r\n"
+P2C: "-ERR valami_mas\r\n"
+.
+
+StartPolicy
+	def config(self):
+		self.request["*"] = POP3_REQ_ACCEPT
+		self.request["STAT"] = (POP3_REQ_POLICY, self.test)
+
+	def test(self,command):
+		print self.session_timestamp
+		print type(self.session_timestamp)
+		if self.session_timestamp == "<1896.697170952@dbc.mtview.ca.us>":
+			return POP3_RSP_ACCEPT
+		else:
+			self.response_param = "not allowed"
+			return POP3_RSP_REJECT
+EndPolicy
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+.
+
+S2P: "+OK POP3 server ready <valami_mas>\r\n"
+P2C: "+OK POP3 server ready <valami_mas>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2C: "-ERR not allowed\r\n"
+.
+
+S2P: "+OK POP3 server ready <valami_mas>\r\n"
+P2C: "+OK POP3 server ready <valami_mas>\r\n"
+C2P: "HUBB valami\r\n"
+P2S: Disconnect
+P2C: "-ERR Invalid command.\r\n"
+P2C: Disconnect
+.
+
+StartPolicy
+	def config(self):
+		self.request["GREETING"] = POP3_REQ_ACCEPT
+		self.permit_unknown_command = TRUE
+		self.request["HUBB"] = POP3_REQ_ACCEPT
+EndPolicy
+
+S2P: "+OK POP3 server ready <valami_mas>\r\n"
+P2C: "+OK POP3 server ready <valami_mas>\r\n"
+C2P: "HUBB valami\r\n"
+P2S: "HUBB valami\r\n"
+S2P: "+OK barmi\r\n"
+P2C: "+OK barmi\r\n"
+.

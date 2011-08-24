@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: ftp.c,v 1.281 2004/07/23 09:36:59 sasa Exp $
- *
  * Author:  Andras Kis-Szabo <kisza@sch.bme.hu>
  * Author:  Attila SZALAY <sasa@balabit.hu>
  * Auditor:
@@ -65,7 +63,7 @@ void ftp_data_reset(FtpProxy *self);
 gboolean ftp_data_abort(FtpProxy *self);
 gboolean ftp_stream_write(FtpProxy *self,
                           char     side,
-                          guchar   *line,
+                          const guchar   *line,
                           guint    length);
 void ftp_proxy_free(ZObject *s);
 
@@ -655,8 +653,6 @@ ftp_data_do_ssl_handshake(FtpProxy *self, gint side)
       rc = z_proxy_ssl_perform_handshake(handshake);
       if (!handshake->session)
         rc = FALSE;
-
-      z_proxy_ssl_handshake_unref(handshake);
     }
 
   z_proxy_return(self, rc);
@@ -910,7 +906,7 @@ ftp_data_abort(FtpProxy *self)
     {
       buf[0]=0xf2;
       rc = z_stream_write(self->super.endpoints[EP_SERVER], buf, 1, &len, NULL);
-      ftp_stream_write(self, 'S', "ABOR", 4);
+      ftp_stream_write(self, 'S', (const guchar *)"ABOR", 4);
     }
   z_proxy_return(self, rc == G_IO_STATUS_NORMAL);
 }
@@ -1330,7 +1326,7 @@ ftp_read_line_get (FtpProxy * self, guint side, gint *error_value)
             break;
             
           case FTP_TELNET_IAC:
-            if (strchr (funcs, self->line[i]))
+            if (strchr ((const char *) funcs, self->line[i]))
               {
                 // in funcs
                 state = FTP_TELNET;
@@ -1339,7 +1335,7 @@ ftp_read_line_get (FtpProxy * self, guint side, gint *error_value)
                     i++;
                   }
               }
-            else if (strchr (negot, self->line[i]))
+            else if (strchr ((const char *) negot, self->line[i]))
               {
                 // in negotiation
                 state = FTP_TELNET_IAC_DW;
@@ -1376,7 +1372,7 @@ ftp_read_line_get (FtpProxy * self, guint side, gint *error_value)
 }
 
 gboolean
-ftp_stream_write(FtpProxy *self, char side, guchar *line, guint length)
+ftp_stream_write(FtpProxy *self, char side, const guchar *line, guint length)
 {
   gsize bytes_written = 0;
   gchar buf[2 * length + 3];
@@ -1666,7 +1662,7 @@ ftp_answer_write(FtpProxy *self, gchar *msg)
       else
         bytes_to_write = strlen(msg);
         
-      back = ftp_stream_write(self, 'C', msg, bytes_to_write);
+      back = ftp_stream_write(self, 'C', (const guchar *) msg, bytes_to_write);
     }
   self->drop_answer = FALSE;
   z_proxy_return(self, back);
@@ -1876,7 +1872,7 @@ ftp_command_write(FtpProxy *self, char *msg)
   gboolean back;
   
   z_proxy_enter(self);
-  back = ftp_stream_write(self, 'S', msg, bytes_to_write);
+  back = ftp_stream_write(self, 'S', (const guchar *) msg, bytes_to_write);
   z_proxy_return(self, back);
 }
 

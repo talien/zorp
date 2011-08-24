@@ -60,16 +60,21 @@ test_sockaddr(void)
 gint counter = 0;
 
 ZPolicyObj *
-test_custom_get_value(gpointer user_data, const gchar *name, gpointer value)
+test_custom_get_value(gpointer user_data, const gchar *name , gpointer value)
 {
   g_assert(user_data == (gpointer) 0xdeadbabe);
   g_assert(value == (gpointer) 0xaaffaaff);
+  (void) name;
   return PyInt_FromLong(counter++);
 }
 
 gint
 test_custom_set_value(gpointer user_data, const gchar *name, gpointer value, ZPolicyObj *new_value)
 {
+  (void) user_data;
+  (void) name;
+  (void) value;
+  (void) new_value;
   counter = 0;
   return 0;
 }

@@ -1,0 +1,20 @@
+
+StartGlobalInfo
+	Tags bug5723
+EndGlobalInfo
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+                self.unconnected_response_code = 421
+
+	def connectServer(self):
+		return None
+EndPolicy
+
+P2C: "421 Server not available\r\n"
+C2P: "EHLO bb\r\n"
+P2C: "503 Server not available\r\n"
+C2P: "QUIT\r\n"
+P2C: "221 Bye\r\n"
+.

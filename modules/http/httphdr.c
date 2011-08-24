@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: httphdr.c,v 1.19 2004/07/26 11:45:57 bazsi Exp $
- * 
  * Author: Balazs Scheidler <bazsi@balabit.hu>
  * Auditor: 
  * Last audited version: 
@@ -510,7 +508,7 @@ http_filter_headers(HttpProxy *self, guint side, HttpHeaderFilter filter)
                 {
                   z_proxy_log(self, HTTP_VIOLATION, 3,
                               "Header failed strict checking, value too long; "
-                              "header='%s', value='%s', length='%zd', max_length='%zd'",
+                              "header='%s', value='%s', length='%" G_GSIZE_FORMAT "', max_length='%" G_GSIZE_FORMAT "'",
                               h->name->str, h->value->str, h->value->len, info->max_len);
                   action = self->strict_header_checking_action;
                   goto exit_check;

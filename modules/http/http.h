@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: http.h,v 1.77 2004/06/12 19:54:37 bazsi Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_MODULES_HTTP_H_INCLUDED

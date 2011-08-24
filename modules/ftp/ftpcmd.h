@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: ftpcmd.h,v 1.15 2004/02/03 13:59:37 sasa Exp $
- *
  * Author:  Andras Kis-Szabo <kisza@sch.bme.hu>
  * Author:  Attila SZALAY <sasa@balabit.hu>
  * Auditor:

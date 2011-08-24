@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: main.c,v 1.27 2004/07/01 16:55:25 bazsi Exp $
- *
  * Author  : bazsi
  * Auditor : 
  * Last version : 
@@ -66,6 +64,7 @@
 #define ZORP_INSTANCES_CONF  "instances.conf"
 #define ZORP_ZORPCTL_CONF    "zorpctl.conf"
 #endif
+
 
 #define UNUSED __attribute__((unused))
 
@@ -959,17 +958,31 @@ z_process_kzorp_entries(ZInstance *ins, gpointer user_data G_GNUC_UNUSED)
 
   if ((file = fopen("/proc/net/nf_kzorp", "r")) == NULL)
     {
-      z_error(0, "Unable to open /proc/net/nf_kzorp. Kernel is too old or kzorp is not loaded.\n");
+      if (errno == ENOENT)
+        {
+          /* No such file exists: kzorp is most probably not available, so do
+           * not consider this an error. */
+          res = 1;
+        }
+      else
+        {
+          z_error(0, "Unable to open /proc/net/nf_kzorp. Kernel is too old or kzorp is not loaded.\n");
+        }
       goto error;
     }
 
-  while (!feof(file))
+  while (1)
     {
-      if (!fgets(buffer, 4096, file))
+      if (!fgets(buffer, 4096, file) )
         {
-          z_error(0, "Error while reading from /proc/net/nf_kzorp.\n");
-          fclose(file);
-          goto error;
+          if (!feof(file))
+            {
+              z_error(0, "Error while reading from /proc/net/nf_kzorp.\n");
+              fclose(file);
+              goto error;
+            }
+          else
+            break;
         }
 
       p = buffer;
@@ -1038,7 +1051,6 @@ z_process_kzorp_entries(ZInstance *ins, gpointer user_data G_GNUC_UNUSED)
 error:
   return res;
 }
-
 
 static int 
 z_get_counter(ZInstance *inst, const char *var_name)
@@ -1435,21 +1447,6 @@ exit:
   return 1;
 }
 
-
-static void
-z_print_empty_result(char *status, pid_t pid, char *qry_strings[])
-{
-  int i;
-  
-  printf("\"%s\";", status);
-  if (pid > 0)
-    printf("%d", pid);
-  for (i = 0; qry_strings[i]; i++)
-    {
-      putc(';', stdout);
-    }
-  putc('\n', stdout);
-}
 
 
 static void
@@ -2149,6 +2146,7 @@ z_cmd_szig(int argc, char *argv[])
 
   if (!res)
     res = z_process_args("szig", argc, argv, z_process_kzorp_entries, 0, 0);
+
   return res;
 }
 

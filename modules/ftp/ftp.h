@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: ftp.h,v 1.75 2004/07/22 09:04:39 bazsi Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_MODULES_FTP_H_INCLUDED

@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: dispatch.c,v 1.40 2004/05/22 16:02:57 bazsi Exp $
- *
  * Author  : SaSa
  * Auditor :
  * Last audited version:
@@ -980,6 +978,7 @@ z_dispatch_bind_listener(ZDispatchChain *chain, ZDispatchBind **bound_key)
             {
               chain->listeners = g_list_remove(chain->listeners, entry);
               z_listener_entry_unref(entry);
+              z_listener_unref(listener);
               rc = FALSE;
               break;
             }
@@ -989,8 +988,8 @@ z_dispatch_bind_listener(ZDispatchChain *chain, ZDispatchBind **bound_key)
               chain->bound_addr = NULL;
               z_sockaddr_unref(listener->local);
               chain->listeners = g_list_remove(chain->listeners, entry);
+              z_listener_entry_unref(entry);
               z_listener_unref(listener);
-
               rc = FALSE;
               break;
 

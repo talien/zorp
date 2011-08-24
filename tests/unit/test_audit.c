@@ -213,7 +213,8 @@ init_audit()
 
   if (getuid() == 0)
     {
-      system("modprobe dummy; ifconfig dummy0 up");
+      if (system("modprobe dummy; ifconfig dummy0 up"))
+        return 1;
       audit_params.ids_interface = "dummy0";
       audit_params.ids_src_mac = "f2:ba:23:27:c9:26";
       audit_params.ids_dst_mac = "f2:ba:23:27:c9:27";
@@ -233,7 +234,7 @@ init_audit()
 int 
 main(void)
 {
-  gint i;
+  size_t i;
   
   for (i = 0; i < sizeof(recvd); i++)
     recvd[i] = i % 26 + 'A';

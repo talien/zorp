@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id$
- *
  * Author  : Bazsi
  * Auditor : 
  * Last audited version:
@@ -110,6 +108,7 @@ struct _ZPolicyDictEntry
     guint8 int8_value;
     guint16 int16_value;
     guint32 int32_value;
+    guint64 int64_value;
     gsize cstring_buflen;
     ZPolicyObj *object_ref;
     struct
@@ -223,6 +222,10 @@ z_policy_dict_int_parse_args(ZPolicyDict *self G_GNUC_UNUSED, ZPolicyDictEntry *
           e->value = &e->ts.int32_value;
           e->ts.int32_value = va_arg(args, guint32);
           break;
+        case Z_VT_INT64:
+          e->value = &e->ts.int64_value;
+          e->ts.int64_value = va_arg(args, guint64);
+          break;
         default:
           g_assert_not_reached();
           break;
@@ -271,6 +274,11 @@ z_policy_dict_int_get_value(ZPolicyDict *self G_GNUC_UNUSED, ZPolicyDictEntry  *
       value = *(guint32 *) e->value;
       if (e->flags & Z_VF_INT_NET)
         value = ntohl(value);
+      break;
+    case Z_VT_INT64:
+      value = *(guint64 *) e->value;
+      if (e->flags & Z_VF_INT_NET)
+        value = GUINT64_FROM_BE(value);
       break;
     default:
       g_assert_not_reached();
@@ -321,6 +329,11 @@ z_policy_dict_int_set_value(ZPolicyDict *self G_GNUC_UNUSED, ZPolicyDictEntry *e
       if (e->flags & Z_VF_INT_NET)
         value = htonl(value);
       *((guint32 *) e->value) = value;
+      break;
+    case Z_VT_INT64:
+      if (e->flags & Z_VF_INT_NET)
+        value = GUINT64_TO_BE(value);
+      *((guint64 *) e->value) = value;
       break;
     default:
       g_assert_not_reached();
@@ -1799,6 +1812,7 @@ ZPolicyDictType z_policy_dict_types[] =
   [Z_VT_INT8]    = { z_policy_dict_int_parse_args, z_policy_dict_int_get_value, z_policy_dict_int_set_value, NULL },
   [Z_VT_INT16]   = { z_policy_dict_int_parse_args, z_policy_dict_int_get_value, z_policy_dict_int_set_value, NULL },
   [Z_VT_INT32]   = { z_policy_dict_int_parse_args, z_policy_dict_int_get_value, z_policy_dict_int_set_value, NULL },
+  [Z_VT_INT64]   = { z_policy_dict_int_parse_args, z_policy_dict_int_get_value, z_policy_dict_int_set_value, NULL },
   [Z_VT_STRING]  = { z_policy_dict_string_parse_args, z_policy_dict_string_get_value, z_policy_dict_string_set_value, z_policy_dict_string_free },
   [Z_VT_CSTRING] = { z_policy_dict_string_parse_args, z_policy_dict_string_get_value, z_policy_dict_string_set_value, z_policy_dict_string_free },
   [Z_VT_METHOD]  = { z_policy_dict_method_parse_args, z_policy_dict_method_get_value, NULL, z_policy_dict_method_free },

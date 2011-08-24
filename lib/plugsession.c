@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: plugsession.c,v 1.18 2004/07/01 16:55:25 bazsi Exp $
- *
  * Author  : bazsi
  * Auditor : 
  * Last audited version: 1.1
@@ -137,7 +135,10 @@ z_plug_read_input(ZPlugSession *self, ZStream *input, ZPlugIOBuffer *buf)
                                                 self->buffers[EP_SERVER].packet_bytes,
                                                 self->buffers[EP_SERVER].packet_count,
                                                 self->user_data))
-            z_plug_update_eof_mask(self, EOF_ALL);
+            {
+              z_plug_update_eof_mask(self, EOF_ALL);
+              rc = G_IO_STATUS_EOF;
+            }
         }
     }
   z_return(rc);
@@ -489,6 +490,8 @@ z_plug_timeout(gpointer user_data)
   ZPlugSession *self = (ZPlugSession *) user_data;
   
   z_enter();
+  if (self->session_data->timeout_cb)
+    self->session_data->timeout_cb (self, self->user_data);
   z_plug_update_eof_mask(self, EOF_ALL);
   z_return(FALSE);
 }

@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: zpython.h,v 1.26 2004/07/02 10:03:34 bazsi Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_ZPYTHON_H_INCLUDED

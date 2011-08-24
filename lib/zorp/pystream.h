@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: pystream.h,v 1.5 2002/08/22 05:56:35 sasa Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_PYSTREAM_H_INCLUDED

@@ -1,0 +1,61 @@
+StartGlobalInfo
+	Tags bug7935
+EndGlobalInfo
+
+StartPolicy
+	class MyMatcher(AbstractMatcher):
+		def checkMatch(self, str):
+			return TRUE
+
+        def config(self):
+                SmtpProxy.config(self)
+		self.error_soft = TRUE
+		self.relay_check = FALSE
+		self.sender_matcher = self.MyMatcher()
+EndPolicy
+
+#Check the answers for commands.
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<450@sender.host>\r\n"
+P2C: "450 Cannot verify sender at this time, come back later.\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "421 Bye\r\n"
+P2C: "421 Bye\r\n"
+.
+
+StartPolicy
+	class MyMatcher(AbstractMatcher):
+		def checkMatch(self, str):
+			return TRUE
+
+        def config(self):
+                SmtpProxy.config(self)
+		self.error_soft = TRUE
+		self.relay_check = FALSE
+		self.recipient_matcher = self.MyMatcher()
+EndPolicy
+
+#Check the answers for commands.
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<450@sender.host>\r\n"
+P2S: "MAIL From:<450@sender.host>\r\n"
+S2P: "250 Ok.\r\n"
+P2C: "250 Ok.\r\n"
+C2P: "RCPT To:<450@recipient.host>\r\n"
+P2C: "450 Cannot verify recipient at this time, come back later.\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "421 Bye\r\n"
+P2C: "421 Bye\r\n"
+.

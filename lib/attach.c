@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: attach.c,v 1.29 2004/01/26 16:55:34 bazsi Exp $
- *
  * Author  : Bazsi
  * Auditor :
  * Last audited version:

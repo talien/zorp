@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: pyproxy.h,v 1.8 2003/07/16 07:45:40 bazsi Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_PYPROXY_H_INCLUDED

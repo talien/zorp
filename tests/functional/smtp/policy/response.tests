@@ -1,0 +1,62 @@
+StartGlobalInfo
+	Tags bug6711
+EndGlobalInfo
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+		self.relay_domains = ('receiverhost.org',)
+		self.response["MAIL", "333"] = (SMTP_RSP_ACCEPT)
+EndPolicy
+
+#Check the answers for commands.
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<450@sender.host>\r\n"
+P2S: "MAIL From:<450@sender.host>\r\n"
+S2P: "450 Nem Ok.\r\n"
+P2C: "450 Nem Ok.\r\n"
+.
+
+#Check the answers for commands.
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<450@sender.host>\r\n"
+P2S: "MAIL From:<450@sender.host>\r\n"
+S2P: "250 Nem Ok.\r\n"
+P2C: "250 Nem Ok.\r\n"
+.
+
+#Check the answers for commands.
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<450@sender.host>\r\n"
+P2S: "MAIL From:<450@sender.host>\r\n"
+S2P: "333 Nem Ok.\r\n"
+P2C: "333 Nem Ok.\r\n"
+.
+
+StartInfo
+	Tags bug7222
+EndInfo
+
+#Check the answers for commands.
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "501 gond\r\n"
+P2C: "501 gond\r\n"
+.

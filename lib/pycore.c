@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: pycore.c,v 1.10 2004/07/22 07:51:10 bazsi Exp $
- *
  * Author  : Bazsi
  * Auditor : kisza
  * Last audited version: 1.22
@@ -346,7 +344,9 @@ z_py_szig_event(PyObject *self G_GNUC_UNUSED, PyObject *args)
 /**
  *  **/
 static PyObject *
-z_policy_notify_event(PyObject *self G_GNUC_UNUSED, PyObject *args)
+z_policy_notify_event(PyObject *self G_GNUC_UNUSED,
+                      PyObject *args G_GNUC_UNUSED
+                     )
 {
   Py_XINCREF(Py_None);
   return Py_None;

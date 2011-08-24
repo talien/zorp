@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * Copyright (c) 2009 BalaBit IT Ltd, Budapest, Hungary
+ * Copyright (c) 2009, 2010 BalaBit IT Ltd, Budapest, Hungary
  * All rights reserved.
  *
  * Author: Laszlo Attila Toth
@@ -74,12 +74,24 @@ typedef struct _ZProxySsl {
   gboolean permit_invalid_certificates;
   gboolean server_check_subject;
   GString  *local_privkey_passphrase[EP_MAX];
+
+  /* List of handshake objects. Unfortunately OpenSSL callbacks cannot be
+   * handed a destroy_notify callback so we generally cannot use
+   * refcounting to manage the lifetime of handshake objects.
+   *
+   * Instead, we do store all handshake objects in this linked list in the
+   * associated proxy and make sure we delete these when we can guarantee that
+   * the handshake is no longer needed (referenced).
+   *
+   * Right now this means we delete handshake objects only from the proxy
+   * destroy method.
+   */
+  GList *handshakes;
 } ZProxySsl;
 
 struct _ZProxySSLHandshake;
 typedef void (*ZProxySSLCallbackFunc)(struct _ZProxySSLHandshake *hs, gpointer user_data);
 typedef struct _ZProxySSLHandshake {
-  ZRefCount ref_cnt;
   ZSSLSession *session;
   ZStream *stream;
   ZProxy *proxy;
@@ -96,11 +108,11 @@ typedef struct _ZProxySSLHandshake {
   ZProxySSLCallbackFunc completion_cb;
   gpointer completion_user_data;
   GDestroyNotify completion_user_data_notify;
+
+  SSL_CTX *ssl_context;
 } ZProxySSLHandshake;
 
 ZProxySSLHandshake *z_proxy_ssl_handshake_new(ZProxy *proxy, ZStream *stream, gint side);
-ZProxySSLHandshake *z_proxy_ssl_handshake_ref(ZProxySSLHandshake *self);
-gboolean z_proxy_ssl_handshake_unref(ZProxySSLHandshake *self);
 
 void z_proxy_ssl_config_defaults(ZProxy *self);
 void z_proxy_ssl_register_vars(ZProxy *self);

@@ -1,0 +1,48 @@
+StartGlobalInfo
+        Tags bug13339
+EndGlobalInfo
+
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+		self.relay_domains = ('receiverhost.org',)
+EndPolicy
+
+# Some valid scenarios/MAIL command
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<eric@receiverhost.org>\r\n"
+P2S: "RCPT To:<eric@receiverhost.org>\r\n"
+S2P: "552 Recipient storage full, try again in another transaction\r\n"
+P2C: "552 Recipient storage full, try again in another transaction\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+#<header of message>
+C2P: "Subject: test\r\nFrom: Sender User <seus at senderhost.org>\r\nDate: 15-Sept-03 12:15:44\r\nTo: Receiver User <reus at receiverhost.org>\r\n\r\n..\r\n..\r\n..\r\n..\r\n.\r\n"
+P2S: "Subject: test\r\nFrom: Sender User <seus at senderhost.org>\r\nDate: 15-Sept-03 12:15:44\r\nTo: Receiver User <reus at receiverhost.org>\r\n\r\n..\r\n..\r\n..\r\n..\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+

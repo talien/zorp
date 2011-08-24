@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: http.c,v 1.175 2004/07/26 11:45:57 bazsi Exp $
- * 
  * Author: Balazs Scheidler <bazsi@balabit.hu>
  * Auditor: 
  * Last audited version: 
@@ -1305,6 +1303,9 @@ http_fetch_request(HttpProxy *self)
           
           if (!self->request_data)
             self->request_data = z_blob_new(NULL, 0);
+
+          if (!self->request_data)
+            z_proxy_return(self, FALSE);
             
           g_snprintf(session_id, sizeof(session_id), "%s/post", self->super.session_id);
           blob_stream = z_stream_blob_new(self->request_data, session_id);

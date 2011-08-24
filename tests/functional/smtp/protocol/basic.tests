@@ -1,0 +1,786 @@
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+		self.relay_domains = ('receiverhost.org',)
+EndPolicy
+
+# Some valid scenarios/MAIL command
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<eric@receiverhost.org>\r\n"
+P2S: "RCPT To:<eric@receiverhost.org>\r\n"
+S2P: "552 Recipient storage full, try again in another transaction\r\n"
+P2C: "552 Recipient storage full, try again in another transaction\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+#<header of message>
+C2P: "Subject: test\r\nFrom: Sender User <seus at senderhost.org>\r\nDate: 15-Sept-03 12:15:44\r\nTo: Receiver User <reus at receiverhost.org>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "Subject: test\r\nFrom: Sender User <seus at senderhost.org>\r\nDate: 15-Sept-03 12:15:44\r\nTo: Receiver User <reus at receiverhost.org>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Forwarding with positive preliminary and permanent negative completion reply
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<test@receiverhost.org>\r\n"
+P2S: "RCPT To:<test@receiverhost.org>\r\n"
+S2P: "251 User not local, will forwarding to <test@domain1.org>\r\n"
+P2C: "251 User not local, will forwarding to <test@domain1.org>\r\n"
+C2P: "RCPT To:<tester@receiverhost.org>\r\n"
+P2S: "RCPT To:<tester@receiverhost.org>\r\n"
+S2P: "551 User not local, please try <user@domain2.org>\r\n"
+P2C: "551 User not local, please try <user@domain2.org>\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Mailbox not found
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "550 No such user here\r\n"
+P2C: "550 No such user here\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# SEND, SOML, SAML commands
+#
+#S2P: "220 receiverhost.org SMTP  ready\r\n"
+#P2C: "220 receiverhost.org SMTP  ready\r\n"
+#C2P: "HELO senderhost.org\r\n"
+#P2S: "HELO senderhost.org\r\n"
+#S2P: "250 receiverhost.org\r\n"
+#P2C: "250 receiverhost.org\r\n"
+#C2P: "SEND From:<sender@senderhost.org>\r\n"
+#P2S: "SEND From:<sender@senderhost.org>\r\n"
+#S2P: "250 OK\r\n"
+#P2C: "250 OK\r\n"
+#C2P: "RCPT To:<user@receiverhost.org>\r\n"
+#P2S: "RCPT To:<user@receiverhost.org>\r\n"
+#S2P: "450 User not active now\r\n"
+#P2C: "450 User not active now\r\n"
+#C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+#P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+#S2P: "250 OK\r\n"
+#P2C: "250 OK\r\n"
+#C2P: "DATA\r\n"
+#P2S: "DATA\r\n"
+#S2P: "354 Start mail input\r\n"
+#P2C: "354 Start mail input\r\n"
+#C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+#P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+#S2P: "250 Ok\r\n"
+#P2C: "250 Ok\r\n"
+#C2P: "QUIT\r\n"
+#P2S: "QUIT\r\n"
+#S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+#P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+#C2P: Disconnect
+#P2S: Disconnect
+#.
+#
+#S2P: "220 receiverhost.org SMTP  ready\r\n"
+#P2C: "220 receiverhost.org SMTP  ready\r\n"
+#C2P: "HELO senderhost.org\r\n"
+#P2S: "HELO senderhost.org\r\n"
+#S2P: "250 receiverhost.org\r\n"
+#P2C: "250 receiverhost.org\r\n"
+#C2P: "SOML From:<sender@senderhost.org>\r\n"
+#P2S: "SOML From:<sender@senderhost.org>\r\n"
+#S2P: "250 OK\r\n"
+#P2C: "250 OK\r\n"
+#C2P: "RCPT To:<user@receiverhost.org>\r\n"
+#P2S: "RCPT To:<user@receiverhost.org>\r\n"
+#S2P: "250 User not active now, so will do mail\r\n"
+#P2C: "250 User not active now, so will do mail\r\n"
+#C2P: "DATA\r\n"
+#P2S: "DATA\r\n"
+#S2P: "354 Start mail input\r\n"
+#P2C: "354 Start mail input\r\n"
+#C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+#P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+#S2P: "250 Ok\r\n"
+#P2C: "250 Ok\r\n"
+#C2P: "QUIT\r\n"
+#P2S: "QUIT\r\n"
+#S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+#P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+#C2P: Disconnect
+#P2S: Disconnect
+#.
+#
+#S2P: "220 receiverhost.org SMTP  ready\r\n"
+#P2C: "220 receiverhost.org SMTP  ready\r\n"
+#C2P: "HELO senderhost.org\r\n"
+#P2S: "HELO senderhost.org\r\n"
+#S2P: "250 receiverhost.org\r\n"
+#P2C: "250 receiverhost.org\r\n"
+#C2P: "SAML From:<sender@senderhost.org>\r\n"
+#P2S: "SAML From:<sender@senderhost.org>\r\n"
+#S2P: "250 OK\r\n"
+#P2C: "250 OK\r\n"
+#C2P: "RCPT To:<user@receiverhost.org>\r\n"
+#P2S: "RCPT To:<user@receiverhost.org>\r\n"
+#S2P: "250 OK\r\n"
+#P2C: "250 OK\r\n"
+#C2P: "DATA\r\n"
+#P2S: "DATA\r\n"
+#S2P: "354 Start mail input\r\n"
+#P2C: "354 Start mail input\r\n"
+#C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+#P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+#S2P: "250 Ok\r\n"
+#P2C: "250 Ok\r\n"
+#C2P: "QUIT\r\n"
+#P2S: "QUIT\r\n"
+#S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+#P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+#C2P: Disconnect
+#P2S: Disconnect
+#.
+
+# RSET command / Aborted scenario
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<sender@senderhost.org>\r\n"
+P2S: "MAIL From:<sender@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "550 No such user here\r\n"
+P2C: "550 No such user here\r\n"
+C2P: "RSET\r\n"
+P2S: "RSET\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 receiverhost.org Service closing transmission channel\r\n"
+P2C: "221 receiverhost.org Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+StartPolicy
+	def config(self):
+		SmtpProxy.config(self)
+		self.request["VRFY"] = (SMTP_REQ_ACCEPT,)
+		self.response["VRFY", "250"] = SMTP_REQ_ACCEPT
+		self.response["VRFY", "251"] = SMTP_REQ_ACCEPT
+		self.response["VRFY", "421"] = SMTP_REQ_ACCEPT
+		self.response["VRFY", "500"] = SMTP_REQ_ACCEPT
+		self.response["VRFY", "501"] = SMTP_REQ_ACCEPT
+		self.response["VRFY", "502"] = SMTP_REQ_ACCEPT
+		self.response["VRFY", "504"] = SMTP_REQ_ACCEPT
+		self.response["VRFY", "550"] = SMTP_REQ_ACCEPT
+		self.response["VRFY", "551"] = SMTP_REQ_ACCEPT
+		self.response["VRFY", "553"] = SMTP_REQ_ACCEPT
+		self.relay_domains = ('receiverhost.org')
+EndPolicy
+
+# VRFY and EXPN commands
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "VRFY User\r\n"
+P2S: "VRFY User\r\n"
+S2P: "250 Receiver User <user@receiverhost.org>\r\n"
+P2C: "250 Receiver User <user@receiverhost.org>\r\n"
+C2P: "VRFY Tester\r\n"
+P2S: "VRFY Tester\r\n" 
+S2P: "250 <tester@receiverhost.org>\r\n"
+P2C: "250 <tester@receiverhost.org>\r\n"
+C2P: "VRFY Smith\r\n"
+P2S: "VRFY Smith\r\n"
+S2P: "251 User not local, will forward to <smith@domain1.org>\r\n"
+P2C: "251 User not local, will forward to <smith@domain1.org>\r\n"
+C2P: "VRFY Jones\r\n"
+P2S: "VRFY Jones\r\n"
+S2P: "551 User not local, please try <jones@domain2.org>\r\n"
+P2C: "551 User not local, please try <jones@domain2.org>\r\n"
+C2P: "VRFY Hommer\r\n"
+P2S: "VRFY Hommer\r\n"
+S2P: "550 String does not mach anything\r\n"
+P2C: "550 String does not mach anything\r\n"
+C2P: "VRFY Xzyqswer\r\n"
+P2S: "VRFY Xzyqswer\r\n"
+S2P: "553 User ambiguous\r\n"
+P2C: "553 User ambiguous\r\n"
+C2P: "VRFY List-Name\r\n"
+P2S: "VRFY List-Name\r\n"
+S2P: "550 This is not an username\r\n"
+P2C: "550 This is not an username\r\n"
+.
+
+StartPolicy
+	def config(self):
+		SmtpProxy.config(self)
+		self.request["EXPN"] = (SMTP_REQ_ACCEPT,)
+		self.response["EXPN", "250"] = SMTP_REQ_ACCEPT
+		self.response["EXPN", "421"] = SMTP_REQ_ACCEPT
+		self.response["EXPN", "500"] = SMTP_REQ_ACCEPT
+		self.response["EXPN", "501"] = SMTP_REQ_ACCEPT
+		self.response["EXPN", "502"] = SMTP_REQ_ACCEPT
+		self.response["EXPN", "504"] = SMTP_REQ_ACCEPT
+		self.response["EXPN", "550"] = SMTP_REQ_ACCEPT
+		self.relay_domains = ('receiverhost.org')
+EndPolicy
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "EXPN Linux-List\r\n"
+P2S: "EXPN Linux-List\r\n"
+S2P: "250-Receiver User <receiver@receiverhost.org>\r\n\
+250-<user@receiverhost.org>\r\n\
+250 <tester@receiverhost.org>\r\n"
+P2C: "250-Receiver User <receiver@receiverhost.org>\r\n\
+250-<user@receiverhost.org>\r\n\
+250 <tester@receiverhost.org>\r\n"
+C2P: "EXPN Windows-List\r\n"
+P2S: "EXPN Windows-List\r\n"
+S2P: "550 Access Denied to You\r\n"
+P2C: "550 Access Denied to You\r\n"
+C2P: "EXPN Bill Smith\r\n"
+P2S: "EXPN Bill Smith\r\n"
+S2P: "550 This is not a mailing list\r\n"
+P2C: "550 This is not a mailing list\r\n"
+.
+
+StartPolicy
+	def config(self):
+		SmtpProxy.config(self)
+		self.request["HELP"] = (SMTP_REQ_ACCEPT,)
+		self.response["HELP", "211"] = SMTP_REQ_ACCEPT
+		self.response["HELP", "214"] = SMTP_REQ_ACCEPT
+		self.response["HELP", "502"] = SMTP_REQ_ACCEPT
+		self.response["HELP", "504"] = SMTP_REQ_ACCEPT
+		self.request["NOOP"] = (SMTP_REQ_ACCEPT,)
+		self.response["NOOP", "250"] = SMTP_REQ_ACCEPT
+		self.relay_domains = ('receiverhost.org')
+EndPolicy
+
+# HELP and NOOP commands
+
+S2P: "220 receiverhost SMTP  ready\r\n"
+P2C: "220 receiverhost SMTP  ready\r\n"
+C2P: "HELO senderhost\r\n"
+P2S: "HELO senderhost\r\n"
+S2P: "250 receiverhost\r\n"
+P2C: "250 receiverhost\r\n"
+C2P: "HELP\r\n"
+P2S: "HELP\r\n"
+S2P: "214-Commands:\r\n\
+214-HELO MAIL RCPT DATA RSET\r\n\
+214-NOOP QUIT HELP VRFY EXPN\r\n\
+214-For more info use HELP <topic>.\r\n\
+214-For local information contact postmaster at this site.\r\n\
+214 End of HELP info\r\n"
+P2C: "214-Commands:\r\n\
+214-HELO MAIL RCPT DATA RSET\r\n\
+214-NOOP QUIT HELP VRFY EXPN\r\n\
+214-For more info use HELP <topic>.\r\n\
+214-For local information contact postmaster at this site.\r\n\
+214 End of HELP info\r\n"
+C2P: "HELP [ RSET]\r\n"
+P2S: "HELP [ RSET]\r\n"
+S2P: "214-RSET\r\n\
+214-Resets the system.\r\n\
+214 End of HELP info\r\n"
+P2C: "214-RSET\r\n\
+214-Resets the system.\r\n\
+214 End of HELP info\r\n"
+C2P: "NOOP\r\n"
+P2S: "NOOP\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+.
+
+#StartPolicy
+#        def config(self):
+#                SmtpProxy.config(self)
+#		self.relay_domains = ('host2.org','host1.org',)
+#EndPolicy
+#
+# TURN command/Change roles
+#
+#S2P: "220 host2.org SMTP ready\r\n"
+#P2C: "220 host2.org SMTP ready\r\n"
+#C2P: "HELO host1.org\r\n"
+#P2S: "HELO host1.org\r\n"
+#S2P: "250 host2.org\r\n"
+#P2C: "250 host2.org\r\n"
+#C2P: "MAIL From:<sender@host1.org>\r\n"
+#P2S: "MAIL From:<sender@host1.org>\r\n"
+#S2P: "250 OK\r\n"
+#P2C: "250 OK\r\n"
+#C2P: "RCPT To:<receiver@host2.org>\r\n"
+#P2S: "RCPT To:<receiver@host2.org>\r\n"
+#S2P: "250 OK\r\n"
+#P2C: "250 OK\r\n"
+#C2P: "DATA\r\n"
+#P2S: "DATA\r\n"
+#S2P: "354 Start mail input\r\n"
+#P2C: "354 Start mail input\r\n"
+#C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+#P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+#S2P: "250 Ok\r\n"
+#P2C: "250 Ok\r\n"
+#C2P: "TURN\r\n"
+#P2S: "TURN\r\n"
+#S2P: "250 OK\r\n"
+#P2C: "250 OK\r\n"
+#S2P: "220 host1.org SMTP ready\r\n"
+#P2C: "220 host1.org SMTP ready\r\n"
+#C2P: "HELO host2.org\r\n"
+#P2S: "HELO host2.org\r\n"
+#S2P: "250 host1.org\r\n"
+#P2C: "250 host1.org\r\n"
+#C2P: "QUIT\r\n"
+#P2S: "QUIT\r\n"
+#S2P: "221 host1.org Service closing transmission channel\r\n"
+#P2C: "221 host1.org Service closing transmission channel\r\n"
+#C2P: Disconnect
+#P2S: Disconnect
+#.
+#
+#S2P: "220 host1.org SMTP ready\r\n"
+#P2C: "220 host1.org SMTP ready\r\n"
+#C2P: "HELO host2.org\r\n"
+#P2S: "HELO host2.org\r\n"
+#S2P: "250 host1.org\r\n"
+#P2C: "250 host1.org\r\n"
+#C2P: "TURN\r\n"
+#P2S: "TURN\r\n"
+#S2P: "502 Refused transmission\r\n"
+#P2C: "502 Refused transmission\r\n"
+#C2P: "QUIT\r\n"
+#P2S: "QUIT\r\n"
+#S2P: "221 host1.org Service closing transmission channel\r\n"
+#P2C: "221 host1.org Service closing transmission channel\r\n"
+#C2P: Disconnect
+#P2S: Disconnect
+#.
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+		self.relay_domains = ('receiverhost.org')
+EndPolicy
+
+# Extended HELO testing
+# bug5148
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+P2C: "250-server\r\n\
+250-PIPELINING\r\n\
+250-SIZE 10240000\r\n\
+250-ETRN\r\n\
+250 8BITMIME\r\n"
+C2P: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n" 
+P2S: "MAIL From:<sender@senderhost.org> SIZE=10000\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+.
+
+# ETRN command
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "EHLO senderhost.org\r\n"
+P2S: "EHLO senderhost.org\r\n"
+S2P: "250-server\r\n\
+250 ETRN\r\n"
+P2C: "250-server\r\n\
+250 ETRN\r\n"
+C2P: "ETRN receiverhost.org\r\n"
+P2S: "ETRN receiverhost.org\r\n"
+S2P: "250 OK, queuing for node receiverhost.org started\r\n"
+P2C: "250 OK, queuing for node receiverhost.org started\r\n"
+C2P: "ETRN receiverhost.org\r\n"
+P2S: "ETRN receiverhost.org\r\n"
+S2P: "251 OK, no messages waiting for node receiverhost.org started\r\n"
+P2C: "251 OK, no messages waiting for node receiverhost.org started\r\n"
+C2P: "ETRN receiverhost.org\r\n"
+P2S: "ETRN receiverhost.org\r\n"
+S2P: "252 OK, pending messages for node receiverhost.org started\r\n"
+P2C: "252 OK, pending messages for node receiverhost.org started\r\n"
+C2P: "ETRN mysoft.com\r\n"
+P2S: "ETRN mysoft.com\r\n"
+S2P: "253 OK, 14 pending messages for node mysoft.com started\r\n"
+P2C: "253 OK, 14 pending messages for node mysoft.com started\r\n"
+C2P: "ETRN uu.net\r\n"
+P2S: "ETRN uu.net\r\n"
+S2P: "458 Unable to queue messages for node uu.net\r\n"
+P2C: "458 Unable to queue messages for node uu.net\r\n"
+C2P: "ETRN foo.bar\r\n"
+P2S: "ETRN foo.bar\r\n"
+S2P: "459 Node foo.bar not allowed: Unable to resolve name\r\n"
+P2C: "459 Node foo.bar not allowed: Unable to resolve name\r\n"
+C2P: "ETRN\r\n"
+P2C: "500" $NIHIL "\r\n"
+.
+
+# Valid command syntax <mixed upper and lower cases>
+
+S2P: "220 receiverhost SMTP ready\r\n"
+P2C: "220 receiverhost SMTP ready\r\n"
+C2P: "HELo senderhost\r\n"
+P2S: "HELO senderhost\r\n"
+S2P: "250 receiverhost\r\n"
+P2C: "250 receiverhost\r\n"
+C2P: "MaIl FrOm:<sender@senderhost>\r\n"
+P2S: "MAIL From:<sender@senderhost>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RcPT To: <receiver@receiverhost.org>\r\n"
+P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DaTA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+.
+
+# Invalid command syntax <multiple spaces, some invalid characters>
+# D-01211
+# bug20230
+S2P: "220 receiverhost SMTP ready\r\n"
+P2C: "220 receiverhost SMTP ready\r\n"
+C2P: "HELO  senderhost\r\n"
+P2C: "500" $NIHIL "\r\n"
+C2P: "HELO <senderhost\r\n"
+P2C: "500" $NIHIL "\r\n"
+C2P: "HELO \\senderhost\r\n"
+P2C: "500" $NIHIL "\r\n"
+.
+
+# Invalid order of commands
+
+#S2P: "220 receiverhost.org SMTP  ready\r\n"
+#P2C: "220 receiverhost.org SMTP  ready\r\n"
+#C2P: "NOOP\r\n"
+#P2C: "500" $NIHIL "\r\n"
+#C2P: "HELO senderhost.org\r\n"
+#P2S: "HELO senderhost.org\r\n"
+#S2P: "250 receiverhost.org\r\n"
+#P2C: "250 receiverhost.org\r\n"
+#C2P: "DATA\r\n"
+#P2S: "DATA\r\n"
+#P2C: "500" $NIHIL "\r\n"
+#C2P: "MAIL From:<sender@senderhost.org>\r\n"
+#P2S: "MAIL From:<sender@senderhost.org>\r\n"
+#S2P: "250 OK\r\n"
+#P2C: "250 OK\r\n"
+#C2P: "HELP\r\n"
+#P2C: "500" $NIHIL "\r\n"
+#C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+#P2S: "RCPT To:<receiver@receiverhost.org>\r\n"
+#S2P: "250 OK\r\n"
+#P2C: "250 OK\r\n"
+#C2P: "HELO senderhost.org\r\n"
+#P2C: "503" $NIHIL "\r\n"
+#C2P: "DATA\r\n"
+#P2S: "DATA\r\n"
+#S2P: "354 Start mail input\r\n"
+#P2C: "354 Start mail input\r\n"
+#C2P: "<header of message>\r\n\r\n<body of message>\r\n.\r\n"
+#P2S: "<header of message>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+#S2P: "250 Ok\r\n"
+#P2C: "250 Ok\r\n"
+#C2P: "RCPT To:<receiver@receiverhost.org>\r\n"
+#P2C: "503" $NIHIL "\r\n"
+#.
+
+StartPolicy
+        def config(self):
+                SmtpProxy.config(self)
+                self.relay_domains = ('host4','host3','host2','host1',)
+EndPolicy
+
+# Relaying via more hosts
+
+S2P: "220 host2 SMTP ready\r\n"
+P2C: "220 host2 SMTP ready\r\n"
+C2P: "HELO host1\r\n"
+P2S: "HELO host1\r\n"
+S2P: "250 host2\r\n"
+P2C: "250 host2\r\n"
+C2P: "MAIL From:<joe@host1>\r\n"
+P2S: "MAIL From:<joe@host1>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<@host2,@host3:sam@host4>\r\n"
+P2S: "RCPT To:<sam@host4>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "Subject: test\r\nFrom: Joe Joe <joe at host1>\r\nDate: 15-Sept-03 12:15:44\r\nTo: Sam Sam <sam at host4>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "Subject: test\r\nFrom: Joe Joe <joe at host1>\r\nDate: 15-Sept-03 12:15:44\r\nTo: Sam Sam <sam at host4>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+.
+
+# Message with timestamp
+
+S2P: "220 host3 SMTP ready\r\n"
+P2C: "220 host3 SMTP ready\r\n"
+C2P: "HELO host2\r\n"
+P2S: "HELO host2\r\n"
+S2P: "250 host3\r\n"
+P2C: "250 host3\r\n"
+C2P: "MAIL From:<@host2:joe@host1>\r\n"
+P2S: "MAIL From:<joe@host1>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<@host3:sam@host4>\r\n"
+P2S: "RCPT To:<sam@host4>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+#<timestamp>
+C2P: "Return-Path: <@host2,@host1:joe@host1>\r\nReceived: from host2 by host3 ; 15 Sept 03 12:27:36 PST\r\nReceived: from host1 by host2 ; 15 Sept 03 12:16:07 PST\r\nDate: 15-Sept-03 12:15:44\r\nFrom: Joe Joe <joe at host1>\r\nSubject: test\r\nTo: Sam Sam <sam at host4>\r\n\r\n<body of message>\r\n.\r\n"
+P2S: "Return-Path: <@host2,@host1:joe@host1>\r\nReceived: from host2 by host3 ; 15 Sept 03 12:27:36 PST\r\nReceived: from host1 by host2 ; 15 Sept 03 12:16:07 PST\r\nDate: 15-Sept-03 12:15:44\r\nFrom: Joe Joe <joe at host1>\r\nSubject: test\r\nTo: Sam Sam <sam at host4>\r\n\r\n<body of message>\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+.
+
+# Undeliverable mail notification message
+
+S2P: "220 host2 SMTP ready\r\n"
+P2C: "220 host2 SMTP ready\r\n"
+C2P: "HELO host3\r\n"
+P2S: "HELO host3\r\n"
+S2P: "250 host2\r\n"
+P2C: "250 host2\r\n"
+C2P: "MAIL From:<>\r\n"
+P2S: "MAIL From:<>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<@host2:joe@host1>\r\n"
+P2S: "RCPT To:<joe@host1>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "DATA\r\n"
+P2S: "DATA\r\n"
+S2P: "354 Start mail input\r\n"
+P2C: "354 Start mail input\r\n"
+C2P: "Subject: Mail System Problem\r\nSender: SMTP@host4\r\nDate: 15-Sept-03 12:15:44\r\n\r\nSorry Joe, your message to sam@host4 lost.\r\nhost4 said this: 550 No Such User\r\n.\r\n"
+P2S: "Subject: Mail System Problem\r\nSender: SMTP@host4\r\nDate: 15-Sept-03 12:15:44\r\n\r\nSorry Joe, your message to sam@host4 lost.\r\nhost4 said this: 550 No Such User\r\n\r\n.\r\n"
+S2P: "250 Ok\r\n"
+P2C: "250 Ok\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "221 host2 Service closing transmission channel\r\n"
+P2C: "221 host2 Service closing transmission channel\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+# Invalid address parses
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<@:sender.senderhost.org>\r\n"
+P2C: "500" $NIHIL "\r\n"
+C2P: "MAIL From:<:receiver@receiverhost.org>\r\n"
+P2C: "500" $NIHIL "\r\n"
+C2P: "MAIL From:receiver@receiverhost.org\r\n"
+P2C: "500" $NIHIL "\r\n"
+C2P: "MAIL From:<receiver@receiverhost.org\r\n"
+P2C: "500" $NIHIL "\r\n"
+C2P: "MAIL From:receiver@receiverhost.org>\r\n"
+P2C: "500" $NIHIL "\r\n"
+C2P: "MAIL From:<receiverreceiverhost.org>\r\n"
+P2C: "500" $NIHIL "\r\n"
+C2P: "MAIL From:<host1:receiver@receiverhost.org>\r\n"
+P2C: "500" $NIHIL "\r\n"
+C2P: "MAIL From:<@host1receiver@receiverhost.org>\r\n"
+P2C: "500" $NIHIL "\r\n"
+C2P: "MAIL From:<@host1,receiver@receiverhost.org>\r\n"
+P2C: "500" $NIHIL "\r\n"
+.
+
+# Valid address parses
+
+QUOTE='"'
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<" %QUOTE "sender user" %QUOTE "@senderhost.org>\r\n"
+P2S: "MAIL From:<" %QUOTE "sender user" %QUOTE "@senderhost.org>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+.
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<senderuser@[1.2.3.4]>\r\n"
+P2S: "MAIL From:<senderuser@[1.2.3.4]>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+.
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<senderuser@#12345>\r\n"
+P2S: "MAIL From:<senderuser@#12345>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+.
+
+# checks whether '%' and '!' are permitted (should not be)
+# tests bug #3154
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL From:<senderuser@#12345>\r\n"
+P2S: "MAIL From:<senderuser@#12345>\r\n"
+S2P: "250 OK\r\n"
+P2C: "250 OK\r\n"
+C2P: "RCPT To:<bazsi%kuka.balabit@balabit.hu>\r\n"
+P2C: "501 Malformed address\r\n"
+C2P: "RCPT To:<kuka.balabit!bazsi@balabit.hu>\r\n"
+P2C: "501 Malformed address\r\n"
+.
+
+S2P: "220 receiverhost.org SMTP  ready\r\n"
+P2C: "220 receiverhost.org SMTP  ready\r\n"
+C2P: "HELO senderhost.org\r\n"
+P2S: "HELO senderhost.org\r\n"
+S2P: "250 receiverhost.org\r\n"
+P2C: "250 receiverhost.org\r\n"
+C2P: "MAIL FROM:<bazsi@balabit.hu>" 00 "\r\n"
+P2S: "MAIL From:<bazsi@balabit.hu>\r\n"
+S2P: "250 ok\r\n"
+P2C: "250 ok\r\n"
+.
+
+#S2P: "554 receiverhost.org SMTP  ready\r\n"
+#P2C: "554 receiverhost.org SMTP  ready\r\n"
+#C2P: Disconnect
+#P2C: "421 Service not available, closing transmission channel.\r\n"
+#P2C: Disconnect#.
+
+

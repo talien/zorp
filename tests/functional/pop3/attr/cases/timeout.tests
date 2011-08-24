@@ -1,0 +1,41 @@
+StartGlobalInfo
+    Tags timeout D-01046 bug12123
+EndGlobalInfo
+
+StartPolicy
+    def config(self):
+        self.request["*"] = POP3_REQ_ACCEPT
+        self.timeout = 3000
+        self.request["STAT"] = (POP3_REQ_POLICY, self.test)
+        self.request["LIST"] = (POP3_REQ_POLICY, self.test2)
+    def test(self,command):
+        print self.username
+        print type(self.username)
+        if self.username == "mrose":
+            self.request_command = "LIST"
+        return POP3_REQ_ACCEPT
+    def test2(self,command):
+        print self.password
+        print type(self.password)
+        if self.password == "secret":
+            self.request_param = "5"
+        return POP3_REQ_ACCEPT
+EndPolicy
+
+S2P: "+OK POP3 server ready"
+A= time.sleep(6)
+S2P: " <1896.697170952@dbc.mtview.ca.us>\r\n"
+#P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "-ERR Error in protocol\r\n"
+P2C: Disconnect
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP"
+A= time.sleep(6)
+C2P: " mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2C: "-ERR Invalid command.\r\n"
+P2S: Disconnect
+P2C: Disconnect
+.

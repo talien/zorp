@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: proxy.h,v 1.82 2004/06/11 12:57:39 bazsi Exp $
- *
  ***************************************************************************/
 
 #ifndef ZORP_NOTIFICATION_H_INCLUDED

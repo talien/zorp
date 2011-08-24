@@ -45,13 +45,13 @@ def exchangeMessages(h, messages):
         for (msg, payload) in messages:
                 exchangeMessage(h, msg, payload)
 
-def startTransaction(h, type, instance_name):
+def startTransaction(h, instance_name):
         tries = 7
         wait = 0.1
         while tries > 0:
                 try:
                         exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_START, \
-                                        kznf.kznfnetlink.create_start_msg(type, instance_name))
+                                        kznf.kznfnetlink.create_start_msg(instance_name))
                 except socket.error, e:
                         if e[0] == errno.ECONNREFUSED:
                                 raise
@@ -78,9 +78,11 @@ def downloadKZorpConfig(instance_name):
         random.seed()
         h = openHandle()
 
-        # download services
-        startTransaction(h, kznf.kznfnetlink.KZ_TR_TYPE_SERVICE, instance_name)
+        # start transaction
+        startTransaction(h, instance_name)
+
         try:
+                # download services
                 exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_SERVICE, \
                                 kznf.kznfnetlink.create_flush_msg())
 
@@ -88,14 +90,7 @@ def downloadKZorpConfig(instance_name):
                         messages = service.buildKZorpMessage()
                         exchangeMessages(h, messages)
 
-                commitTransaction(h)
-        except:
-                h.close()
-                raise
-
-        # download zones
-        startTransaction(h, kznf.kznfnetlink.KZ_TR_TYPE_ZONE, kznf.kznfnetlink.KZ_INSTANCE_GLOBAL)
-        try:
+                # download zones
                 exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_ZONE, \
                                 kznf.kznfnetlink.create_flush_msg())
 
@@ -108,24 +103,16 @@ def downloadKZorpConfig(instance_name):
                                 zone.iterAdminChildren(walkZones, messages)
                                 exchangeMessages(h, messages)
 
-                commitTransaction(h)
-        except:
-                h.close()
-                raise
-
-        # download dispatchers
-        startTransaction(h, kznf.kznfnetlink.KZ_TR_TYPE_DISPATCHER, instance_name)
-        try:
                 exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_DISPATCHER, \
                                 kznf.kznfnetlink.create_flush_msg())
 
                 for dispatch in Globals.dispatches:
-			try:
-				messages = dispatch.buildKZorpMessage()
-				exchangeMessages(h, messages)
-			except:
-				log(None, CORE_ERROR, 0, "Error occured during Dispatcher upload to KZorp; dispatcher='%s', error='%s'" % (dispatch.bindto.format(), sys.exc_value))
-				raise
+                        try:
+                                messages = dispatch.buildKZorpMessage()
+                                exchangeMessages(h, messages)
+                        except:
+                                log(None, CORE_ERROR, 0, "Error occured during Dispatcher upload to KZorp; dispatcher='%s', error='%s'" % (dispatch.bindto.format(), sys.exc_value))
+                                raise
 
                 commitTransaction(h)
         except:
@@ -139,19 +126,11 @@ def flushKZorpConfig(instance_name):
         random.seed()
         h = openHandle()
 
-        # flush dispatchers
-        startTransaction(h, kznf.kznfnetlink.KZ_TR_TYPE_DISPATCHER, instance_name)
+        # flush dispatchers and services
+        startTransaction(h, instance_name)
         try:
                 exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_DISPATCHER, \
                                 kznf.kznfnetlink.create_flush_msg())
-                commitTransaction(h)
-        except:
-                h.close()
-                raise
-
-        # flush services
-        startTransaction(h, kznf.kznfnetlink.KZ_TR_TYPE_SERVICE, instance_name)
-        try:
                 exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_SERVICE, \
                                 kznf.kznfnetlink.create_flush_msg())
                 commitTransaction(h)

@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: pyproxy.c,v 1.60 2004/07/26 12:31:58 sasa Exp $
- *
  * Author  : Bazsi
  * Auditor : kisza
  * Last audited version: 1.15
@@ -379,6 +377,12 @@ PyTypeObject z_policy_proxy_type =
   .tp_del = NULL,
 };
 
+/*  to avoid type-punned pointer warning -- not static to avoid auto-inlining */
+void wrap_Py_INCREF(void * p)
+{
+  Py_INCREF(p);
+}
+
 /**
  * z_policy_proxy_module_init:
  *
@@ -395,7 +399,7 @@ z_policy_proxy_module_init(void)
     g_assert_not_reached();
 
   m = PyImport_AddModule("Zorp.Zorp");
-  Py_INCREF(&z_policy_proxy_type);
+  wrap_Py_INCREF(&z_policy_proxy_type);
   o = &z_policy_proxy_type;
   PyModule_AddObject(m, "BuiltinProxy", (PyObject *) o);
 }

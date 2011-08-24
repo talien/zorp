@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: zpython.c,v 1.82 2004/04/14 16:53:13 bazsi Exp $
- *
  * Author  : Bazsi
  * Auditor : 
  * Last audited version: 

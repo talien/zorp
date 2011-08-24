@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: authprovider.h,v 1.6 2003/11/18 19:28:16 sasa Exp $
- *
  ***************************************************************************/
 
 #ifndef AUTHORIZATION_H_INCLUDED

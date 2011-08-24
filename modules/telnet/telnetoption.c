@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: telnetoption.c,v 1.10 2004/07/22 10:48:46 bazsi Exp $
- *
  * Author: Hidden
  * Auditor:
  * Last audited version:
@@ -66,7 +64,7 @@ telnet_opt_terminal_type(TelnetProxy *self, guint ep)
 {
   ZIOBuffer     *sbuf = &self->suboptions[ep];
   guint         ptr, i;
-  guchar        buf[SB_BUF_SIZE];
+  gchar         buf[SB_BUF_SIZE];
   guint         res;
 
   z_proxy_enter(self);
@@ -147,7 +145,7 @@ telnet_opt_terminal_speed(TelnetProxy *self, guint ep)
 {
   ZIOBuffer     *sbuf = &self->suboptions[ep];
   guint         ptr, i;
-  guchar        buf[SB_BUF_SIZE];
+  gchar         buf[SB_BUF_SIZE];
   guint         res;
 
   z_proxy_enter(self);
@@ -226,7 +224,7 @@ telnet_opt_x_display(TelnetProxy *self, guint ep)
 {
   ZIOBuffer     *sbuf = &self->suboptions[ep];
   guint         ptr, i;
-  guchar        buf[SB_BUF_SIZE];
+  gchar         buf[SB_BUF_SIZE];
   guint         res;
 
   z_proxy_enter(self);
@@ -310,7 +308,7 @@ telnet_opt_new_env(TelnetProxy *self, guint ep)
   ZIOBuffer     cbuf;
   guint         ptr, i;
   guint         res;
-  guchar        name[SB_BUF_SIZE], value[SB_BUF_SIZE];
+  gchar         name[SB_BUF_SIZE], value[SB_BUF_SIZE];
   guchar        command, type;
   gboolean      valid = FALSE; /* TRUE if there was anything accepted by policy */
 
@@ -554,7 +552,7 @@ telnet_opt_naws(TelnetProxy *self, guint ep)
   guint         ptr, i;
   guchar        buf[SB_BUF_SIZE];
   guint         res;
-  guchar        value[SB_BUF_SIZE];
+  gchar         value[SB_BUF_SIZE];
   guint16       width, height;
   gchar         width_cols[256], height_rows[256];
 

@@ -35,7 +35,7 @@
         Starting with Zorp 3.3FR1, the Proxy module provides a common SSL/TLS framework for the Zorp proxies as well. This SSL framework replaces and extends the functionality of the Pssl proxy, providing support for STARTTLS as well. The Pssl proxy has become obsolete, but still provides a compatibility layer for older configuration files, but you are recommended to update your configuration to use the new SSL framework as soon as possible. The SSL framework is described in <xref linkend="chapter_ssl"/>.
     </para>
     <note>
-        <para>STARTTLS support is currently available only for the Ftp proxy to support FTPS sessions.</para>
+        <para>STARTTLS support is currently available only for the Ftp proxy to support FTPS sessions and for the SMTP proxy.</para>
     </note>
     <inline type="enum" target="enum.ssl.verify"/>
     <inline type="enum" target="enum.ssl.method"/>
@@ -267,6 +267,7 @@ from SockAddr import SockAddrInet, getHostByName
 from Session import StackedSession, MasterSession
 from Stack import getStackingProviderBackend
 from Keybridge import *
+from Chainer import ConnectChainer
 
 import string, os, sys, traceback, re, types
 
@@ -1583,7 +1584,7 @@ class Proxy(BuiltinProxy):
                 self.__dict__.clear()
                 self.session = session
 
-        def stackProxy(self, client_stream, server_stream, proxy_class, stack_info):
+        def stackProxy(self, client_stream, server_stream, proxy_class, stack_info, side_stacking=False):
                 """
                 <method internal="yes">
                   <summary>
@@ -1615,17 +1616,30 @@ class Proxy(BuiltinProxy):
                         <description>The protocol-specific proxy class to embed into the current proxy instance.
                         </description>
                       </argument>
+                      <argument>
+                        <name>side_stacking</name>
+                        <type></type>
+                        <description>TRUE if a side-stack is requested, FALSE for normal stack.
+                        </description>
+                      </argument>
                     </arguments>
                   </metainfo>
                 </method>
                 """
 
-                ## LOG ##
-                # This message reports that Zorp is about to stack a new proxy under the current proxy, as a child proxy.
-                ##
-                proxyLog(self, CORE_DEBUG, 7, "Stacking child proxy; client_fd='%d', server_fd='%d', class='%s'", (client_stream.fd, server_stream.fd, proxy_class.__name__))
 
-                subsession = StackedSession(self.session)
+                if side_stacking:
+                        ## LOG ##
+                        # This message reports that Zorp is about to stack a new proxy under the current proxy, as a child proxy.
+                        ##
+                        proxyLog(self, CORE_DEBUG, 7, "Stacking child proxy on right side; client_fd='%d', class='%s'", (client_stream.fd, proxy_class.__name__))
+                        subsession = StackedSession(self.session, ConnectChainer())
+                else:
+                        ## LOG ##
+                        # This message reports that Zorp is about to stack a new proxy under the current proxy, as a child proxy.
+                        ##
+                        proxyLog(self, CORE_DEBUG, 7, "Stacking child proxy; client_fd='%d', server_fd='%d', class='%s'", (client_stream.fd, server_stream.fd, proxy_class.__name__))
+                        subsession = StackedSession(self.session)
                 subsession.stack_info = stack_info
                 session_id = string.split(self.session.session_id, '/')
                 if len(session_id):
@@ -1636,8 +1650,9 @@ class Proxy(BuiltinProxy):
                         session_id = self.session.session_id
                 subsession.client_stream = client_stream
                 subsession.client_stream.name = "%s/client_upstream" % (session_id)
-                subsession.server_stream = server_stream
-                subsession.server_stream.name = "%s/server_upstream" % (session_id)
+                if not side_stacking:
+                        subsession.server_stream = server_stream
+                        subsession.server_stream.name = "%s/server_upstream" % (session_id)
                 try:
                         proxy = proxy_class(subsession)
                         if ProxyGroup(1).start(proxy):

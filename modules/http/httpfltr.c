@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: httpfltr.c,v 1.83 2004/07/26 11:45:57 bazsi Exp $
- *
  * Author: Balazs Scheidler <bazsi@balabit.hu>
  * Auditor: 
  * Last audited version: 

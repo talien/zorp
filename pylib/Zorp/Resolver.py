@@ -35,7 +35,7 @@ to perform name lookups.
 
 from Zorp import *
 from SockAddr import SockAddrInet
-from socket import gethostbyname_ex
+from socket import gethostbyname, gethostbyname_ex
 import types
 
 # NOTE: This is IPv4 specific

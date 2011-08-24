@@ -221,6 +221,7 @@ import Globals
 import Config
 import traceback
 import sys
+import errno
 
 config = Config
 
@@ -311,6 +312,7 @@ Z_SZIG_RELOAD = 8
 Z_SZIG_AUTH_PENDING_BEGIN = 9
 Z_SZIG_AUTH_PENDING_FINISH = 10
 Z_SZIG_SERVICE_COUNT = 11
+Z_SZIG_CONNECTION_START = 12
 
 Z_KEEPALIVE_NONE   = 0
 Z_KEEPALIVE_CLIENT = 1
@@ -484,22 +486,37 @@ def init(names):
                         return FALSE
                 func()
 
-        if Globals.kzorp_responds_to_ping:
-                try:
-                        KZorp.downloadKZorpConfig(names[0])
-                except:
-                        ## LOG ##
-                        # This message indicates that downloading the necessary information to the
-                        # kernel-level KZorp subsystem has failed.
-                        ##
-                        log(None, CORE_ERROR, 0, "Error downloading KZorp configuration, Python traceback follows; error='%s'" % (sys.exc_value))
-                        for s in traceback.format_tb(sys.exc_traceback):
-                                for l in s.split("\n"):
-                                        if l:
-                                                log(None, CORE_ERROR, 0, "Traceback: %s" % (l))
+        if config.options.kzorp_enabled:
+            # ping kzorp to see if it's there
+            try:
+                    h = KZorp.openHandle()
+                    m = h.create_message(kznf.nfnetlink.NFNL_SUBSYS_KZORP, kznf.kznfnetlink.KZNL_MSG_GET_ZONE,
+                                         kznf.nfnetlink.NLM_F_REQUEST)
+                    m.set_nfmessage(kznf.kznfnetlink.create_get_zone_msg("__nonexistent_zone__"))
+                    result = h.talk(m, (0, 0), KZorp.netlinkmsg_handler)
+                    if result < 0 and result != -errno.ENOENT:
+                            log(None, CORE_ERROR, 0, "Error pinging KZorp, it is probably unavailable; result='%d'" % (result))
+                    else:
+                            Globals.kzorp_responds_to_ping = True
+            except:
+                    log(None, CORE_ERROR, 0, "Error pinging KZorp, it is probably unavailable; exc_value='%s'" % (sys.exc_value))
 
-                        # if kzorp did respond to the ping, the configuration is erroneous -- we die here so the user finds out
-                        return FALSE
+            if Globals.kzorp_responds_to_ping:
+                    try:
+                            KZorp.downloadKZorpConfig(names[0])
+                    except:
+                            ## LOG ##
+                            # This message indicates that downloading the necessary information to the
+                            # kernel-level KZorp subsystem has failed.
+                            ##
+                            log(None, CORE_ERROR, 0, "Error downloading KZorp configuration, Python traceback follows; error='%s'" % (sys.exc_value))
+                            for s in traceback.format_tb(sys.exc_traceback):
+                                    for l in s.split("\n"):
+                                            if l:
+                                                    log(None, CORE_ERROR, 0, "Traceback: %s" % (l))
+
+                            # if kzorp did respond to the ping, the configuration is erroneous -- we die here so the user finds out
+                            return FALSE
 
         return TRUE
 

@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: proxy.c,v 1.132 2004/07/05 16:57:46 sasa Exp $
- *
  * Author  : Bazsi
  * Auditor : kisza
  * Last audited version: 1.23
@@ -569,6 +567,47 @@ z_proxy_propagate_channel_props(ZProxy *self G_GNUC_UNUSED)
 }
 
 
+
+static gboolean
+z_proxy_set_server_address_no_acquire(ZProxy *self, const gchar *host, gint port)
+{
+  ZPolicyObj *res = NULL;
+  ZPolicyObj *args;
+  gint rc = FALSE;
+  gboolean called;
+
+  args = z_policy_var_build("(si)", host, port);
+  res = z_policy_call(self->handler, "setServerAddress", args, &called, self->session_id);
+  if (!res)
+    goto out;
+  if (!z_policy_var_parse(res, "i", &rc) || !rc)
+    goto out;
+
+  rc = TRUE;
+
+ out:
+  if (res)
+    z_policy_var_unref(res);
+  return rc;
+}
+
+/**
+ * Set server address for using by z_proxy_connect_server
+ * @param self[in,out]: ZProxy instance
+ * @param host[in]: remote server address
+ * @param port: remote server port
+ * @return: TRUE on success, FALSE otherwise
+ */
+gboolean
+z_proxy_set_server_address(ZProxy *self, const gchar *host, gint port)
+{
+  gint rc = FALSE;
+  z_policy_thread_acquire(self->thread);
+  rc = z_proxy_set_server_address_no_acquire(self, host, port);
+  z_policy_thread_release(self->thread);
+  return rc;
+}
+
 /**
  * z_proxy_connect_server:
  * @self: proxy instance
@@ -582,7 +621,7 @@ z_proxy_propagate_channel_props(ZProxy *self G_GNUC_UNUSED)
 gboolean
 z_proxy_connect_server(ZProxy *self, const gchar *host, gint port)
 {
-  ZPolicyObj *res, *args;
+  ZPolicyObj *res;
   gint rc;
   gboolean called;
   
@@ -612,21 +651,10 @@ z_proxy_connect_server(ZProxy *self, const gchar *host, gint port)
     }
 
   z_policy_thread_acquire(self->thread);
-  if (host && host[0])
+  if (host && host[0] && !z_proxy_set_server_address_no_acquire(self, host, port))
     {
-      args = z_policy_var_build("(si)", host, port);
-      res = z_policy_call(self->handler, "setServerAddress", args, &called, self->session_id);
-      if (!res)
-        {
-          z_policy_thread_release(self->thread);
-          z_proxy_return(self, FALSE);
-        }
-      if (!z_policy_var_parse(res, "i", &rc) || !rc)
-        {
-          z_policy_thread_release(self->thread);
-          z_proxy_return(self, FALSE);
-        }
-      z_policy_var_unref(res);
+      z_policy_thread_release(self->thread);
+      z_proxy_return(self, FALSE);
     }
 
   res = z_policy_call(self->handler, "connectServer", NULL, &called, self->session_id);
@@ -1001,6 +1029,11 @@ z_proxy_var_register_va(ZProxy *s, ZPolicyDict *dict, const gchar *name, guint f
     case Z_VAR_TYPE_INT:
       z_policy_dict_register(dict, 
                              Z_VT_INT, name, flags, va_arg(args, gint *), NULL, 
+                             NULL);
+      break;
+    case Z_VAR_TYPE_INT64:
+      z_policy_dict_register(dict,
+                             Z_VT_INT64, name, flags, va_arg(args, gint *), NULL,
                              NULL);
       break;
     case Z_VAR_TYPE_STRING:
@@ -1698,5 +1731,4 @@ ZClass ZProxyHostIface__class =
   sizeof(ZProxyHostIface),
   &z_proxy_host_iface_funcs.super
 };
-
 

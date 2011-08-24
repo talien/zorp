@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: connection.c,v 1.10 2003/10/09 07:38:29 bazsi Exp $
- *
  * Author  : SaSa
  * Auditor :
  * Last audited version:

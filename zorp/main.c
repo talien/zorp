@@ -3,8 +3,6 @@
  * Copyright (c) 2000, 2001 BalaBit IT Ltd, Budapest, Hungary
  * All rights reserved.
  *
- * $Id: main.c,v 1.171 2004/09/03 12:16:02 bazsi Exp $
- *
  * Author  : bazsi
  * Auditor : kisza
  * Last version : 1.24
@@ -229,7 +227,9 @@ const gchar *tproxy_impl = NULL;
 static gboolean display_version = FALSE;
 
 static gboolean
-z_set_instance_name(const gchar *option_name G_GNUC_UNUSED, const gchar *value, gpointer user_datae G_GNUC_UNUSED, GError **error)
+z_set_instance_name(const gchar *option_name G_GNUC_UNUSED, const gchar *value, gpointer user_datae G_GNUC_UNUSED,
+                    GError **error G_GNUC_UNUSED
+                   )
 {
   instance_name = g_strdup(value);
   instance_policy_list[0] = (gchar *) instance_name;

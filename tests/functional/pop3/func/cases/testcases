@@ -1,0 +1,769 @@
+#Some valid scenarios
+
+StartPolicy
+	def config(self):
+		Pop3Proxy.config(self)
+
+EndPolicy
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK 2 320\r\n"
+P2C: "+OK 2 320\r\n"
+C2P: "LIST\r\n"
+P2S: "LIST\r\n"
+S2P: "+OK 2 messages (320 octets)\r\n" \
+"1 120\r\n" \
+"2 200\r\n" \
+".\r\n"
+P2C: "+OK 2 messages (320 octets)\r\n" \
+"1 120\r\n" \
+"2 200\r\n" \
+".\r\n"
+C2P: "RETR 1\r\n"
+P2S: "RETR 1\r\n"
+S2P: "+OK 120 octets\r\n" \
+"<the POP3 server sends message 1>\r\n" \
+".\r\n"
+P2C: "+OK 120 octets\r\n" \
+"<the POP3 server sends message 1>\r\n" \
+".\r\n"
+C2P: "DELE 1\r\n"
+P2S: "DELE 1\r\n"
+S2P: "+OK message 1 deleted\r\n"
+P2C: "+OK message 1 deleted\r\n"
+C2P: "RETR 2\r\n"
+P2S: "RETR 2\r\n"
+S2P: "+OK 200 octets\r\n" \
+"<the POP3 server sends message 2>\r\n" \
+".\r\n"
+P2C: "+OK 200 octets\r\n" \
+"<the POP3 server sends message 2>\r\n" \
+".\r\n"
+C2P: "DELE 2\r\n"
+P2S: "DELE 2\r\n"
+S2P: "+OK message 2 deleted\r\n"
+P2C: "+OK message 2 deleted\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "+OK dewey POP3 server signing off (maildrop empty)\r\n"
+P2C: "+OK dewey POP3 server signing off (maildrop empty)\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "NOOP\r\n"
+P2S: "NOOP\r\n"
+S2P: "+OK all right\r\n"
+P2C: "+OK all right\r\n"
+C2P: "RETR 1\r\n"
+P2S: "RETR 1\r\n"
+S2P: "+OK 12 octets\r\n" \
+"123456789012\r\n.\r\n"
+P2C: "+OK 12 octets\r\n" \
+"123456789012\r\n.\r\n"
+C2P: "DELE 1\r\n"
+P2S: "DELE 1\r\n"
+S2P: "+OK message 1 deleted\r\n"
+P2C: "+OK message 1 deleted\r\n"
+C2P: "RSET\r\n"
+P2S: "RSET\r\n"
+S2P: "+OK maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK maildrop has 2 messages (320 octets)\r\n"
+C2P: "QUIT\r\n"
+P2S: "QUIT\r\n"
+S2P: "+OK dewey POP3 server signing off\r\n"
+P2C: "+OK dewey POP3 server signing off\r\n"
+C2P: Disconnect
+P2S: Disconnect
+.
+
+#TRANSACTION commands in AUTH state
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "STAT\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "LIST\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "RETR 1\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "DELE 1\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "NOOP\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "RSET\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "TOP 1 1\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "UIDL\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.69710952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.69710952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valami\r\n"   
+P2S: "USER valami\r\n"
+S2P: "-ERR never heard of mailbox name\r\n"
+P2C: "-ERR never heard of mailbox name\r\n"
+C2P: "PASS barki\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.69710952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.69710952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barki\r\n"
+P2S: "PASS barki\r\n"
+S2P: "-ERR invalid password\r\n"
+P2C: "-ERR invalid password\r\n"
+C2P: "TOP 1 1\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "-ERR permission denied\r\n"
+P2C: "-ERR permission denied\r\n"
+C2P: "RSET\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.69710952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.69710952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK 2 320\r\n"
+P2C: "+OK 2 320\r\n"
+C2P: "PASS barmi\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK 2 320\r\n"
+P2C: "+OK 2 320\r\n"
+.
+
+#STAT
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK 2 320\r\n"
+P2C: "+OK 2 320\r\n"
+
+C2P: "STAT 2\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK 2 320\r\n"
+P2C: "+OK 2 320\r\n"
+.
+ 
+#LIST
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "LIST\r\n"
+P2S: "LIST\r\n"
+S2P: "+OK 2 messages (320 octets)\r\n" \
+"1 120\r\n" \
+"2 200\r\n" \
+".\r\n"
+P2C: "+OK 2 messages (320 octets)\r\n" \
+"1 120\r\n" \
+"2 200\r\n" \
+".\r\n"
+
+C2P: "LIST\r\n"
+P2S: "LIST\r\n"
+S2P: "+OK 2 messages\r\n" \
+"1 120\r\n" \
+"2 200\r\n" \
+".\r\n"
+P2C: "+OK 2 messages\r\n" \
+"1 120\r\n" \
+"2 200\r\n" \
+".\r\n"
+
+C2P: "LIST 2\r\n"
+P2S: "LIST 2\r\n"
+S2P: "+OK 2 200\r\n"
+P2C: "+OK 2 200\r\n"
+
+C2P: "LIST 3\r\n"
+P2S: "LIST 3\r\n"
+S2P: "-ERR no such message\r\n"
+P2C: "-ERR no such message\r\n"
+.
+
+# RETR
+
+#S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#C2P: "USER valaki\r\n"
+#P2S: "USER valaki\r\n"
+#S2P: "+OK name is a valid mailbox\r\n"
+#P2C: "+OK name is a valid mailbox\r\n"
+#C2P: "PASS barmi\r\n"
+#P2S: "PASS barmi\r\n"
+#S2P: "+OK maildrop locked and ready\r\n"
+#P2C: "+OK maildrop locked and ready\r\n"
+#C2P: "RETR 1\r\n"
+#P2S: "RETR 1\r\n"
+#S2P: "+OK 120 octets follows\r\n" \
+#"<message>\r\n" \
+#".\r\n"
+#P2C: "+OK 120 octets follows\r\n" \
+#"<message>\r\n" \
+#".\r\n"
+#
+#C2P: "RETR 5\r\n"
+#P2S: "RETR 5\r\n"
+#S2P: "-ERR no such message\r\n"
+#P2C: "-ERR no such message\r\n"
+#
+#C2P: "RETR 2\r\n"
+#P2S: "RETR 2\r\n"
+#S2P: "+OK 5 octets\r\n" \
+#"123456789\r\n.\r\n"
+#P2C: "-ERR " $NIHIL "\r\n"
+#.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "RETR\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+#DELE
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "DELE 1\r\n"
+P2S: "DELE 1\r\n"
+S2P: "+OK message deleted\r\n"
+P2C: "+OK message deleted\r\n"
+
+C2P: "DELE 2\r\n"
+P2S: "DELE 2\r\n"
+S2P: "-ERR message 2 already deleted\r\n"
+P2C: "-ERR message 2 already deleted\r\n"
+
+C2P: "DELE\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "DELE 0\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+#RSET
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "RSET\r\n"
+P2S: "RSET\r\n"
+S2P: "+OK maildrop has 2 messages\r\n"
+P2C: "+OK maildrop has 2 messages\r\n"
+
+C2P: "RSET 2\r\n"
+P2S: "RSET\r\n"
+.
+
+#NOOP
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "NOOP\r\n"
+P2S: "NOOP\r\n"
+S2P: "+OK all right\r\n"
+P2C: "+OK all right\r\n"
+
+C2P: "NOOP 2\r\n"
+P2S: "NOOP\r\n"
+.
+#TOP
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "TOP 1 30\r\n"
+P2S: "TOP 1 30\r\n"
+S2P: "+OK top of message follows\r\n" \
+"<the header of the message>\r\n" \
+"\r\n" \
+"<line_1: a level csak 3 soros, ezert atmegy az egesz>\r\n" \
+"<line_2: van benne egy pont>.\r\n" \
+"<line_3: utolso sor>\r\n.\r\n"
+P2C: "+OK top of message follows\r\n" \
+"<the header of the message>\r\n" \
+"\r\n" \
+"<line_1: a level csak 3 soros, ezert atmegy az egesz>\r\n" \
+"<line_2: van benne egy pont>.\r\n" \
+"<line_3: utolso sor>\r\n.\r\n"
+
+C2P: "TOP 100 3\r\n"
+P2S: "TOP 100 3\r\n"
+S2P: "-ERR no such message\r\n"
+P2C: "-ERR no such message\r\n"
+
+C2P: "TOP 1\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "TOP\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+#UIDL
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "UIDL\r\n"
+P2S: "UIDL\r\n"
+S2P: "+OK unique-id listing follows\r\n" \
+"1 whqtswO00WBw418f9t5JxYwZ\r\n" \
+"2 QhdPYR:00WBw1Ph7x7\r\n" \
+".\r\n"
+P2C: "+OK unique-id listing follows\r\n" \
+"1 whqtswO00WBw418f9t5JxYwZ\r\n" \
+"2 QhdPYR:00WBw1Ph7x7\r\n" \
+".\r\n"
+
+C2P: "UIDL 2\r\n"
+P2S: "UIDL 2\r\n"
+S2P: "+OK 2 QhdPYR:00WBw1Ph7x7\r\n"
+P2C: "+OK 2 QhdPYR:00WBw1Ph7x7\r\n"
+
+C2P: "UIDL 3\r\n"
+P2S: "UIDL 3\r\n"
+S2P: "-ERR no such message\r\n"
+P2C: "-ERR no such message\r\n"
+
+C2P: "UIDL valami\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+# Response test
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "RETR 1\r\n"
+P2S: "RETR 1\r\n"
+S2P: "+OK a"x512 "\r\n.\r\n"
+P2C: "-ERR" $NIHIL "\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK bumburnyak\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "LIST 2\r\n"
+P2S: "LIST 2\r\n"
+S2P: "+OK2 320\r\n"
+P2C: "-ERR " $NIHIL "\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "NOOP\r\n"
+P2S: "NOOP\r\n"
+S2P: "-ok all right\r\n"
+P2C: "-ERR" $NIHIL "\r\n"
+.
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "RETR 1\r\n"
+P2S: "RETR 1\r\n"
+S2P: "-HRR xsrfsklm\r\n"
+P2C: "-ERR" $NIHIL "\r\n"
+.
+
+# empty multiline response
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has no messages (0 octets)\r\n"
+P2C: "+OK mrose's maildrop has no messages (0 octets)\r\n"
+C2P: "STAT\r\n"
+P2S: "STAT\r\n"
+S2P: "+OK 0 0\r\n"
+P2C: "+OK 0 0\r\n"
+C2P: "LIST\r\n"
+P2S: "LIST\r\n"
+S2P: "+OK 0 messages\r\n" \
+".\r\n"
+P2C: "+OK 0 messages\r\n" \
+".\r\n"
+.
+
+# Disconnect test
+
+#S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+#P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+#S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+#P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+#C2P: "RETR 1\r\n"
+#P2S: "RETR 1\r\n"
+#S2P: "+OK 1024 byte coming\r\n"
+##P2C: "+OK 1024 byte coming\r\n"
+#S2P: "abc"
+#S2P: Disconnect
+#.
+
+# XSENDER test
+StartPolicy
+	def config(self):
+		Pop3Proxy.config(self)
+		self.request["XSENDER"] = POP3_REQ_ACCEPT
+EndPolicy
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "XSENDER 1\r\n"
+P2S: "XSENDER 1\r\n"
+S2P: "-ERR Unknown command\r\n"
+P2C: "-ERR Unknown command\r\n"
+.
+
+# Multiline state machine
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+C2P: "UIDL\r\n"
+P2S: "UIDL\r\n"
+S2P: "+OK unique-id listing follows\r\n" \
+"1 whqtswO00WBw418f9t5JxYwZ\r\n" \
+"2 QhdPYR:00WBw1Ph7x7\r\n" \
+".\r\n"
+P2C: "+OK unique-id listing follows\r\n" \
+"1 whqtswO00WBw418f9t5JxYwZ\r\n" \
+"2 QhdPYR:00WBw1Ph7x7\r\n" \
+".\r\n"
+C2P: "XSENDER 1\r\n"
+P2S: "XSENDER 1\r\n"
+S2P: "+OK something\r\n"
+P2C: "+OK something\r\n"
+C2P: "NOOP\r\n"
+P2S: "NOOP\r\n"
+S2P: "+OK all right\r\n"
+P2C: "+OK all right\r\n"
+
+
+.
+
+#S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+#P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+#S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+#P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+#C2P: "RETR 1\r\n"
+#P2S: "RETR 1\r\n"
+#S2P: "+OK 1024 byte coming\r\n"
+##P2C: "+OK 1024 byte coming\r\n"
+#S2P: "abc\r"
+#S2P: Disconnect
+#.
+
+#S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#C2P: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+#P2S: "APOP mrose c4c9334bac560ecc979e58001b3e22fb\r\n"
+#S2P: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+#P2C: "+OK mrose's maildrop has 2 messages (320 octets)\r\n"
+#C2P: "RETR 1\r\n"
+#P2S: "RETR 1\r\n"
+#S2P: "+OK 1024 byte coming\r\n" \
+#"abc\r\n"
+#P2C: "+OK 1024 byte coming\r\n" \
+#"abc\r\n"
+#S2P: Disconnect
+#.
+
+# Authentication test
+
+StartPolicy
+	def config(self):
+		Pop3Proxy.config(self)
+		self.request["AUTH"] = POP3_REQ_ACCEPT
+EndPolicy
+
+#invalid AUTH
+#S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#C2P: "AUTH barmi\r\n"
+#P2C: "-ERR " $NIHIL "\r\n"
+#S2P: Disconnect
+#.
+
+#valid AUTH
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "AUTH barmi\r\n"
+P2S: "AUTH barmi\r\n"
+S2P: "+ AmFYig==\r\n"
+P2C: "+ AmFYig==\r\n"
+C2P: "BAcAQU5EUkVXLkNNVS5FRFUAOCAsho84kLN3/IJmrMG+25a4DT+nZImJjnTNHJUtxAA+o0KPKfHEcAFs9a3CL5Oe\r\n"
+P2S: "BAcAQU5EUkVXLkNNVS5FRFUAOCAsho84kLN3/IJmrMG+25a4DT+nZImJjnTNHJUtxAA+o0KPKfHEcAFs9a3CL5Oe\r\n"
+S2P: "+ or//EoAADZI=\r\n"
+P2C: "+ or//EoAADZI=\r\n"
+C2P: "DiAF5A4gA+oOIALuBkAAmw==\r\n"
+P2S: "DiAF5A4gA+oOIALuBkAAmw==\r\n"
+S2P: "+OK barmi authentication successful\r\n"
+P2C: "+OK barmi authentication successful\r\n"
+.
+
+#cancelled AUTH
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "AUTH barmi\r\n"
+P2S: "AUTH barmi\r\n"
+S2P: "+ AmFYig==\r\n"
+P2C: "+ AmFYig==\r\n"
+C2P: "*\r\n"
+P2S: "*\r\n"
+S2P: "-ERR authentication exchange failed\r\n"
+P2C: "-ERR authentication exchange failed\r\n"
+.
+
+# CAPA
+#
+#S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#C2P: "CAPA\r\n"
+#P2S: "CAPA\r\n"
+#S2P: "-ERR Invalid command, try one of: USER name, PASS string, APOP name digest, QUIT\r\n"
+#P2C: "-ERR Invalid command, try one of: USER name, PASS string, APOP name digest, QUIT\r\n"
+#C2P: "USER test\r\n"
+#P2S: "USER test\r\n"
+#S2P: "+OK test selected\r\n"
+#P2C: "+OK test selected\r\n"
+#C2P: "PASS test\r\n"
+#P2S: "PASS test\r\n"
+#S2P: "+OK maildrop locked and ready\r\n"
+#P2C: "+OK maildrop locked and ready\r\n"
+#.
+#
+#S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+#C2P: "CAPA\r\n"
+#P2S: "CAPA\r\n"
+#S2P: "+OK Capability list follows\r\n\
+#TOP\r\n\
+#USER\r\n\
+#SASL CRAM-MD5\r\n\
+#RESP-CODES\r\n\
+#LOGIN-DELAY 900\r\n\
+#PIPELINING\r\n\
+#EXPIRE 30\r\n\
+#UIDL\r\n\
+#IMPLEMENTATION information\r\n.\r\n"
+#P2C: "+OK Capability list follows\r\n\
+#TOP\r\n\
+#USER\r\n\
+#SASL CRAM-MD5\r\n\
+#RESP-CODES\r\n\
+#LOGIN-DELAY 900\r\n\
+#PIPELINING\r\n\
+#EXPIRE 30\r\n\
+#UIDL\r\n\
+#IMPLEMENTATION information\r\n.\r\n"
+#.
+
+
+#Bug 3893
+
+S2P: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+P2C: "+OK POP3 server ready <1896.697170952@dbc.mtview.ca.us>\r\n"
+C2P: "USER valaki\r\n"
+P2S: "USER valaki\r\n"
+S2P: "+OK name is a valid mailbox\r\n"
+P2C: "+OK name is a valid mailbox\r\n"
+C2P: "PASS barmi\r\n"
+P2S: "PASS barmi\r\n"
+S2P: "+OK maildrop locked and ready\r\n"
+P2C: "+OK maildrop locked and ready\r\n"
+C2P: "RETR 1\r\n"
+P2S: "RETR 1\r\n"
+S2P: "+OK 120 octets follows\r\n" \
+"En egy message sor vagyok\r\n" \
+"En pedig egy olyan sor" 0x00 0x00 0x00 " amiben null karakter van\r\n" \
+"Ez megint egy normalis sor.\r\n" \
+".\r\n"
+P2C: "+OK 120 octets follows\r\n" \
+"En egy message sor vagyok\r\n" \
+"En pedig egy olyan sor" 0x00 0x00 0x00 " amiben null karakter van\r\n" \
+"Ez megint egy normalis sor.\r\n" \
+".\r\n"
+.

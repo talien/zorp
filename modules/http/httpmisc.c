@@ -22,8 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: httpmisc.c,v 1.21 2004/02/03 10:57:59 bazsi Exp $
- *
  * Author: Balazs Scheidler <bazsi@balabit.hu>
  * Auditor: 
  * Last audited version: 
@@ -178,7 +176,7 @@ http_string_assign_url_decode(GString *part, gboolean permit_invalid_hex_escape,
 static gboolean
 http_string_assign_url_decode_unicode(GString *part, gboolean permit_invalid_hex_escape, const gchar *str, gint len, const gchar **reason)
 {
-  const guchar *src = str;
+  const guchar *src = (const guchar *) str;
   gchar *dst;
   gint left = len;
   
@@ -273,7 +271,7 @@ http_string_append_url_encode(GString *result, const gchar *unsafe_chars, const 
   gsize orig_len = result->len;
   
   g_string_set_size(result, orig_len + (len+1) * 3);
-  src = str;
+  src = (const guchar *) str;
   dst = result->str + orig_len;
   while (*src)
     {
@@ -315,7 +313,7 @@ http_string_append_url_encode_unicode(GString *result, const gchar *unsafe_chars
   gsize orig_len = result->len;
   
   g_string_set_size(result, orig_len + (len+1) * 6);
-  src = str;
+  src = (const guchar *) str;
   dst = result->str + orig_len;
   while (*src)
     {
@@ -461,7 +459,7 @@ http_string_assign_url_canonicalize_unicode(GString *result, gboolean permit_inv
 
   g_string_set_size(result, (len + 1) * 6);
   dst = result->str;
-  src = str;
+  src = (const guchar *) str;
   while (left)
     {
       gunichar c = (gunichar) *src;

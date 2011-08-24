@@ -3,8 +3,6 @@
  * Copyright (c) 2000, 2001 BalaBit IT Ltd, Budapest, Hungary
  * All rights reserved.
  *
- * $Id: sysdep.c,v 1.24 2004/04/15 11:41:49 bazsi Exp $
- *
  * Author  : Bazsi
  * Auditor :
  * Last audited version:
@@ -86,13 +84,13 @@ z_sysdep_init(const gchar *sysdep_tproxy_arg)
 {
   const gchar *sysdep_tproxy_str[] = 
   {
-    [0]                            NULL,
-    [Z_SD_TPROXY_LINUX22]          "linux22",
-    [Z_SD_TPROXY_NETFILTER_V12]    "tproxy12",
-    [Z_SD_TPROXY_IPF]              "ipf",
-    [Z_SD_TPROXY_NETFILTER_V20]    "tproxy20",
-    [Z_SD_TPROXY_NETFILTER_V30]    "tproxy30",
-    [Z_SD_TPROXY_NETFILTER_V40]    "tproxy40"
+    [0]                         = NULL,
+    [Z_SD_TPROXY_LINUX22]       = "linux22",
+    [Z_SD_TPROXY_NETFILTER_V12] = "tproxy12",
+    [Z_SD_TPROXY_IPF]           = "ipf",
+    [Z_SD_TPROXY_NETFILTER_V20] = "tproxy20",
+    [Z_SD_TPROXY_NETFILTER_V30] = "tproxy30",
+    [Z_SD_TPROXY_NETFILTER_V40] = "tproxy40"
   };
   gint sysdep_tproxy = z_sysdep_parse_tproxy_arg(sysdep_tproxy_arg);
   

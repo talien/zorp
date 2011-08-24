@@ -200,4 +200,3 @@ ZClass ZProxySslHostIface__class =
   sizeof(ZProxySslHostIface),
   &z_proxy_ssl_host_iface_funcs.super,
 };
-
