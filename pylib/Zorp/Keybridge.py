@@ -201,16 +201,14 @@ class X509KeyBridge(X509KeyManager):
                         except IndexError:
                                 passphrase = ""
                         self.trusted_ca = (OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(trusted_ca_files[0], 'r').read()),
-                                           OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, open(trusted_ca_files[1], 'r').read()),
-                                           passphrase)
+                                           OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, open(trusted_ca_files[1], 'r').read(), passphrase))
                         if untrusted_ca_files:
                                 try:
                                         passphrase = untrusted_ca_files[2]
                                 except IndexError:
                                         passphrase = ""
                                 self.untrusted_ca = (OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(untrusted_ca_files[0], 'r').read()),
-                                                     OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, open(untrusted_ca_files[1], 'r').read(),
-                                                     passphrase))
+                                                     OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, open(untrusted_ca_files[1], 'r').read(), passphrase))
                         try:
                                 self.lock_file = open('%s/.lock' % self.cache_directory, 'r+')
                         except IOError:
