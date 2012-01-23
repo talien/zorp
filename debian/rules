@@ -30,9 +30,7 @@ build-stamp:
 		--localstatedir=/var/lib/zorp \
 		--sysconfdir=/etc \
 		--with-pidfiledir=/var/run/zorp/ \
-		--disable-dmalloc \
-		$(DDEBUG) \
-		--enable-tproxy=netfilter
+		$(DDEBUG)
 
 	# Add here commands to compile the package.
 	$(MAKE)
@@ -130,7 +128,7 @@ binary-arch: build install
 #	dh_installinfo -a
 	dh_installchangelogs -a
 	dh_link -a
-	dh_strip -a --dbg-package=zorp --dbg-package=zorp-modules
+	dh_strip -a --dbg-package=zorp --dbg-package=zorp-modules --dbg-package=libzorp3.9-3
 	dh_compress -a
 	dh_fixperms -a
 	chmod 750 `pwd`/debian/zorp/etc/zorp

@@ -37,22 +37,28 @@
 #include <zorp/io.h>
 #include <zorp/tpsocket.h>
 #include <zorp/cap.h>
-#include <zorp/sysdep.h>
 
-#if ENABLE_NETFILTER_TPROXY
+enum
+{
+  ZDS_LISTEN = 1,
+  ZDS_ESTABLISHED = 2,
+} ZorpDgramFlags;
 
-#if ENABLE_NETFILTER_TPROXY_V12_FALLBACK
-#define in_tproxy in_tproxy_v12
-#include <zorp/nfiptproxy-kernel.h>
-#undef in_tproxy
+#ifndef IP_ORIGDSTADDR
+#define IP_ORIGDSTADDR 20
 #endif
 
-#include <zorp/nfiptproxy-kernelv2.h>
-
+#ifndef IP_RECVORIGDSTADDR
+#define IP_RECVORIGDSTADDR IP_ORIGDSTADDR
 #endif
 
-#define ZDS_LISTEN	0x0001
-#define ZDS_ESTABLISHED	0x0002
+#ifndef IPV6_ORIGDSTADDR
+#define IPV6_ORIGDSTADDR 74
+#endif
+
+#ifndef IPV6_RECVORIGDSTADDR
+#define IPV6_RECVORIGDSTADDR IPV6_ORIGDSTADDR
+#endif
 
 typedef struct _ZDgramSocketFuncs
 {
@@ -60,7 +66,6 @@ typedef struct _ZDgramSocketFuncs
   gboolean (*setup)(gint fd, guint flags, gint tos);
   GIOStatus (*recv)(gint fd, ZPktBuf **pack, ZSockAddr **from, ZSockAddr **to, gint *tos, gboolean peek, GError **error);
 } ZDgramSocketFuncs;
-
 
 /* Wrapper functions calling the underlying OS specific routines */
 
@@ -99,223 +104,6 @@ z_dgram_socket_recv(gint fd, ZPktBuf **pack, ZSockAddr **from, ZSockAddr **to, g
   return dgram_socket_funcs->recv(fd, pack, from, to, tos, peek, error);
 }
 
-/* OS dependant low-level functions */
-
-#if ENABLE_LINUX22_TPROXY || ENABLE_NETFILTER_LINUX22_FALLBACK
-
-/**
- * z_l22_dgram_socket_open:
- * @flags: Additional flags: ZDS_LISTEN for incoming, ZDS_ESTABLISHED for outgoing socket
- * @remote: Address of the remote endpoint
- * @local: Address of the local endpoint
- * @sock_flags: Flags for binding, see 'z_bind' for details
- * @error: not used
- *
- * Create a new UDP socket - Linux 2.2 ipf version.
- *
- * Returns:
- * -1 on error, socket descriptor otherwise
- */
-gint
-z_l22_dgram_socket_open(guint flags, ZSockAddr *remote, ZSockAddr *local, guint32 sock_flags, gint tos, GError **error G_GNUC_UNUSED)
-{
-  gint fd;
-  
-  z_enter();
-  fd = socket(z_map_pf(local->sa.sa_family), SOCK_DGRAM, 0);
-  if (fd < 0)
-    {
-      /*LOG
-        This message indicate that Zorp failed opening a new socket.
-        It is likely that Zorp reached some resource limit.
-       */
-      z_log(NULL, CORE_ERROR, 3, "Error opening socket; error='%s'", g_strerror(errno));
-      close(fd);
-      z_return(-1);
-    }
-
-  if (!z_dgram_socket_setup(fd, flags, tos))
-    {
-      /* z_dgram_socket_setup() already issued a log message */
-      close(fd);
-      z_return(-1);
-    }
-  
-  if (flags & ZDS_LISTEN)
-    {
-      if (z_bind(fd, local, sock_flags) != G_IO_STATUS_NORMAL)
-        {
-          /* z_bind already issued a log message */
-          close(fd);
-          z_return(-1);
-        }
-    }
-  else if (flags & ZDS_ESTABLISHED)
-    {
-      if (local && z_bind(fd, local, sock_flags) != G_IO_STATUS_NORMAL)
-        {
-          close(fd);
-          z_return(-1);
-        }
-      if (connect(fd, &remote->sa, remote->salen) == -1)
-        {
-          /*LOG
-            This message indicates that Zorp was unable to establish a UDP connection.
-           */
-          z_log(NULL, CORE_ERROR, 3, "Error connecting UDP socket (l22); error='%s'", g_strerror(errno));
-          close(fd);
-          z_return(-1);
-        }
-    }
-  z_return(fd);
-}
-
-/**
- * z_l22_dgram_socket_setup:
- * @fd: Socket descriptor to set up
- * @flags: Flags for binding, see 'z_bind' for details
- *
- * Returns:
- * FALSE if the setup operation failed, TRUE otherwise
- */
-gboolean
-z_l22_dgram_socket_setup(gint fd, guint flags, gint tos)
-{
-  gint tmp = 1;
-
-  z_enter();
-  setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &tmp, sizeof(tmp));
-  tmp = 1;
-  setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &tmp, sizeof(tmp));
-  if (flags & ZDS_LISTEN)
-    {
-#if ZORPLIB_ENABLE_TOS
-      /* enable receiving TOS on this socket */
-      tmp = 1;
-      if (setsockopt(fd, SOL_IP, IP_RECVTOS, &tmp, sizeof(tmp)) < 0)
-        {
-          z_log(NULL, CORE_ERROR, 3, "Error during setsockopt(SOL_IP, IP_RECVTOS); error='%s'", g_strerror(errno));
-          z_return(FALSE);
-        }
-#endif
-    }
-  else if (flags & ZDS_ESTABLISHED)
-    {
-      /* set TOS of packets sent from this socket */
-      z_fd_set_our_tos(fd, tos);
-    }
-  z_return(TRUE);
-}
-
-/**
- * z_l22_dgram_socket_recv:
- * @fd: Socket descriptor to read from
- * @packet: The received packet
- * @from_addr: Address of the remote endpoint
- * @to_addr: Address of the local endpoint
- * @error: not used
- *
- * Receive data from an UDP socket and encapsulate it in a ZPktBuf.
- * Provides address information about the source and destination of
- * the packet. - Linux 2.2 ipf version.
- *
- * Returns:
- * The status of the operation
- */
-GIOStatus
-z_l22_dgram_socket_recv(gint fd, ZPktBuf **packet, 
-                    ZSockAddr **from_addr, ZSockAddr **to_addr, 
-                    gint *tos,
-                    gboolean peek,
-                    GError **error G_GNUC_UNUSED)
-{
-  struct sockaddr_in from;
-  gchar buf[65536], ctl_buf[64];
-  struct msghdr msg;
-  struct iovec iov;
-  struct cmsghdr *cmsg;
-  gint rc;
-  
-  z_enter();
-  memset(&msg, 0, sizeof(msg));
-  msg.msg_name = &from;
-  msg.msg_namelen = sizeof(from);
-  msg.msg_controllen = sizeof(ctl_buf);
-  msg.msg_control = ctl_buf;
-  msg.msg_iovlen = 1;
-  msg.msg_iov = &iov;
-  iov.iov_base = buf;
-  iov.iov_len = sizeof(buf);
-  do
-    {                
-      rc = recvmsg(fd, &msg, MSG_PROXY | (peek ? MSG_PEEK : 0));
-    }
-  while (rc < 0 && errno == EINTR);
-  
-  if (rc < 0)
-    z_return(errno == EAGAIN ? G_IO_STATUS_AGAIN : G_IO_STATUS_ERROR);
-
-  *packet = z_pktbuf_new();
-  z_pktbuf_copy(*packet, buf, rc);
-  *from_addr = z_sockaddr_inet_new2(&from);
-  if (to_addr)
-    {
-      if (((struct sockaddr_in *) &from.sin_zero)->sin_family)
-        {
-          *to_addr = z_sockaddr_inet_new2((struct sockaddr_in *) &from.sin_zero);
-        }
-      else
-        {
-          struct sockaddr_in to;
-          socklen_t tolen = sizeof(to);
-          
-          getsockname(fd, (struct sockaddr *) &to, &tolen);
-          *to_addr = z_sockaddr_inet_new2(&to);
-        }
-    }
-  if (tos)
-    {
-      for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg))
-        {
-          if (cmsg->cmsg_level == SOL_IP && cmsg->cmsg_type == IP_TOS)
-            {
-              *tos = *(guchar *) CMSG_DATA(cmsg);
-              break;
-            }
-        }
-    }
-  z_return(G_IO_STATUS_NORMAL);
-  
-}
-
-ZDgramSocketFuncs z_l22_dgram_socket_funcs = 
-{
-  z_l22_dgram_socket_open,
-  z_l22_dgram_socket_setup,
-  z_l22_dgram_socket_recv
-};
-
-#endif
-
-#if ENABLE_NETFILTER_TPROXY
-
-#include <zorp/nfiptproxy-kernelv2.h>
-
-#ifndef IP_RECVORIGADDRS_V12
-#define IP_RECVORIGADDRS_V12 16
-#define IP_ORIGADDRS_V12     17
-#endif
-
-#endif
-
-
-#if ENABLE_NETFILTER_TPROXY || ENABLE_IPFILTER_TPROXY
-static gint z_nf_recvorigaddrs_opt = -1;
-
-#if ENABLE_NETFILTER_TPROXY
-static gint z_nf_origaddrs_opt = -1;
-#endif /* ENABLE_NETFILTER_TPROXY */
-
 
 /**
  * z_nf_dgram_socket_open:
@@ -335,11 +123,11 @@ gint
 z_nf_dgram_socket_open(guint flags, ZSockAddr *remote, ZSockAddr *local, guint32 sock_flags, gint tos, GError **error G_GNUC_UNUSED)
 {
   gint fd;
-  guint32 ip;
-  guint16 port;
   
   z_enter();
+
   g_assert(local != NULL);
+
   fd = socket(z_map_pf(local->sa.sa_family), SOCK_DGRAM, 0);
   if (fd < 0)
     {
@@ -363,16 +151,6 @@ z_nf_dgram_socket_open(guint flags, ZSockAddr *remote, ZSockAddr *local, guint32
     {
       if (z_bind(fd, local, sock_flags) != G_IO_STATUS_NORMAL)
         z_return(-1); /* z_bind already issued a log message */
-      if ((z_tp_query(fd, NULL, NULL) != -1) &&
-          (z_tp_set_flags(fd, ITP_LISTEN | ITP_UNIDIR) < 0))
-        {
-          /*LOG
-            This message indicates that the setsockopt failed, and Zorp can not listen on a foreign address.
-            */
-          z_log(NULL, CORE_ERROR, 3, "Error during setsockopt(SOL_IP, IP_TPROXY_FLAGS, ITP_LISTEN | ITP_UNIDIR); error='%s'", g_strerror(errno));
-          close(fd);
-          z_return(-1);
-        }
     }
   else if (flags & ZDS_ESTABLISHED)
     {
@@ -406,21 +184,6 @@ z_nf_dgram_socket_open(guint flags, ZSockAddr *remote, ZSockAddr *local, guint32
           close(fd);
           z_return(-1);
         }
-
-      /* test if it was a foreign address: an assignment exists and is not mark only */
-      if ((z_tp_query(fd, &ip, &port) != -1) &&
-          ((local_sa.sin_addr.s_addr != ip) || (local_sa.sin_port != port)))
-        {
-          z_tp_connect(fd, ((struct sockaddr_in *) &remote->sa)->sin_addr.s_addr, ((struct sockaddr_in *) &remote->sa)->sin_port);
-          if (z_tp_set_flags(fd, ITP_ESTABLISHED) < 0)
-            {
-              /*LOG
-               */
-              z_log(NULL, CORE_ERROR, 3, "Error during setsockopt(SOL_IP, IP_TPROXY_FLAGS, ITP_ESTABLISHED); error='%s'", g_strerror(errno));
-              close(fd);
-              z_return(-1);
-            }
-        }
     } /* flags & ZDS_ESTABLISHED */
   z_return(fd);
 }
@@ -445,7 +208,7 @@ z_nf_dgram_socket_setup(gint fd, guint flags, gint tos)
   if (flags & ZDS_LISTEN)
     {
       tmp = 1;
-      if (z_nf_recvorigaddrs_opt != -1 && setsockopt(fd, SOL_IP, z_nf_recvorigaddrs_opt, &tmp, sizeof(tmp)) < 0)
+      if (setsockopt(fd, SOL_IP, IP_RECVORIGDSTADDR, &tmp, sizeof(tmp)) < 0)
         {
           /*LOG
             This message indicates that the setsockopt failed.
@@ -468,10 +231,6 @@ z_nf_dgram_socket_setup(gint fd, guint flags, gint tos)
     }
   z_return(TRUE);
 }
-
-#endif /* ENABLE_NETFILTER_TPROXY || ENABLE_IPFILTER_TPROXY */
-
-#if ENABLE_NETFILTER_TPROXY
 
 /**
  * z_nf_dgram_socket_recv:
@@ -500,6 +259,7 @@ z_nf_dgram_socket_recv(gint fd, ZPktBuf **packet, ZSockAddr **from_addr, ZSockAd
   gint rc;
   
   z_enter();
+
   memset(&msg, 0, sizeof(msg));
   msg.msg_name = &from;
   msg.msg_namelen = sizeof(from);
@@ -531,24 +291,16 @@ z_nf_dgram_socket_recv(gint fd, ZPktBuf **packet, ZSockAddr **from_addr, ZSockAd
 
       for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg,cmsg))
         {
-          if (to_addr && cmsg->cmsg_level == SOL_IP && cmsg->cmsg_type == z_nf_origaddrs_opt)
+          if (to_addr && cmsg->cmsg_level == SOL_IP && cmsg->cmsg_type == IP_ORIGDSTADDR)
             {
-              struct in_origaddrs *ioa = (struct in_origaddrs *) CMSG_DATA(cmsg);
+              struct sockaddr_in *orig = (struct sockaddr_in *) CMSG_DATA(cmsg);
 
-              if (ioa->ioa_dstaddr.s_addr && ioa->ioa_dstport)
+              if (orig->sin_addr.s_addr && orig->sin_port)
                 {
-                  to.sin_family = AF_INET;
-                  to.sin_addr = ioa->ioa_dstaddr;
-                  to.sin_port = ioa->ioa_dstport;
+                  to.sin_family = orig->sin_family;
+                  to.sin_addr = orig->sin_addr;
+                  to.sin_port = orig->sin_port;
                   *to_addr = z_sockaddr_inet_new2(&to);
-                }
-
-              /* override source address returned by recvmsg */
-              if (ioa->ioa_srcaddr.s_addr && ioa->ioa_srcport)
-                {
-                  from.sin_family = AF_INET;
-                  from.sin_addr = ioa->ioa_srcaddr;
-                  from.sin_port = ioa->ioa_srcport;
                 }
             }
           else if (tos && cmsg->cmsg_level == SOL_IP && cmsg->cmsg_type == IP_TOS)
@@ -580,9 +332,6 @@ ZDgramSocketFuncs z_nf_dgram_socket_funcs =
   z_nf_dgram_socket_recv
 };
 
-#endif /* ENABLE_NETFILTER_TPROXY */
-
-
 /**
  * z_dgram_init:
  * @sysdep_tproxy: Required functionality to use: Z_SD_TPROXY_[LINUX22|NETFILTER_V12|NETFILTER_V20]
@@ -594,41 +343,12 @@ ZDgramSocketFuncs z_nf_dgram_socket_funcs =
  * TRUE on success
  */
 gboolean
-z_dgram_init(gint sysdep_tproxy)
+z_dgram_init(void)
 {
   z_enter();
-  switch (sysdep_tproxy)
-    {
-#if ENABLE_LINUX22_TPROXY
-    case Z_SD_TPROXY_LINUX22:
-      dgram_socket_funcs = &z_l22_dgram_socket_funcs;
-      break;
-#endif
-#if ENABLE_NETFILTER_TPROXY
-    case Z_SD_TPROXY_NETFILTER_V12:
-      z_nf_recvorigaddrs_opt = IP_RECVORIGADDRS_V12;
-      z_nf_origaddrs_opt = IP_ORIGADDRS_V12;
-      dgram_socket_funcs = &z_nf_dgram_socket_funcs;
-      break;
-      
-    case Z_SD_TPROXY_NETFILTER_V20:
-    case Z_SD_TPROXY_NETFILTER_V30:
-      z_nf_recvorigaddrs_opt = IP_RECVORIGADDRS;
-      z_nf_origaddrs_opt = IP_ORIGADDRS;
-      
-    case Z_SD_TPROXY_NETFILTER_V40:
-      dgram_socket_funcs = &z_nf_dgram_socket_funcs;
-      break;
-#endif
-    default:
-      /*LOG
-        This message indicates that Zorp was compiled without the required transparency support for UDP, or bad 
-        transparency support was specified on command line.
-        Check your "instances.conf" or your kernel tproxy capabilities.
-       */
-      z_log(NULL, CORE_ERROR, 0, "Required transparency support not compiled in (UDP); sysdep_tproxy='%d'", sysdep_tproxy);
-      z_return(FALSE);
-    }
+
+  dgram_socket_funcs = &z_nf_dgram_socket_funcs;
+
   z_return(TRUE);
 } 
 

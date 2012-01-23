@@ -34,7 +34,7 @@
 
 extern ZClass ZDGramListener__class;
 
-gboolean z_dgram_init(gint sysdep_tproxy);
+gboolean z_dgram_init(void);
 
 ZListener *
 z_dgram_listener_new(const gchar *session_id,

@@ -34,7 +34,7 @@ Description: An advanced protocol analyzing firewall
  .
  Debug symbols.
 
-Package: libzorp3.9-2
+Package: libzorp3.9-3
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -48,10 +48,21 @@ Description: The runtime library of Zorp
  .
  The library needed to run zorp.
 
+Package: libzorp3.9-3-dbg
+Architecture: any
+Priority: extra
+Depends: libzorp3.9-3 (= ${binary:Version}), ${misc:Depends}
+Description: An advanced protocol analyzing firewall
+ Zorp is a new generation firewall. It is essentially a transparent proxy
+ firewall, with strict protocol analyzing proxies, a modular architecture,
+ and fine-grained control over the mediated traffic. Configuration decisions
+ .
+ This package contains the debugging symbols for libzorp3.9-3.
+
 Package: libzorp3.9-dev
 Section: libdevel
 Architecture: any
-Depends: python-dev (>=2.6), libzorpll-dev, libzorp3.9-2 (= ${binary:Version}), ${misc:Depends}
+Depends: python-dev (>=2.6), libzorpll-dev, libzorp3.9-3 (= ${binary:Version}), ${misc:Depends}
 Conflicts: zorp-dev, libzorp0-dev
 Description: Development files needed to compile Zorp modules
  Zorp is a new generation firewall. It is essentially a transparent proxy

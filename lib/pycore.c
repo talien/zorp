@@ -36,7 +36,6 @@
 #include <zorp/log.h>
 #include <zorp/io.h>
 #include <zorp/policy.h>
-#include <zorp/sysdep.h>
 #include <zorp/streamfd.h>
 #include <zorp/cap.h>
 #include <zorp/szig.h>

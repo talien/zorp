@@ -1,5 +1,5 @@
 if PRO
-PRODIRS = solbuild zorpaddr zorpblgen
+PRODIRS = zorpaddr zorpblgen
 else
 PRODIRS =
 endif

@@ -19,7 +19,8 @@
 #include <zorp/log.h>
 #include <zorp/cap.h>
 #include <zorp/ssl.h>
-#include <zorp/sysdep.h>
+#include <zorp/dgram.h>
+#include <zorp/tpsocket.h>
 #include <zorp/poll.h>
 #include <zorp/szig.h>
 #include <zorp/tpsocket.h>
@@ -195,9 +196,6 @@ z_version(void)
          "Trace: %s\n"
          "Debug: %s\n"
          "IPOptions: %s\n"
-         "IPFilter-Tproxy: %s\n"
-         "Netfilter-Tproxy: %s\n"
-         "Linux22-Tproxy: %s\n\n"
          "%s\n"
          , 
          VERSION, 
@@ -207,9 +205,6 @@ z_version(void)
          ON_OFF_STR(ENABLE_TRACE),
          ON_OFF_STR(ENABLE_DEBUG),
          ON_OFF_STR(ENABLE_IPOPTIONS),
-         ON_OFF_STR(ENABLE_IPFILTER_TPROXY),
-         ON_OFF_STR(ENABLE_NETFILTER_TPROXY),
-         ON_OFF_STR(ENABLE_LINUX22_TPROXY),
          z_libzorpll_version_info()
          );
 }
@@ -223,7 +218,6 @@ static const gchar *instance_policy_list[MAX_SOFT_INSTANCES + 1];
 static gint instance_count = 1;
 static const gchar *policy_file = ZORP_POLICY_FILE;
 static gboolean log_escape = FALSE;
-const gchar *tproxy_impl = NULL;
 static gboolean display_version = FALSE;
 
 static gboolean
@@ -245,11 +239,7 @@ static GOptionEntry zorp_options[] =
   { "policy",       'p',                     0, G_OPTION_ARG_STRING, &policy_file,          "Set policy file", "<policy>" },
   { "version",      'V',                     0, G_OPTION_ARG_NONE,   &display_version,      "Display version number", NULL },
   { "log-escape",     0,                     0, G_OPTION_ARG_NONE,   &log_escape,           "Escape log messages to avoid non-printable characters", NULL },
-  { "tproxy",       'Y',                     0, G_OPTION_ARG_STRING, &tproxy_impl,          "Force the TPROXY implementation to use", "<netfilter|linux22|ipf>" },
   { "deadlock-check-timeout", 0,             0, G_OPTION_ARG_INT,    &deadlock_checker_timeout, "Timeout for deadlock detection queries in seconds", NULL },
-#if ENABLE_NETFILTER_TPROXY || ENABLE_IPFILTER_TPROXY
-  { "autobind-ip",  'B',                     0, G_OPTION_ARG_STRING, &auto_bind_ip,         "Set autobind-ip", "<ipaddr>" },
-#endif
   { NULL,             0,                     0,                   0, NULL,                  NULL, NULL }
 };
 
@@ -429,17 +419,8 @@ main(int argc, char *argv[])
    */
   z_log(NULL, CORE_DEBUG, 0, "Starting up; verbose_level='%d', version='%s', startup_id='%d'", z_log_get_verbose_level(), VERSION, startup_id);
 
-  if (!z_sysdep_init(tproxy_impl))
-    {
-      /*LOG
-        This message indicates that some of the system dependent subsystems
-        (tproxy for example) could not be initialized.
-       */
-      z_log(NULL, CORE_ERROR, 0, "Error initializing system dependent subsystems;");
-      fprintf(stderr, "%s: Error initializing system dependent subsystems\n", instance_name);
-      exit_code = 1;
-      goto deinit_exit;
-    }
+  z_dgram_init();
+  z_tp_socket_init();
   z_ssl_init();
   z_szig_init(instance_name);
 
@@ -481,7 +462,6 @@ main(int argc, char *argv[])
   z_dispatch_destroy();
   z_ifmon_destroy();
   z_main_loop_destroy();
-  z_sysdep_destroy();
   z_ssl_destroy();
   z_log_destroy();
   z_proxy_hash_destroy();

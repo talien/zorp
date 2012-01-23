@@ -4,20 +4,11 @@
 /* Enable debugging */
 #define ENABLE_DEBUG 0
 
-/* Enable ipf based tproxy */
-#define ENABLE_IPFILTER_TPROXY 0
-
 /* Enable IP option processing */
 #define ENABLE_IPOPTIONS 0
 
 /* Enable IPv6 support */
 #define ENABLE_IPV6 0
-
-/* Enable Linux 2.2 tproxy behaviour */
-#define ENABLE_LINUX22_TPROXY 0
-
-/* Enable netfilter tproxy */
-#define ENABLE_NETFILTER_TPROXY 1
 
 /* Enable prefork support */
 #define ENABLE_PREFORK 0
@@ -132,10 +123,10 @@
 #define STDC_HEADERS 1
 
 /* Zorp package version */
-#define VERSION "3.9.2"
+#define VERSION "3.9.3"
 
 /* Configuration date */
-#define ZORP_CONFIG_DATE "2011/08/13"
+#define ZORP_CONFIG_DATE "2012/01/21"
 
 /* datadir */
 #define ZORP_DATADIR "/home/coroner/zwa/install/zorp-mainline-4.0/share/zorp"
@@ -153,7 +144,7 @@
 #define ZORP_PRODUCT_NAME "Zorp Professional"
 
 /* Zorp source revision number */
-#define ZORP_SOURCE_REVISION "ssh+git://coroner@git.balabit//var/scm/git/zorp/zorp-core--mainline--4.0#master#c52537337d6add922cdb65a04767d8a74b2eef12"
+#define ZORP_SOURCE_REVISION "ssh+git://coroner@git.balabit//var/scm/git/zorp/zorp-core--mainline--4.0#3.9.3#ebf210012a3d71a0f0b8cb429ecbc46723ad47e4"
 
 /* localstatedir */
 #define ZORP_STATEDIR "/home/coroner/zwa/install/zorp-mainline-4.0/var"
