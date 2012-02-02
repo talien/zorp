@@ -381,7 +381,7 @@ http_policy_header_manip(HttpProxy *self, ZPolicyObj *args)
         }
       else
         {
-          z_policy_var_ref(z_policy_none);
+          z_policy_none_ref();
           res = z_policy_none;
         }
       break;
@@ -395,7 +395,7 @@ http_policy_header_manip(HttpProxy *self, ZPolicyObj *args)
         p = http_add_header(&self->headers[side], header, strlen(header), new_value, strlen(new_value));
       g_string_assign(p->value, new_value);
       p->present = TRUE;
-      z_policy_var_ref(z_policy_none);
+      z_policy_none_ref();
       res = z_policy_none;
       break;
 

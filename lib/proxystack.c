@@ -126,7 +126,7 @@ z_proxy_stack_proxy(ZProxy *self, ZPolicyObj *proxy_class, ZStackedProxy **stack
     }
   else
     {
-      Py_XINCREF(Py_None);
+      Py_INCREF(Py_None);
       stack_info_obj = Py_None;
     }
 
@@ -235,8 +235,6 @@ z_proxy_control_stream_read(ZStream *stream, GIOCondition cond G_GNUC_UNUSED, gp
   if (strcmp(request->command->str, "SETVERDICT") == 0
      )
     {
-      ZProxyStackIface *siface;
-      
       iface = z_proxy_find_iface(proxy, Z_CLASS(ZProxyStackIface));
       if (!iface)
         {
@@ -244,7 +242,6 @@ z_proxy_control_stream_read(ZStream *stream, GIOCondition cond G_GNUC_UNUSED, gp
           goto error;
         }
         
-      siface = (ZProxyBasicIface *) iface;
       if (strcmp(request->command->str, "SETVERDICT") == 0)
         {
           ZVerdict verdict;

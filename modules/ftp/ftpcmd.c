@@ -1481,7 +1481,7 @@ ftp_command_parse_PASV(FtpProxy *self)
       SET_ANSWER(MSG_COMMAND_NOT_ALLOWED_HERE);
       z_proxy_return(self, FTP_REQ_REJECT);
     }
-  z_proxy_return(self, FTP_REQ_ACCEPT);
+  z_proxy_return(self, res);
 }
 
 guint
@@ -1872,7 +1872,7 @@ ftp_command_parse_EPSV(FtpProxy *self)
       SET_ANSWER(MSG_COMMAND_NOT_ALLOWED_HERE);
       z_proxy_return(self, FTP_REQ_REJECT);
     }
-  z_proxy_return(self, FTP_REQ_ACCEPT);
+  z_proxy_return(self, res);
 }
 
 guint

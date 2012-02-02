@@ -412,7 +412,7 @@ z_policy_stream_write(PyObject *o, PyObject *args)
       return NULL;
     }
   
-  Py_XINCREF(Py_None);
+  Py_INCREF(Py_None);
   return Py_None;
 }
 
@@ -430,7 +430,7 @@ z_policy_stream_close(PyObject *o, PyObject *args G_GNUC_UNUSED)
   ZPolicyStream *self = (ZPolicyStream *) o;
 
   z_stream_close(self->stream, NULL);
-  Py_XINCREF(Py_None);
+  Py_INCREF(Py_None);
   return Py_None;
 }
 

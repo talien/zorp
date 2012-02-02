@@ -394,7 +394,7 @@ z_policy_dict_string_parse_args(ZPolicyDict *self G_GNUC_UNUSED, ZPolicyDictEntr
             }
           else
             {
-              gsize tmp;
+              G_GNUC_UNUSED gsize tmp;
               g_assert((e->flags & (Z_VF_WRITE+Z_VF_CFG_WRITE)) == 0);
 
               e->value = va_arg(args, gchar *);
