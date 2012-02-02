@@ -295,30 +295,12 @@ PyMethodDef z_policy_attach_funcs[] =
 
 static PyTypeObject z_policy_attach_type = 
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "ZPolicyAttach",
-  sizeof(ZPolicyAttach),
-  0,
-  (destructor) z_policy_attach_free,
-  0,
-  (getattrfunc) z_policy_attach_getattr,
-  0,
-  0,
-  0, /*(reprfunc) z_policy_attach_repr,*/
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  "ZPolicyAttach class for Zorp",
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type,0)
+  .tp_name = "ZPolicyAttach",
+  .tp_basicsize = sizeof(ZPolicyAttach),
+  .tp_dealloc = (destructor) z_policy_attach_free,
+  .tp_getattr = (getattrfunc) z_policy_attach_getattr,
+  .tp_doc = "ZPolicyAttach class for Zorp"
 };
 
 
