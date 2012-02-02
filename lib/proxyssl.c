@@ -1282,6 +1282,7 @@ z_proxy_ssl_setup_handshake(ZProxySSLHandshake *handshake)
       else
         ctx = SSL_CTX_new(SSLv23_client_method());
     }
+#ifndef OPENSSL_NO_SSL2
   else if (strcmp(self->ssl_opts.ssl_method[side]->str, "SSLv2") == 0)
     {
       if (side == EP_CLIENT)
@@ -1289,6 +1290,7 @@ z_proxy_ssl_setup_handshake(ZProxySSLHandshake *handshake)
       else
         ctx = SSL_CTX_new(SSLv2_client_method());
     }
+#endif
   else if (strcmp(self->ssl_opts.ssl_method[side]->str, "SSLv3") == 0)
     {
       if (side == EP_CLIENT)
