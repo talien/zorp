@@ -394,7 +394,7 @@ z_policy_dict_string_parse_args(ZPolicyDict *self G_GNUC_UNUSED, ZPolicyDictEntr
             }
           else
             {
-              gsize tmp;
+              G_GNUC_UNUSED gsize tmp;
               g_assert((e->flags & (Z_VF_WRITE+Z_VF_CFG_WRITE)) == 0);
 
               e->value = va_arg(args, gchar *);
@@ -599,30 +599,12 @@ z_policy_method_free(ZPolicyMethod *self)
 
 static PyTypeObject z_policy_method_type = 
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "ZPolicyMethod",
-  sizeof(ZPolicyMethod),
-  0,
-  (destructor) z_policy_method_free, 
-  0,                                  /* tp_print */
-  0,                                  /* tp_getattr */
-  0,                                  /* tp_setattr */
-  0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
-  0,                                  /* tp_as_number */
-  0,                                  /* tp_as_sequence */
-  0,                                  /* tp_as_mapping */
-  0,                                  /* tp_hash */
-  (ternaryfunc) z_policy_method_call,/* tp_call */
-  0,                                  /* tp_str */
-  0,                                  /* tp_getattro */
-  0,                                  /* tp_setattro */
-  0,                                  /* tp_as_buffer */
-  0,                                  /* flags */
-  "ZPolicyMethod class for Zorp",        /* docstring */
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  .tp_name = "ZPolicyMethod",
+  .tp_basicsize = sizeof(ZPolicyMethod),
+  .tp_dealloc = (destructor) z_policy_method_free,
+  .tp_call = (ternaryfunc) z_policy_method_call,
+  .tp_doc = "ZPolicyMethod class for Zorp"
 };
 
 /**
@@ -1132,30 +1114,12 @@ PyMappingMethods z_policy_hash_mapping =
 
 PyTypeObject z_policy_hash_type =
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "Zorp hash",
-  sizeof(ZPolicyHash),
-  0,
-  (destructor) z_policy_hash_free,
-  0,                                  /* tp_print */
-  0,                                  /* tp_getattr */
-  0,                                  /* tp_setattr */
-  0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
-  0,                                  /* tp_as_number */
-  0,                                  /* tp_as_sequence */
-  &z_policy_hash_mapping,             /* tp_as_mapping */
-  0,                                  /* tp_hash */
-  0,                                  /* tp_call */
-  0,                                  /* tp_str */
-  0,                                  /* tp_getattro */
-  0,                                  /* tp_setattro */
-  0,                                  /* tp_as_buffer */
-  0,                                  /* flags */
-  "ZPolicyHash class for Zorp",          /* docstring */
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  .tp_name = "Zorp hash",
+  .tp_basicsize = sizeof(ZPolicyHash),
+  .tp_dealloc = (destructor) z_policy_hash_free,
+  .tp_as_mapping = &z_policy_hash_mapping,
+  .tp_doc = "ZPolicyHash class for Zorp"
 };
 
 void
@@ -1441,30 +1405,12 @@ PyMappingMethods z_policy_dim_hash_mapping =
 
 PyTypeObject z_policy_dim_hash_type = 
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "Zorp Multidimensional hash",
-  sizeof(ZPolicyDimHash),
-  0,
-  (destructor) z_policy_dim_hash_free, 
-  0,                                  /* tp_print */
-  0,                                  /* tp_getattr */
-  0,                                  /* tp_setattr */
-  0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
-  0,                                  /* tp_as_number */
-  0,                                  /* tp_as_sequence */
-  &z_policy_dim_hash_mapping,        /* tp_as_mapping */
-  0,                                  /* tp_hash */
-  0,  				      /* tp_call */
-  0,                                  /* tp_str */
-  0,                                  /* tp_getattro */
-  0,                                  /* tp_setattro */
-  0,                                  /* tp_as_buffer */
-  0,                                  /* flags */
-  "ZPolicyDimHash class for Zorp",       /* docstring */
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  .tp_name = "Zorp Multidimensional hash",
+  .tp_basicsize = sizeof(ZPolicyDimHash),
+  .tp_dealloc = (destructor) z_policy_dim_hash_free,
+  .tp_as_mapping = &z_policy_dim_hash_mapping,
+  .tp_doc = "ZPolicyDimHash class for Zorp"
 };
 
 static void

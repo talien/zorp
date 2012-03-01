@@ -24,7 +24,7 @@ AC_INIT(zorp/main.c)
 dnl ***************************************************************************
 dnl Definitions
 
-PACKAGE=zorp-pro
+PACKAGE=zorp
 VERSION=`cat $srcdir/VERSION`
 ZORP_PRODUCT_NAME="Zorp Professional"
 ZORP_LICENSE_VERSION="3.4"
@@ -34,14 +34,8 @@ dnl Dependencies
 
 GLIB_MIN_VERSION="2.2.1"
 ZORPLL_MIN_VERSION="3.9.1.0"
-ZORPLIC_MIN_VERSION="4.0.0"
-ZORPMISC_MIN_VERSION="4.0.1.0"
 OPENSSL_MIN_VERSION="0.9.8"
 PYTHON_MIN_VERSION="2.6"
-OSIP_MIN_VERSION="2.2.1"
-OSIP_MAX_VERSION="3.4"
-# all samba libs declare themselves as version 0
-WBCLIENT_MIN_VERSION=0
 UUID_MIN_VERSION=2.17
 
 dnl ***************************************************************************
@@ -63,21 +57,6 @@ if test -r $srcdir/dist.conf; then
         # values for parameters that are already set
         source $srcdir/dist.conf
         fi
-
-if test -z "$ZORP_PACKAGE_LICENSE"; then
-        ZORP_PACKAGE_LICENSE="pro"
-fi
-
-if test "$ZORP_PACKAGE_LICENSE" = "gpl"; then
-        PACKAGE="zorp"
-        PACKAGE_SUFFIX=""
-elif test "$ZORP_PACKAGE_LICENSE" = "pro"; then
-        PACKAGE_SUFFIX="-pro"
-else
-        AC_ERROR(Invalid license type: %s)
-fi
-
-AM_CONDITIONAL(PRO, test x$ZORP_PACKAGE_LICENSE = xpro)
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
@@ -284,39 +263,6 @@ PKG_CHECK_MODULES(ZORPLL, zorplibll >= $ZORPLL_MIN_VERSION,,
 PKG_CHECK_MODULES(OPENSSL, openssl >= $OPENSSL_MIN_VERSION,,
         AC_MSG_ERROR(Cannot find OpenSSL library version >= $OPENSSL_MIN_VERSION: is pkg-config in path?))
 
-if test "$ZORP_PACKAGE_LICENSE" = "pro"; then
-
-	save_CPPFLAGS=$CPPFLAGS
-	CPPFLAGS="$CPPFLAGS $OPENSSL_CFLAGS"
-	AC_CHECK_HEADER(openssl/ts.h, [], [AC_MSG_ERROR([OpenSSL header file <openssl/ts.h> is missing])])
-	CPPFLAGS=$save_CPPFLAGS
-
-	PKG_CHECK_MODULES(OSIP, libosip2 < $OSIP_MAX_VERSION,,
-		AC_MSG_ERROR(Cannot find osip2 library version >= $OSIP_MIN_VERSION and < $OSIP_MAX_VERSION: is pkg-config in path?))
-
-	PKG_CHECK_MODULES(ZORPLIC, libzlicense >= $ZORPLIC_MIN_VERSION,,
-		AC_MSG_ERROR(Cannot find ZORP license library version >= $ZORPLIC_MIN_VERSION: is pkg-config in path?))
-
-	PKG_CHECK_MODULES(ZORPMISC, libzmisc >= $ZORPMISC_MIN_VERSION,,
-		AC_MSG_ERROR(Cannot find Zorp Misc library version >= $ZORPMISC_MIN_VERSION: is pkg-config in path?))
-
-        PKG_CHECK_MODULES(XMLSEC, xmlsec1-openssl >= 1.0.0 libxml-2.0 libxslt,,
-                AC_MSG_ERROR(Cannot find libxmlsec1 libxml-2.0 or libxslt))
-
-	PKG_CHECK_MODULES(WBCLIENT, wbclient >= $WBCLIENT_MIN_VERSION,,
-		AC_MSG_ERROR(Cannot find Samba wbclient library version >= $WBCLIENT_MIN_VERSION: is pkg-config in path?))
-
-	AC_CHECK_LIB(pcap, pcap_open_live, PCAP_LIBS="$PCAP_LIBS -lpcap")
-
-	PKG_CHECK_MODULES(UUID, uuid >= $UUID_MIN_VERSION,,
-		AC_MSG_ERROR(Cannot find uuid library version >= $UUID_MIN_VERSION: is pkg-config in path?))
-
-	AC_CHECK_HEADERS(google/coredumper.h)
-	AC_CHECK_LIB(coredumper, WriteCoreDump, COREDUMP_LIBS="$COREDUMP_LIBS -lcoredumper")
-
-fi
-
-
 dnl
 dnl Locating Python libraries
 dnl  
@@ -446,10 +392,6 @@ AC_SUBST(RELEASE_TAG)
 AC_SUBST(SNAPSHOT_VERSION)
 AC_SUBST(SOURCE_REVISION)
 
-AC_SUBST(ZORP_PACKAGE_LICENSE)
-AC_SUBST(PACKAGE_SUFFIX)
-
-AC_DEFINE_UNQUOTED(ZORP_LICENSE_VERSION, "$ZORP_LICENSE_VERSION", [Required license version])
 AC_DEFINE_UNQUOTED(ZORP_PRODUCT_NAME, "$ZORP_PRODUCT_NAME", [Required product name in license])
 
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Zorp package version])
@@ -543,7 +485,6 @@ ipoptions: $enable_ip_options
 ipv6: $enable_ipv6
 prefork: $enable_prefork
 modules: $MODULE_DIRS
-License: $ZORP_PACKAGE_LICENSE
 
 
 EOF
@@ -559,24 +500,13 @@ AC_SUBST(LIBZORP_LT_AGE)
 
 AC_SUBST(GLIB_MIN_VERSION)
 AC_SUBST(ZORPLL_MIN_VERSION)
-AC_SUBST(ZORPLIC_MIN_VERSION)
-AC_SUBST(ZORPMISC_MIN_VERSION)
 AC_SUBST(OPENSSL_MIN_VERSION)
 AC_SUBST(PYTHON_MIN_VERSION)
-AC_SUBST(OSIP_MIN_VERSION)
-AC_SUBST(OSIP_MAX_VERSION)
 AC_SUBST(CURRDATE)
 AC_SUBST(pidfiledir)
 
-if test "$ZORP_PACKAGE_LICENSE" = "pro"; then
-PRO_FILES="zorpaddr/Makefile zorpblgen/Makefile"
-else
-PRO_FILES=
-fi
-
 AC_OUTPUT(
 zorp-config
-
 Makefile 
 zorp/Makefile 
 zorp/urlfilter/Makefile
@@ -601,7 +531,18 @@ tests/python/Makefile
 tests/python/runtest.sh
 tests/unit/Makefile
 tests/kzorp/Makefile
-$PRO_FILES
-
- modules/anypy/Makefile modules/finger/Makefile modules/ftp/Makefile modules/ftp/tests/Makefile modules/http/Makefile modules/http/tests/Makefile modules/http/messages/Makefile modules/plug/Makefile modules/pop3/Makefile modules/pop3/messages/Makefile modules/pop3modules/smtp/Makefile modules/smtp/tests/Makefile modules/telnet/Makefile modules/whois/Makefile
+modules/anypy/Makefile
+modules/finger/Makefile
+modules/ftp/Makefile
+modules/ftp/tests/Makefile
+modules/http/Makefile
+modules/http/tests/Makefile
+modules/http/messages/Makefile
+modules/plug/Makefile
+modules/pop3/Makefile
+modules/pop3/messages/Makefile
+modules/smtp/Makefile
+modules/smtp/tests/Makefile
+modules/telnet/Makefile
+modules/whois/Makefile
 )

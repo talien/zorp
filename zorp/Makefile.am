@@ -1,11 +1,8 @@
 pkglibdir=$(libdir)/zorp
+pkglibexecdir=$(libdir)/zorp
 LIBS=@ZORP_LIBS@
 
-if PRO
-SUBDIRS = urlfilter
-endif
-
-pkglib_PROGRAMS = zorp
+pkglibexec_PROGRAMS = zorp
 
 zorp_SOURCES = main.c 
 

@@ -411,7 +411,7 @@ z_policy_dispatch_destroy_method(ZPolicyDispatch *self, PyObject *args G_GNUC_UN
   Py_XDECREF(self->handler);
   self->handler = NULL;
 
-  Py_XINCREF(Py_None);
+  Py_INCREF(Py_None);
   return Py_None;
 }
 
@@ -614,30 +614,12 @@ static PyMethodDef z_policy_dispatch_methods[] =
 
 static PyTypeObject z_policy_dispatch_type = 
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "ZPolicyDispatch",
-  sizeof(ZPolicyDispatch),
-  0,
-  (destructor) z_policy_dispatch_free,
-  0,
-  (getattrfunc) z_policy_dispatch_getattr,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  "ZPolicyDispatch class for Zorp",
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  .tp_name = "ZPolicyDispatch",
+  .tp_basicsize = sizeof(ZPolicyDispatch),
+  .tp_dealloc = (destructor) z_policy_dispatch_free,
+  .tp_getattr =(getattrfunc) z_policy_dispatch_getattr,
+  .tp_doc = "ZPolicyDispatch class for Zorp",
 };
 
 /**
@@ -665,7 +647,7 @@ z_policy_dispatch_get_kzorp_result(PyObject *o G_GNUC_UNUSED, PyObject *args)
   memset(&buf, 0, sizeof(buf));
 
   if (!z_kzorp_get_lookup_result(fd, &buf)) {
-    Py_XINCREF(Py_None);
+    Py_INCREF(Py_None);
     return Py_None;
   }
 

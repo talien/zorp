@@ -588,7 +588,7 @@ z_proxy_ssl_load_local_ca_list(ZProxySSLHandshake *handshake)
       if (!sk)
         z_proxy_return(self, FALSE);
 
-      n = sk_X509_NAME_num(self->ssl_opts.local_ca_list[ndx]);
+      n = sk_X509_num(self->ssl_opts.local_ca_list[ndx]);
       for (i = 0; i < n; i++)
         sk_X509_NAME_push(sk, X509_NAME_dup(X509_get_subject_name(sk_X509_value(self->ssl_opts.local_ca_list[ndx],
                                                                                 i))));
@@ -1282,6 +1282,7 @@ z_proxy_ssl_setup_handshake(ZProxySSLHandshake *handshake)
       else
         ctx = SSL_CTX_new(SSLv23_client_method());
     }
+#ifndef OPENSSL_NO_SSL2
   else if (strcmp(self->ssl_opts.ssl_method[side]->str, "SSLv2") == 0)
     {
       if (side == EP_CLIENT)
@@ -1289,6 +1290,7 @@ z_proxy_ssl_setup_handshake(ZProxySSLHandshake *handshake)
       else
         ctx = SSL_CTX_new(SSLv2_client_method());
     }
+#endif
   else if (strcmp(self->ssl_opts.ssl_method[side]->str, "SSLv3") == 0)
     {
       if (side == EP_CLIENT)
