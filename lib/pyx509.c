@@ -62,7 +62,7 @@ z_py_zorp_certificate_new(X509 *cert)
     }
   else
     {
-      Py_XINCREF(Py_None);
+      Py_INCREF(Py_None);
       return Py_None;
     }
 }
@@ -123,30 +123,12 @@ z_py_zorp_certificate_free(ZorpCertificate *self)
 
 static PyTypeObject z_py_zorp_certificate_type =
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "Zorp Certificate",
-  sizeof(ZorpCertificate),
-  0,
-  (destructor) z_py_zorp_certificate_free,
-  0,                                  /* tp_print */
-  z_py_zorp_certificate_getattr,      /* tp_getattr */
-  0,                                  /* tp_setattr */
-  0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
-  0,                                  /* tp_as_number */
-  0,                                  /* tp_as_sequence */
-  0,                                  /* tp_as_mapping */
-  0,                                  /* tp_hash */
-  0,                                  /* tp_call */
-  0,                                  /* tp_str */
-  0,                                  /* tp_getattro */
-  0,                                  /* tp_setattro */
-  0,                                  /* tp_as_buffer */
-  0,                                  /* flags */
-  "ZorpCertificate class for Zorp",   /* docstring */
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  .tp_name = "Zorp Certificate",
+  .tp_basicsize = sizeof(ZorpCertificate),
+  .tp_dealloc = (destructor) z_py_zorp_certificate_free,
+  .tp_getattr = z_py_zorp_certificate_getattr,      /* tp_getattr */
+  .tp_doc = "ZorpCertificate class for Zorp",   /* docstring */
 };
 
 typedef struct _ZorpCRL
@@ -209,30 +191,12 @@ z_py_zorp_crl_free(ZorpCRL *self)
 
 static PyTypeObject z_py_zorp_crl_type =
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "Zorp CRL",
-  sizeof(ZorpCRL),
-  0,
-  (destructor) z_py_zorp_crl_free,
-  0,                                  /* tp_print */
-  z_py_zorp_crl_getattr,              /* tp_getattr */
-  0,                                  /* tp_setattr */
-  0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
-  0,                                  /* tp_as_number */
-  0,                                  /* tp_as_sequence */
-  0,                                  /* tp_as_mapping */
-  0,                                  /* tp_hash */
-  0,                                  /* tp_call */
-  0,                                  /* tp_str */
-  0,                                  /* tp_getattro */
-  0,                                  /* tp_setattro */
-  0,                                  /* tp_as_buffer */
-  0,                                  /* flags */
-  "ZorpCRL class for Zorp",           /* docstring */
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  .tp_name = "Zorp CRL",
+  .tp_basicsize = sizeof(ZorpCRL),
+  .tp_dealloc = (destructor) z_py_zorp_crl_free,
+  .tp_getattr = z_py_zorp_crl_getattr,
+  .tp_doc = "ZorpCRL class for Zorp"
 };
 
 typedef struct _ZorpCertList
@@ -333,7 +297,7 @@ z_py_zorp_cert_list_ass_subscript(ZorpCertList *self, PyObject *ndx, PyObject *n
 
   if (i != -1)
     {
-      X509 *tmp;
+      G_GNUC_UNUSED X509 *tmp;
       X509 *p = sk_X509_value(self->certs, i);
       tmp = sk_X509_delete(self->certs, i);
       X509_free(p);
@@ -362,30 +326,12 @@ static PyMappingMethods z_py_zorp_cert_list_mapping =
 
 static PyTypeObject z_py_zorp_cert_list_type =
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "Zorp Certificate List",
-  sizeof(ZorpCertList),
-  0,
-  (destructor) z_py_zorp_cert_list_free,
-  0,                                  /* tp_print */
-  0,                                  /* tp_getattr */
-  0,                                  /* tp_setattr */
-  0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
-  0,                                  /* tp_as_number */
-  0,                                  /* tp_as_sequence */
-  &z_py_zorp_cert_list_mapping,        /* tp_as_mapping */
-  0,                                  /* tp_hash */
-  0,                                  /* tp_call */
-  0,                                  /* tp_str */
-  0,                                  /* tp_getattro */
-  0,                                  /* tp_setattro */
-  0,                                  /* tp_as_buffer */
-  0,                                  /* flags */
-  "ZorpCertList class for Zorp",   /* docstring */
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  .tp_name = "Zorp Certificate List",
+  .tp_basicsize = sizeof(ZorpCertList),
+  .tp_dealloc = (destructor) z_py_zorp_cert_list_free,
+  .tp_as_mapping = &z_py_zorp_cert_list_mapping,        /* tp_as_mapping */
+  .tp_doc = "ZorpCertList class for Zorp",   /* docstring */
 };
 
 typedef struct _ZorpCertNameList
@@ -415,7 +361,7 @@ z_py_zorp_cert_name_list_free(ZorpCertNameList *self)
 static Py_ssize_t
 z_py_zorp_cert_name_list_length(ZorpCertNameList *self)
 {
-  return sk_X509_num(self->cert_names);
+  return sk_X509_NAME_num(self->cert_names);
 }
 
 static int
@@ -474,30 +420,12 @@ static PyMappingMethods z_py_zorp_cert_name_list_mapping =
 
 static PyTypeObject z_py_zorp_cert_name_list_type =
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "Zorp Certificate Name List",
-  sizeof(ZorpCertNameList),
-  0,
-  (destructor) z_py_zorp_cert_name_list_free,
-  0,                                  /* tp_print */
-  0,                                  /* tp_getattr */
-  0,                                  /* tp_setattr */
-  0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
-  0,                                  /* tp_as_number */
-  0,                                  /* tp_as_sequence */
-  &z_py_zorp_cert_name_list_mapping,        /* tp_as_mapping */
-  0,                                  /* tp_hash */
-  0,                                  /* tp_call */
-  0,                                  /* tp_str */
-  0,                                  /* tp_getattro */
-  0,                                  /* tp_setattro */
-  0,                                  /* tp_as_buffer */
-  0,                                  /* flags */
-  "ZorpCertNameList class for Zorp",   /* docstring */
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  .tp_name = "Zorp Certificate Name List",
+  .tp_basicsize = sizeof(ZorpCertNameList),
+  .tp_dealloc = (destructor) z_py_zorp_cert_name_list_free,
+  .tp_as_mapping = &z_py_zorp_cert_name_list_mapping,
+  .tp_doc = "ZorpCertNameList class for Zorp"
 };
 
 typedef struct _ZorpCRLList
@@ -598,7 +526,7 @@ z_py_zorp_crl_list_ass_subscript(ZorpCRLList *self, PyObject *ndx, PyObject *new
 
   if (i != -1)
     {
-      X509_CRL *tmp;
+      G_GNUC_UNUSED X509_CRL *tmp;
       X509_CRL *p = sk_X509_CRL_value(self->crls, i);
       tmp = sk_X509_CRL_delete(self->crls, i);
       X509_CRL_free(p);
@@ -628,30 +556,12 @@ static PyMappingMethods z_py_zorp_crl_list_mapping =
 
 static PyTypeObject z_py_zorp_crl_list_type =
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "Zorp CRL List",
-  sizeof(ZorpCRLList),
-  0,
-  (destructor) z_py_zorp_crl_list_free,
-  0,                                  /* tp_print */
-  0,                                  /* tp_getattr */
-  0,                                  /* tp_setattr */
-  0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
-  0,                                  /* tp_as_number */
-  0,                                  /* tp_as_sequence */
-  &z_py_zorp_crl_list_mapping,        /* tp_as_mapping */
-  0,                                  /* tp_hash */
-  0,                                  /* tp_call */
-  0,                                  /* tp_str */
-  0,                                  /* tp_getattro */
-  0,                                  /* tp_setattro */
-  0,                                  /* tp_as_buffer */
-  0,                                  /* flags */
-  "ZorpCRLList class for Zorp",   /* docstring */
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  .tp_name = "Zorp CRL List",
+  .tp_basicsize = sizeof(ZorpCRLList),
+  .tp_dealloc = (destructor) z_py_zorp_crl_list_free,
+  .tp_as_mapping = &z_py_zorp_crl_list_mapping,
+  .tp_doc = "ZorpCRLList class for Zorp"
 };
 
 ZPolicyObj *

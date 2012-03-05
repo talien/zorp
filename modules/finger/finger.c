@@ -223,8 +223,8 @@ finger_init_server_stream(FingerProxy *self)
 static gboolean
 finger_fetch_request(FingerProxy *self)
 {
-  gchar *p, *line, *user;
-  gint left, hop_count, userlen;
+  gchar *p, *line;
+  gint left, hop_count;
   gsize line_length;
   gint res;
   gboolean fetch_user = TRUE;
@@ -278,8 +278,6 @@ finger_fetch_request(FingerProxy *self)
       left--;
     }
   hop_count = 0;
-  user = p;
-  userlen = left;
   g_string_truncate(self->username, 0);
   g_string_truncate(self->hostnames, 0);
   while (*p && left)

@@ -1,10 +1,4 @@
-if PRO
-PRODIRS = solbuild zorpaddr zorpblgen
-else
-PRODIRS =
-endif
-
-SUBDIRS = lib libproxy modules zorp pylib doc zorpctl scripts tests $(PRODIRS)
+SUBDIRS = lib libproxy modules zorp pylib doc zorpctl scripts tests
 DIST_SUBDIRS = $(SUBDIRS)
 
 EXTRA_DIST = dist.conf BUGS module.list WHATIS.TXT VERSION

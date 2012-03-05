@@ -17,7 +17,7 @@ libzorp_la_SOURCES = \
 	pyproxy.c pystream.c \
 	zorp.c \
 	authprovider.c \
-	sysdep.c tpsocket.c dimhash.c \
+	tpsocket.c dimhash.c \
 	szig.c \
 	pydispatch.c dispatch.c \
 	attach.c connection.c pyattach.c \

@@ -1,9 +1,7 @@
 ZORP_H = modules.h policy.h proxy.h proxystack.h \
 	pyproxy.h \
-	nfiptproxy-kernel.h \
-	ipfiptproxy-kernel.h nfiptproxy-kernelv2.h \
 	nfdynexpect-kernel.h\
-	dimhash.h zorp.h sysdep.h \
+	dimhash.h zorp.h \
 	pysockaddr.h pystream.h \
 	pycore.h \
 	pyzasauth.h zasauth.h \

@@ -15,16 +15,6 @@
 
 #include <zorp/socket.h>
 
-extern const gchar *auto_bind_ip;
-
-gboolean z_tp_socket_init(gint sysdep_tproxy);
-
-int z_tp_assign(int fd, in_addr_t faddr, guint16 fport);
-int z_tp_set_flags(int fd, int flags);
-int z_tp_get_flags(int fd, int *flags);
-int z_tp_connect(int fd, in_addr_t faddr, guint16 fport);
-int z_tp_query(int fd, in_addr_t *faddr, guint16 *fport);
-int z_tp_alloc(int fd);
-
+gboolean z_tp_socket_init(void);
 
 #endif
