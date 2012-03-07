@@ -113,8 +113,6 @@ const gchar *z_verdict_str(ZVerdict verdict);
 #define Z_ERROR    ZV_ERROR
 
 #define z_policy_none Py_None
-#define z_policy_none_ref()   do { Py_INCREF(Py_None); } while (0)
-#define z_policy_none_unref() do { Py_DECREF(Py_None); } while (0)
 
 #define z_policy_var_build(format, args...) Py_BuildValue(format, ##args)
 #define z_policy_var_str(v) PyObject_Str(v)

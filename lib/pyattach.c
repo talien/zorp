@@ -93,7 +93,7 @@ z_policy_attach_start_method(ZPolicyAttach *self, PyObject *args G_GNUC_UNUSED)
     }
   else
     {
-      Py_INCREF(Py_None);
+      Py_XINCREF(Py_None);
       res = Py_None;
     }
   z_leave();
@@ -136,7 +136,7 @@ z_policy_attach_getattr(PyObject *o, char *name)
         }
       else
         {
-          Py_INCREF(Py_None);
+          Py_XINCREF(Py_None);
           z_leave();
           return Py_None;
         }

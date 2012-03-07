@@ -108,7 +108,7 @@ anypy_set_verdict(AnyPyProxy * self, ZPolicyObj *args)
           z_object_unref(&iface->super);
         }
     }
-  z_policy_none_ref();
+  z_policy_var_ref(z_policy_none);
   res = z_policy_none;
   z_proxy_leave(self);
   return res;

@@ -111,7 +111,7 @@ z_py_log(PyObject *self G_GNUC_UNUSED, PyObject *args)
         }
       if (!z_log_enabled(class, verbosity))
         {
-          Py_INCREF(Py_None);
+          Py_XINCREF(Py_None);
           return Py_None;
         }
       if (log_args != Py_None)
@@ -133,7 +133,7 @@ z_py_log(PyObject *self G_GNUC_UNUSED, PyObject *args)
   /*NOLOG*/
   z_log(session_id, class, verbosity, "%s", msg);
   Py_XDECREF(log_msg);
-  Py_INCREF(Py_None);
+  Py_XINCREF(Py_None);
   return Py_None;
 }
  
@@ -148,7 +148,7 @@ z_py_quit(PyObject *self G_GNUC_UNUSED, PyObject *args)
   if (!PyArg_ParseTuple(args, "i", &exit_code))
     z_return(NULL);
   z_main_loop_quit(exit_code);
-  Py_INCREF(Py_None);
+  Py_XINCREF(Py_None);
   z_return(Py_None);
 }
 
@@ -335,7 +335,7 @@ z_py_szig_event(PyObject *self G_GNUC_UNUSED, PyObject *args)
       z_return(NULL);
     }
   z_szig_event(event, sv);
-  Py_INCREF(Py_None);
+  Py_XINCREF(Py_None);
   z_return(Py_None);
 }
 
@@ -347,7 +347,7 @@ z_policy_notify_event(PyObject *self G_GNUC_UNUSED,
                       PyObject *args G_GNUC_UNUSED
                      )
 {
-  Py_INCREF(Py_None);
+  Py_XINCREF(Py_None);
   return Py_None;
 }
 

@@ -62,7 +62,7 @@ z_py_zorp_certificate_new(X509 *cert)
     }
   else
     {
-      Py_INCREF(Py_None);
+      Py_XINCREF(Py_None);
       return Py_None;
     }
 }
@@ -333,7 +333,7 @@ z_py_zorp_cert_list_ass_subscript(ZorpCertList *self, PyObject *ndx, PyObject *n
 
   if (i != -1)
     {
-      G_GNUC_UNUSED X509 *tmp;
+      X509 *tmp;
       X509 *p = sk_X509_value(self->certs, i);
       tmp = sk_X509_delete(self->certs, i);
       X509_free(p);
@@ -415,7 +415,7 @@ z_py_zorp_cert_name_list_free(ZorpCertNameList *self)
 static Py_ssize_t
 z_py_zorp_cert_name_list_length(ZorpCertNameList *self)
 {
-  return sk_X509_NAME_num(self->cert_names);
+  return sk_X509_num(self->cert_names);
 }
 
 static int
@@ -598,7 +598,7 @@ z_py_zorp_crl_list_ass_subscript(ZorpCRLList *self, PyObject *ndx, PyObject *new
 
   if (i != -1)
     {
-      G_GNUC_UNUSED X509_CRL *tmp;
+      X509_CRL *tmp;
       X509_CRL *p = sk_X509_CRL_value(self->crls, i);
       tmp = sk_X509_CRL_delete(self->crls, i);
       X509_CRL_free(p);

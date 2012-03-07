@@ -411,7 +411,7 @@ z_policy_dispatch_destroy_method(ZPolicyDispatch *self, PyObject *args G_GNUC_UN
   Py_XDECREF(self->handler);
   self->handler = NULL;
 
-  Py_INCREF(Py_None);
+  Py_XINCREF(Py_None);
   return Py_None;
 }
 
@@ -665,7 +665,7 @@ z_policy_dispatch_get_kzorp_result(PyObject *o G_GNUC_UNUSED, PyObject *args)
   memset(&buf, 0, sizeof(buf));
 
   if (!z_kzorp_get_lookup_result(fd, &buf)) {
-    Py_INCREF(Py_None);
+    Py_XINCREF(Py_None);
     return Py_None;
   }
 

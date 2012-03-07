@@ -65,7 +65,7 @@ z_policy_proxy_group_start(gpointer user_data, ZPolicyObj *args, ZPolicyObj *kw 
       return PyInt_FromLong(1);
     }
 
-  z_policy_none_ref();
+  z_policy_var_ref(z_policy_none);
   return z_policy_none;
 }
 
