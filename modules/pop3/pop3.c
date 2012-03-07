@@ -830,14 +830,7 @@ ZProxyFuncs pop3_proxy_funcs =
   NULL
 };
 
-ZClass Pop3Proxy__class = 
-{
-  Z_CLASS_HEADER,
-  &ZProxy__class,
-  "Pop3Proxy",
-  sizeof(Pop3Proxy),
-  &pop3_proxy_funcs.super
-};
+Z_CLASS_DEF(Pop3Proxy, ZProxy, pop3_proxy_funcs);
 
 static ZProxy *
 pop3_proxy_new(ZProxyParams *params)

@@ -31,19 +31,19 @@ class KZorpSockoptTest(object):
 
     __setup_messages = \
 	(
-	  (KZNL_MSG_START,            create_start_msg(KZ_TR_TYPE_SERVICE, "test", 123456789L)),
+	  (KZNL_MSG_START,            create_start_msg("test", 123456789L)),
 	  (KZNL_MSG_FLUSH_SERVICE,    create_flush_msg()),
 	  (KZNL_MSG_ADD_SERVICE,      create_add_proxyservice_msg("service")),
 	  (KZNL_MSG_COMMIT,           create_commit_msg()),
 
-	  (KZNL_MSG_START,            create_start_msg(KZ_TR_TYPE_ZONE, KZ_INSTANCE_GLOBAL, 123456789L)),
+	  (KZNL_MSG_START,            create_start_msg(KZ_INSTANCE_GLOBAL, 123456789L)),
 	  (KZNL_MSG_FLUSH_ZONE,       create_flush_msg()),
 	  (KZNL_MSG_ADD_ZONE,         create_add_zone_msg("internet", 0, 0L, 0L, None, None)),
 	  (KZNL_MSG_ADD_ZONE_SVC_OUT, create_add_zone_svc_msg("internet", "*")),
 	  (KZNL_MSG_ADD_ZONE_SVC_IN,  create_add_zone_svc_msg("internet", "*")),
 	  (KZNL_MSG_COMMIT,           create_commit_msg()),
 
-	  (KZNL_MSG_START,            create_start_msg(KZ_TR_TYPE_DISPATCHER, "test", 123456789L)),
+	  (KZNL_MSG_START,            create_start_msg("test", 123456789L)),
 	  (KZNL_MSG_FLUSH_DISPATCHER, create_flush_msg()),
 	  (KZNL_MSG_ADD_DISPATCHER,   create_add_dispatcher_n_dimension("dispatcher", KZF_DPT_TRANSPARENT, 12345, 1)),
 	  (KZNL_MSG_ADD_RULE,         create_add_n_dimension_rule_msg("dispatcher", 1, "service", {})),
@@ -55,15 +55,15 @@ class KZorpSockoptTest(object):
 
     __teardown_messages = \
 	(
-	  (KZNL_MSG_START,            create_start_msg(KZ_TR_TYPE_DISPATCHER, "test", 987654321L)),
+	  (KZNL_MSG_START,            create_start_msg("test", 987654321L)),
 	  (KZNL_MSG_FLUSH_DISPATCHER, create_flush_msg()),
 	  (KZNL_MSG_COMMIT,           create_commit_msg()),
 
-	  (KZNL_MSG_START,            create_start_msg(KZ_TR_TYPE_ZONE, KZ_INSTANCE_GLOBAL, 987654321L)),
+	  (KZNL_MSG_START,            create_start_msg(KZ_INSTANCE_GLOBAL, 987654321L)),
 	  (KZNL_MSG_FLUSH_ZONE,       create_flush_msg()),
 	  (KZNL_MSG_COMMIT,           create_commit_msg()),
 
-	  (KZNL_MSG_START,            create_start_msg(KZ_TR_TYPE_SERVICE, "test", 987654321L)),
+	  (KZNL_MSG_START,            create_start_msg("test", 987654321L)),
 	  (KZNL_MSG_FLUSH_SERVICE,    create_flush_msg()),
 	  (KZNL_MSG_COMMIT,           create_commit_msg()),
 	)

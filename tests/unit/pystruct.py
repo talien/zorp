@@ -1,11 +1,9 @@
 import socket
 
-error = 'test error'
-
 def test_attr_ro(o, attr_name, default_value):
         if getattr(o, attr_name) != default_value:
                 print "bad default value for attr %s, value %s, default %s" % (attr_name, getattr(o, attr_name), default_value)
-                raise error
+                raise ValueError
 
 def test_attr_rw(o, attr_name, default_value, mod_value):
         test_attr_ro(o, attr_name, default_value)
@@ -14,7 +12,7 @@ def test_attr_rw(o, attr_name, default_value, mod_value):
 
         if getattr(o, attr_name) != mod_value:
                 print "bad changed value for attr %s, value %s, default %s" % (attr_name, getattr(o, attr_name), mod_value)
-                raise error
+                raise ValueError
 
 
 def test_sockaddr(sa):
@@ -28,12 +26,12 @@ def test_sockaddr(sa):
 
         try:
                 sa.type = 'qqq'
-                raise error
+                raise ValueError
         except AttributeError:
                 pass
         try:
                 sa.family = 5
-                raise error
+                raise ValueError
         except AttributeError:
                 pass
         if sa.format() != 'AF_INET(192.168.2.1:60000)':
@@ -71,10 +69,10 @@ def test_dict(d):
 
 
         if not (d.custom == 0 and d.custom == 1 and d.custom == 2):
-                raise error
+                raise ValueError
         d.custom = 55
         if not (d.custom == 0 and d.custom == 1 and d.custom == 2):
-                raise error
+                raise ValueError
         
 
         return 1

@@ -34,13 +34,19 @@ to perform name lookups.
 
 
 from Zorp import *
-from SockAddr import SockAddrInet
-from socket import gethostbyname, gethostbyname_ex
+from SockAddr import SockAddrInet, SockAddrInet6
+import socket
 import types
 
-# NOTE: This is IPv4 specific
+def create_sockaddr(addrinfo, port):
+	addr = addrinfo[4][0]
+	family = addrinfo[0]
+	if (family == socket.AF_INET):
+		return SockAddrInet(addr, port)
+	elif (family == socket.AF_INET6):
+		return SockAddrInet6(addr, port)
 
-class ResolverPolicy:
+class ResolverPolicy(object):
         """ 
         <class maturity="stable" type="resolverpolicy"> 
           <summary>
@@ -121,7 +127,7 @@ def getResolverPolicy(name):
 			log(None, CORE_POLICY, 3, "No such resolver policy; policy='%s'", name)
         return None
 
-class AbstractResolver:
+class AbstractResolver(object):
         """ 
         <class maturity="stable" abstract="yes"> 
           <summary> Class encapsulating the abstract Resolver interface. 
@@ -160,9 +166,7 @@ class DNSResolver(AbstractResolver):
         <para>
           Below is a simple DNSResolver policy enabled to return
           multiple 'A' records.
-          <literallayout>
-ResolverPolicy(name="Mailservers", resolver=DNSResolver(multi=TRUE))            
-          </literallayout>
+          <synopsis>ResolverPolicy(name="Mailservers", resolver=DNSResolver(multi=TRUE))</synopsis>
         </para>
       </example>
           </description> 
@@ -172,7 +176,7 @@ ResolverPolicy(name="Mailservers", resolver=DNSResolver(multi=TRUE))
           </metainfo> 
         </class> 
         """
-        def __init__(self, multi=FALSE):
+        def __init__(self, multi=FALSE, family=AF_UNSPEC):
         	"""
         	<method>
 		  <summary>
@@ -194,24 +198,34 @@ ResolverPolicy(name="Mailservers", resolver=DNSResolver(multi=TRUE))
 			<description>Enable this attribute to retrieve multiple IP addresses from the DNS server if the 
 			domain name has multiple A records.</description>
         	      </argument>
+        	      <argument>
+        	        <name>family</name>
+        	        <type>
+                          <link id="enum.zorp.af"/>
+        	        </type>
+			<default>AF_UNSPEC</default>
+			<description>Set this attribute to the necessary address family to filter retrieved IP addresses
+			from the DNS server when name has multiple A records.</description>
+        	      </argument>
         	    </arguments>
         	  </metainfo>
         	</method>
         	"""
-                AbstractResolver.__init__(self)
+                super(DNSResolver, self).__init__()
                 self.multi = multi
-                
-        def resolve(self, host, port):
-        	"""
+                self.family = family
+
+	def resolve(self, host, port):
+		"""
 		<method internal="yes">
 		</method>
 		"""
-                try:
-			ip_list = gethostbyname_ex(host)[2]
+		try:
+			addrinfos = socket.getaddrinfo(host, None, self.family)
 			if self.multi:
-			        return map(lambda ip: SockAddrInet(ip, port), ip_list)
+				return map(lambda addrinfo: create_sockaddr(addrinfo, port), addrinfos)
 			else:
-        			return (SockAddrInet(ip_list[0], port),)
+				return (create_sockaddr(addrinfos[0], port))
 		except IOError:
 			return None
 
@@ -277,7 +291,7 @@ ResolverPolicy(name="DMZ", \
 		  </metainfo>
 		</method>
 		"""
-		AbstractResolver.__init__(self)
+		super(HashResolver, self).__init__()
 		self.mapping = mapping
 	
 	def resolve(self, host, port):
@@ -289,6 +303,6 @@ ResolverPolicy(name="DMZ", \
 			ip_list = self.mapping[host]
 			if type(ip_list) == types.StringType:
 				ip_list = (ip_list,)
-                        return map(lambda ip: SockAddrInet(ip, port), ip_list)
+			return map(lambda ip: create_sockaddr(socket.getaddrinfo(ip, None)[0], port), ip_list)
 		except KeyError:
 			return None

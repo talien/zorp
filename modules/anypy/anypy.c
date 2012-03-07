@@ -74,7 +74,6 @@ anypy_stream_init(AnyPyProxy *self)
   return TRUE;
 }
 
-
 /**
  * anypy_set_verdict:
  * @self: AnyPyProxy instance
@@ -88,16 +87,15 @@ anypy_set_verdict(AnyPyProxy * self, ZPolicyObj *args)
 {
   gint verdict;
   gchar *description;
-  ZPolicyObj *res = NULL;
 
   z_proxy_enter(self);
 
   if (!z_policy_var_parse_tuple(args, "is", &verdict, &description))
     {
       z_policy_raise_exception_obj(z_policy_exc_value_error, "Invalid arguments.");
-      z_proxy_leave(self);
-      return NULL;
+      z_proxy_return(self, NULL);
     }
+
   if (self->super.parent_proxy)
     {
       ZProxyStackIface *iface;
@@ -108,10 +106,44 @@ anypy_set_verdict(AnyPyProxy * self, ZPolicyObj *args)
           z_object_unref(&iface->super);
         }
     }
-  z_policy_var_ref(z_policy_none);
-  res = z_policy_none;
-  z_proxy_leave(self);
-  return res;
+
+  z_proxy_return(self, z_policy_none_ref());
+}
+
+/**
+ * anypy_set_content_hint:
+ * @self: AnyPyProxy instance
+ * @args: Python args argument
+ *
+ * sets verdict for the parent proxy
+ * args is (verdict,description)
+ **/
+static ZPolicyObj *
+anypy_set_content_hint(AnyPyProxy * self, ZPolicyObj *args)
+{
+  gint64 length;
+
+  z_proxy_enter(self);
+
+  if (!z_policy_var_parse_tuple(args, "L", &length))
+    {
+      z_policy_raise_exception_obj(z_policy_exc_value_error, "Invalid arguments.");
+      z_proxy_leave(self);
+      return NULL;
+    }
+
+  if (self->super.parent_proxy)
+    {
+      ZProxyStackIface *iface;
+      iface = z_proxy_find_iface(self->super.parent_proxy, Z_CLASS(ZProxyStackIface));
+      if (iface)
+        {
+          z_proxy_stack_iface_set_content_hint(iface, length);
+          z_object_unref(&iface->super);
+        }
+    }
+
+  z_proxy_return(self, z_policy_none_ref());
 }
 
 /**
@@ -147,6 +179,10 @@ anypy_register_vars(AnyPyProxy *self)
   z_proxy_var_new(&self->super, "set_verdict",
 	Z_VAR_TYPE_METHOD | Z_VAR_GET,
 	self,anypy_set_verdict);
+  /* method for setting the content hint. It should be used before the first write */
+  z_proxy_var_new(&self->super, "set_content_hint",
+        Z_VAR_TYPE_METHOD | Z_VAR_GET,
+        self, anypy_set_content_hint);
   /* size of line buffer of the client stream */
   z_proxy_var_new(&self->super, "client_max_line_length",
 	Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET_CONFIG | Z_VAR_GET_CONFIG,
@@ -226,14 +262,7 @@ ZProxyFuncs anypy_proxy_funcs =
   NULL
 };
 
-ZClass AnyPyProxy__class =
-{
-  Z_CLASS_HEADER,
-  &ZProxy__class,
-  "AnyPyProxy",
-  sizeof(AnyPyProxy),
-  &anypy_proxy_funcs.super,
-};
+Z_CLASS_DEF(AnyPyProxy, ZProxy, anypy_proxy_funcs);
 
 gint
 zorp_module_init(void)

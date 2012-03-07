@@ -80,10 +80,10 @@ from Session import StackedSession
 from SockAddr import SockAddrInet
 from NAT import NAT_SNAT, NAT_DNAT
 from Cache import TimedCache
-from Zone import root_zone
+from Exceptions import DACException
 import types
 
-class AbstractChainer:
+class AbstractChainer(object):
 	"""
         <class maturity="stable" abstract="yes">
           <summary>
@@ -209,7 +209,7 @@ Service(name="demo_service", proxy_class=HttpProxy, chainer=ConnectChainer(proto
                   </metainfo>
                 </method>
 		"""
-		AbstractChainer.__init__(self)
+		super(ConnectChainer, self).__init__()
 		self.protocol = protocol
 		if not timeout_connect:
 			self.timeout_connect = config.options.timeout_server_connect
@@ -265,7 +265,7 @@ Service(name="demo_service", proxy_class=HttpProxy, chainer=ConnectChainer(proto
 			remote.port = session.client_local.port
 		session.setServerAddress(remote)
 
-		if session.isServerPermitted() == Z_ACCEPT:
+		if session.isServerPermitted() == ZV_ACCEPT:
 			#remote.options = session.client_address.options
 			try:
 				conn = Attach(session.proxy, protocol, local, remote, tos=session.proxy.server_local_tos, local_loose=session.target_local_loose, timeout=self.timeout_connect, local_random=session.target_local_random)
@@ -278,8 +278,8 @@ Service(name="demo_service", proxy_class=HttpProxy, chainer=ConnectChainer(proto
 				# This message indicates that the connection to the server failed.
 				##
 				log(session.session_id, CORE_SESSION, 3, 
-                                    "Server connection failure; server_address='%s', server_zone='%s', server_local='%s', server_protocol='%s'",
-                                    (session.server_address, session.server_zone, session.server_local, session.protocol_name))
+				    "Server connection failure; server_address='%s', server_zone='%s', server_local='%s', server_protocol='%s'",
+				    (session.server_address, session.server_zone, session.server_local, ZD_PROTO_NAME[protocol]))
                                         
 			else:
 				session.server_stream.name = session.session_id + "/server"
@@ -289,7 +289,7 @@ Service(name="demo_service", proxy_class=HttpProxy, chainer=ConnectChainer(proto
 				##
 				log(session.session_id, CORE_SESSION, 3, 
 				    "Server connection established; server_fd='%d', server_address='%s', server_zone='%s', server_local='%s', server_protocol='%s'",
-				    (session.server_stream.fd, session.server_address, session.server_zone, session.server_local, session.protocol_name))
+				    (session.server_stream.fd, session.server_address, session.server_zone, session.server_local, ZD_PROTO_NAME[protocol]))
 				szigEvent(Z_SZIG_CONNECTION_PROPS,
 				   (Z_SZIG_TYPE_CONNECTION_PROPS,
 				      (session.service.name, session.instance_id, 0, 0, {
@@ -452,7 +452,7 @@ class MultiTargetChainer(ConnectChainer):
                   </metainfo>
                 </method>
 		"""
-		ConnectChainer.__init__(self, protocol, timeout_connect)
+		super(MultiTargetChainer, self).__init__(protocol, timeout_connect)
 		self.connection_count = 0
 		
 	def restart(self, session):
@@ -535,6 +535,7 @@ class MultiTargetChainer(ConnectChainer):
 				self.disableTarget(session, target_local, target_remote)
 				(target_local, target_remote) = self.getNextTarget(session)
 			else:
+				self.restart(session)
 				return stream
 
 class StateBasedChainer(MultiTargetChainer):
@@ -622,7 +623,7 @@ class StateBasedChainer(MultiTargetChainer):
                   </metainfo>
                 </method>
 		"""
-		MultiTargetChainer.__init__(self, protocol, timeout_connect)
+		super(StateBasedChainer, self).__init__(protocol, timeout_connect)
                 if not timeout_state:
                         timeout_state = 60000
 		self.state = TimedCache('chainer-state', int((timeout_state + 999) / 1000), update_stamp=FALSE)
@@ -632,7 +633,7 @@ class StateBasedChainer(MultiTargetChainer):
                 </method>
                 """
 		while 1:
-			(target_local, target_remote) = MultiTargetChainer.getNextTarget(self, session)
+			(target_local, target_remote) = super(StateBasedChainer, self).getNextTarget(session)
 			
 			if not target_remote:
 				# we enumerated all targets
@@ -810,7 +811,7 @@ class FailoverChainer(StateBasedChainer):
 		"""
 		if timeout:
 			timeout_state = timeout * 1000
-		StateBasedChainer.__init__(self, protocol, timeout_connect, timeout_state)
+		super(FailoverChainer, self).__init__(protocol, timeout_connect, timeout_state)
 		self.round_robin = round_robin
 
 	def getFirstTargetIndex(self, session):
@@ -818,7 +819,7 @@ class FailoverChainer(StateBasedChainer):
                 </method>
                 """
 		if self.round_robin:
-			return StateBasedChainer.getFirstTargetIndex(self, session)
+			return super(FailoverChainer, self).getFirstTargetIndex(session)
 		return 0
 
 class RoundRobinChainer(StateBasedChainer):
@@ -932,7 +933,7 @@ class SideStackChainer(AbstractChainer):
                   </metainfo>
                 </method>
 		"""
-		AbstractChainer.__init__(self)
+		super(SideStackChainer, self).__init__()
 		self.right_class = right_class
 		if right_chainer == None:
 			right_chainer = ConnectChainer()

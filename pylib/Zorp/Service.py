@@ -100,6 +100,8 @@ from Router import TransparentRouter, DirectedRouter
 from Auth import AuthPolicy, getAuthPolicyObsolete, getAuthenticationPolicy
 from Resolver import DNSResolver, getResolverPolicy, ResolverPolicy
 from NAT import getNATPolicy, NATPolicy, NAT_SNAT, NAT_DNAT
+from Encryption import getEncryptionPolicy
+from Exceptions import LimitException
 
 import types, thread, time, socket
 
@@ -111,7 +113,7 @@ default_auth = None
 default_router = None
 default_chainer = None
 
-class AbstractService:
+class AbstractService(object):
         """
         <class maturity="stable" abstract="yes">
           <summary>
@@ -423,7 +425,7 @@ def demo_instance() :
 
         keepalive = Z_KEEPALIVE_NONE
 
-        def __init__(self, name, proxy_class, router=None, chainer=None, snat_policy=None, snat=None, dnat_policy=None, dnat=None, authentication_policy=None, authorization_policy=None, max_instances=0, max_sessions=0, auth_name=None, resolver_policy=None, auth=None, auth_policy=None, keepalive=None):
+        def __init__(self, name, proxy_class, router=None, chainer=None, snat_policy=None, snat=None, dnat_policy=None, dnat=None, authentication_policy=None, authorization_policy=None, max_instances=0, max_sessions=0, auth_name=None, resolver_policy=None, auth=None, auth_policy=None, keepalive=None, encryption_policy=None):
                 """
                 <method maturity="stable">
                   <summary>
@@ -601,7 +603,7 @@ def demo_instance() :
                   </metainfo>
                 </method>
                 """
-                AbstractService.__init__(self, name)
+                super(Service, self).__init__(name)
                 self.proxy_class = proxy_class
                 self.router = router or default_router or TransparentRouter()
                 self.chainer = chainer or default_chainer or ConnectChainer()
@@ -647,6 +649,11 @@ def demo_instance() :
                         self.resolver_policy = getResolverPolicy(resolver_policy)
                 else:
                         self.resolver_policy = ResolverPolicy(None, DNSResolver())
+
+                if encryption_policy:
+                        self.encryption_policy = getEncryptionPolicy(encryption_policy)
+                else:
+                        self.encryption_policy = None
 
                 self.max_instances = max_instances
                 self.max_sessions = max_sessions
@@ -866,7 +873,7 @@ def demo() :
                   </description>
                   </method>
                   """
-                AbstractService.__init__(self, name)
+                super(PFService, self).__init__(name)
                 self.router = router or default_router or TransparentRouter()
                 self.snat_policy = getNATPolicy(snat_policy)
                 self.dnat_policy = getNATPolicy(dnat_policy)
@@ -887,13 +894,15 @@ def demo() :
 
                 if isinstance(self.router, TransparentRouter):
                         flags = kznf.kznfnetlink.KZF_SVC_TRANSPARENT
+                        router_target_family = None
                         router_target_ip = None
                         router_target_port = None
                 elif isinstance(self.router, DirectedRouter):
                         if len(self.router.dest_addr) > 1:
                                 raise ValueError, "DirectedRouter with more than one destination address not supported by KZorp"
                         flags = 0
-                        router_target_ip = socket.ntohl(self.router.dest_addr[0].ip)
+                        router_target_family = self.router.dest_addr[0].family
+                        router_target_ip = self.router.dest_addr[0].pack()
                         router_target_port = self.router.dest_addr[0].port
                 else:
                         raise ValueError, "Invalid router type specified for port forwarded service"
@@ -902,7 +911,8 @@ def demo() :
                         flags = flags | kznf.kznfnetlink.KZF_SVC_FORGE_ADDR
 
                 messages = []
-                messages.append((kznf.kznfnetlink.KZNL_MSG_ADD_SERVICE, kznf.kznfnetlink.create_add_pfservice_msg(self.name, flags, router_target_ip, router_target_port)))
+                messages.append((kznf.kznfnetlink.KZNL_MSG_ADD_SERVICE, kznf.kznfnetlink.create_add_pfservice_msg(self.name, \
+                        flags, router_target_family, router_target_ip, router_target_port)))
                 if self.snat_policy:
                         addNATMappings(messages, NAT_SNAT, self.snat_policy)
                 if self.dnat_policy:

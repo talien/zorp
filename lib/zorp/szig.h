@@ -121,9 +121,6 @@ struct _ZSzigNode
 
 typedef void (*ZSzigEventHandler)(ZSzigNode *node, ZSzigEvent ev, ZSzigValue *param, gpointer user_data);
 
-void z_szig_register_handler(ZSzigEvent ev, ZSzigEventHandler func, const gchar *node_name, gpointer user_data);
-void z_szig_unregister_handler(ZSzigEvent ev, ZSzigEventHandler func);
-
 void z_szig_event(ZSzigEvent ev, ZSzigValue *param);
 
 void z_szig_init(const gchar *instance_name);

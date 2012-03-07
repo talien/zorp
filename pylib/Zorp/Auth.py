@@ -161,13 +161,15 @@
 import Zorp
 from Zorp import *
 from Cache import TimedCache, LockedCache
+from Exceptions import AAException
+from AuthDB import getAuthenticationProviderBackend
 
 import types, threading, time
 
 ## Authentication
 #####################################################
 
-class AuthenticationPolicy:
+class AuthenticationPolicy(object):
         """
         <class maturity="stable" type="authenticationpolicy">
           <summary>A policy determining how the user is authenticated to access
@@ -306,7 +308,7 @@ def getAuthenticationPolicy(name):
                         log(None, CORE_POLICY, 3, "No such authentication policy; policy='%s'", (name))
         return None
 
-class AbstractAuthentication:
+class AbstractAuthentication(object):
         """
         <class maturity="stable" type="authentication" abstract="yes">
           <summary>
@@ -462,7 +464,7 @@ class InbandAuthentication(AbstractAuthentication):
                   </metainfo>
                 </method>
                 """
-                AbstractAuthentication.__init__(self, authentication_provider, auth_cache)
+                super(InbandAuthentication, self).__init__(authentication_provider, auth_cache)
 
         def performAuth(self, provider, session):
                 """
@@ -515,7 +517,7 @@ class ServerAuthentication(AbstractAuthentication):
                   </metainfo>
                 </method>
                 """
-                AbstractAuthentication.__init__(self)
+                super(ServerAuthentication, self).__init__()
 
         def performAuth(self, provider, session):
                 """
@@ -535,7 +537,7 @@ class ServerAuthentication(AbstractAuthentication):
 ## AuthCache
 #####################################################
 
-class AuthCache:
+class AuthCache(object):
         """
         <class type="authcache">
           <summary>
@@ -719,7 +721,7 @@ def getAuthCacheByName(name):
 ## Compatibility
 #####################################################
 
-class AuthPolicy:
+class AuthPolicy(object):
         """
         <class maturity="obsolete" type="authpolicy">
           <summary>

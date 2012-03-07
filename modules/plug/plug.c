@@ -164,7 +164,7 @@ plug_packet_stat_event(ZPlugSession *session G_GNUC_UNUSED,
 
   if (called)
     {
-      resc = Z_REJECT;
+      resc = ZV_REJECT;
       if (res)
         {
           if (!z_policy_var_parse(res, "i", &resc))
@@ -172,11 +172,11 @@ plug_packet_stat_event(ZPlugSession *session G_GNUC_UNUSED,
               /*LOG
                 This message is logged when the policy layer returned a
                 non-integer value in its packetStats() function. packetStats()
-                is expected to return Z_REJECT or Z_ACCEPT.
+                is expected to return ZV_REJECT or ZV_ACCEPT.
                */
               z_proxy_log(self, PLUG_POLICY, 1, "Invalid return value of packetStats(), integer required;");
             }
-          else if (resc != Z_ACCEPT)
+          else if (resc != ZV_ACCEPT)
             {
               /*LOG
                 This message indicates that the verdict returned by the
@@ -188,11 +188,11 @@ plug_packet_stat_event(ZPlugSession *session G_GNUC_UNUSED,
     }
   else
     {
-      resc = Z_ACCEPT;
+      resc = ZV_ACCEPT;
     }
   z_policy_var_unref(res);
   z_policy_unlock(self->super.thread);
-  return resc == Z_ACCEPT;
+  return resc == ZV_ACCEPT;
 }
 
 static void
@@ -228,8 +228,15 @@ plug_request_stack_event(PlugProxy *self, ZStackedProxy **stacked)
                       self->super.session_id);
   if (res)
     {
-      if (res != z_policy_none)
+      if (res != z_policy_none) {
+        /* we have to enable soft shutdown if there is a stacked proxy
+         * -- otherwise we might exit before the child proxy has been
+         * given a chance to handle that one of the endpoints has been
+         * closed */
+        self->session_data.shutdown_soft = TRUE;
+
         rc = z_proxy_stack_object(&self->super, res, stacked, NULL);
+      }
     }
   else if (called)
     {
@@ -347,14 +354,7 @@ ZProxyFuncs plug_proxy_funcs =
   .destroy = NULL,
 };
 
-ZClass PlugProxy__class = 
-{
-  Z_CLASS_HEADER,
-  &ZProxy__class,
-  "PlugProxy",
-  sizeof(PlugProxy),
-  &plug_proxy_funcs.super
-};
+Z_CLASS_DEF(PlugProxy, ZProxy, plug_proxy_funcs);
 
 gint
 zorp_module_init(void)

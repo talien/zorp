@@ -194,6 +194,7 @@ http_transfer_src_read(ZTransfer2 *s, ZStream *stream, gchar *buf, gsize count, 
         case HTTP_SR_READ_INITIAL:
           self->src_whole_length = 0;
           self->src_read_state = HTTP_SR_READ_CHUNK_LENGTH;
+          z_stream_line_set_poll_partial(stream, FALSE);
           /* fallthrough */
         case HTTP_SR_READ_CHUNK_LENGTH:
           {
@@ -202,9 +203,7 @@ http_transfer_src_read(ZTransfer2 *s, ZStream *stream, gchar *buf, gsize count, 
             guint32 chunk_length;
             gchar *end;
             
-            z_stream_line_set_poll_partial(stream, FALSE);
             res = z_stream_line_get(stream, &line, &line_length, NULL);
-            z_stream_line_set_poll_partial(stream, TRUE);
             if (res == G_IO_STATUS_NORMAL)
               {
                 /* a complete line was read, check if it is a valid chunk length */
@@ -283,6 +282,7 @@ http_transfer_src_read(ZTransfer2 *s, ZStream *stream, gchar *buf, gsize count, 
                 self->src_chunk_left = chunk_length;
                 self->src_last_chunk = chunk_length == 0;
                 self->src_read_state = HTTP_SR_READ_CHUNK;
+                z_stream_line_set_poll_partial(stream, TRUE);
                 /* fall through */
               }
             else
@@ -313,12 +313,14 @@ http_transfer_src_read(ZTransfer2 *s, ZStream *stream, gchar *buf, gsize count, 
               if (self->src_chunk_left == 0)
                 {
                   self->src_read_state = HTTP_SR_READ_FOOTER;
+                  z_stream_line_set_poll_partial(stream, FALSE);
                 }
               break;
             }
           else
             {
               self->src_read_state = HTTP_SR_READ_FOOTER;
+              z_stream_line_set_poll_partial(stream, FALSE);
               /* fallthrough */
             }
         case HTTP_SR_READ_FOOTER:
@@ -328,9 +330,7 @@ http_transfer_src_read(ZTransfer2 *s, ZStream *stream, gchar *buf, gsize count, 
             
             if (!self->src_chunk_truncated)
               {
-                z_stream_line_set_poll_partial(stream, FALSE);
                 res = z_stream_line_get(stream, &line, &line_length, NULL);
-                z_stream_line_set_poll_partial(stream, TRUE);
               }
             else
               {
@@ -355,6 +355,7 @@ http_transfer_src_read(ZTransfer2 *s, ZStream *stream, gchar *buf, gsize count, 
                 else
                   {
                     self->src_read_state = HTTP_SR_READ_CHUNK_LENGTH;
+                    z_stream_line_set_poll_partial(stream, TRUE);
                     /* come back later */
                     res = G_IO_STATUS_AGAIN;
                   }
@@ -708,7 +709,7 @@ http_transfer_dst_shutdown(ZTransfer2 *s, ZStream *stream, GError **err)
    * - we are expecting data (e.g. response) or the request contains data (e.g. POST)
    */
   delay_transfer = (self->dst_write_state == HTTP_DW_INITIAL && 
-                    (!!(s->status & (ZT2S_FAILED+ZT2S_ABORTED)) || (self->super.stack_decision != Z_ACCEPT))) && 
+                    (!!(s->status & (ZT2S_FAILED+ZT2S_ABORTED)) || (self->super.stack_decision != ZV_ACCEPT))) &&
                     !self->suppress_data &&
                     (self->expect_data || self->content_length != HTTP_LENGTH_NONE);
   if (!delay_transfer)
@@ -1122,14 +1123,7 @@ ZTransfer2Funcs http_transfer_funcs =
   .progress = NULL
 };
 
-ZClass HttpTransfer__class =
-{
-  Z_CLASS_HEADER,
-  &ZTransfer2__class,
-  "HttpTransfer",
-  sizeof(HttpTransfer),
-  &http_transfer_funcs.super
-};
+Z_CLASS_DEF(HttpTransfer, ZTransfer2, http_transfer_funcs);
 
 gboolean
 http_data_transfer(HttpProxy *self, gint transfer_type, guint from, ZStream *from_stream, guint to, ZStream *to_stream, gboolean expect_data, gboolean suppress_data, HttpTransferPreambleFunc format_preamble)
@@ -1192,7 +1186,7 @@ http_data_transfer(HttpProxy *self, gint transfer_type, guint from, ZStream *fro
     }
   
   /* transfer was successful, check if the stacked proxy told us something important */
-  if (t->super.stack_decision != Z_ACCEPT)
+  if (t->super.stack_decision != ZV_ACCEPT)
     {
       /*LOG
         This message indicates that the stacked proxy returned the
@@ -1224,7 +1218,7 @@ http_data_transfer(HttpProxy *self, gint transfer_type, guint from, ZStream *fro
        * This means that we need to return with some kind of error code to ensure
        * that something gets back to the client */
        
-      if (t->super.stack_decision != Z_ACCEPT)
+      if (t->super.stack_decision != ZV_ACCEPT)
         self->error_code = HTTP_MSG_BAD_CONTENT;
       else
         self->error_code = HTTP_MSG_IO_ERROR;

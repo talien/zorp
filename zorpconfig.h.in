@@ -21,9 +21,6 @@
 /* Define to 1 if you have the `gethostbyname_r' function. */
 #undef HAVE_GETHOSTBYNAME_R
 
-/* Define to 1 if you have the <google/coredumper.h> header file. */
-#undef HAVE_GOOGLE_COREDUMPER_H
-
 /* Define to 1 if you have the `inet_aton' function. */
 #undef HAVE_INET_ATON
 
@@ -132,9 +129,6 @@
 
 /* libdir */
 #undef ZORP_LIBDIR
-
-/* Required license version */
-#undef ZORP_LICENSE_VERSION
 
 /* pidfiledir */
 #undef ZORP_PIDFILEDIR

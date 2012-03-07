@@ -37,33 +37,26 @@ import socket
 
 from Zorp import *
 import Zorp
-from Zone import InetZone
+from Zone import Zone, InetZone
 from Service import Service, PFService
-from SockAddr import SockAddrInet, SockAddrInetHostname, SockAddrInetRange, SockAddrUnix
-
+from SockAddr import SockAddrInet, SockAddrInetHostname, SockAddrInetRange, SockAddrInet6, SockAddrUnix
 
 from Router import TransparentRouter, DirectedRouter, InbandRouter
 from Chainer import ConnectChainer, MultiTargetChainer, StateBasedChainer, RoundRobinChainer, FailoverChainer, SideStackChainer
-from Domain import InetDomain
+from Subnet import InetSubnet, InetDomain, Inet6Subnet
 from Listener import Listener, ZoneListener, CSZoneListener
-from Dispatch import Dispatcher, ZoneDispatcher, CSZoneDispatcher, NDimensionDispatcher
+from Dispatch import Dispatcher, ZoneDispatcher, CSZoneDispatcher, RuleDispatcher
+from Rule import PortRange, Rule
 from NAT import NATPolicy, ForgeClientSourceNAT, StaticNAT, OneToOneNAT, OneToOneMultiNAT, RandomNAT, HashNAT, GeneralNAT
 from Proxy import proxyLog
 from Auth import InbandAuthentication, AuthCache, AuthPolicy, AuthenticationPolicy
 from Stack import StackingProvider, RemoteStackingBackend
 from Matcher import MatcherPolicy, AbstractMatcher, RegexpMatcher, RegexpFileMatcher, CombineMatcher, DNSMatcher, WindowsUpdateMatcher, SmtpInvalidRecipientMatcher
 from Resolver import DNSResolver, HashResolver, ResolverPolicy
+from Encryption import EncryptionPolicy, TLSEncryption
 
 # conntrack support
 try:
 	from Receiver import Receiver, ZoneReceiver, CSZoneReceiver
 except:
 	pass
-
-# ipv6 support
-try:
-	from SockAddr import SockAddrInet6
-	from Zone import Inet6Zone
-except:
-	pass
-

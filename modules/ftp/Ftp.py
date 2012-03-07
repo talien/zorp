@@ -85,8 +85,7 @@
       </para>
       <example>
         <title>FTP protocol sample</title>
-        <literallayout>
-220 FTP server ready
+        <synopsis>220 FTP server ready
 USER account
 331 Password required.
 PASS password
@@ -100,8 +99,7 @@ LIST
 226-Transferring data in separate connection complete.
 226 Quotas off
 QUIT
-221 Goodbye
-        </literallayout>
+221 Goodbye</synopsis>
       </example>
     </section>
   </section>
@@ -128,8 +126,7 @@ QUIT
               <para>
 	      This example calls a function called pUser (defined in the example) whenever a USER command is received. All other commands are accepted. The parameter of the USER command (i.e. the username) is examined: if it is 'anonymous' or 'Anonymous', the connection is accepted, otherwise it is rejected.
 	      </para>
-	      <literallayout>
-class AnonFtp(FtpProxy):
+	      <synopsis>class AnonFtp(FtpProxy):
 	def config(self):
 		self.request["USER"] = (FTP_REQ_POLICY, self.pUser)
 		self.request["*"] = (FTP_REQ_ACCEPT)
@@ -137,8 +134,7 @@ class AnonFtp(FtpProxy):
 	def pUser(self,command):
 		if self.request_parameter == "anonymous" or self.request_parameter == "Anonymous":
 			return FTP_REQ_ACCEPT
-		return FTP_REQ_REJECT
-              </literallayout>
+		return FTP_REQ_REJECT</synopsis>
           </example>
         <para>
           All responses are rejected by default, even though this is not permitted by
@@ -149,7 +145,7 @@ class AnonFtp(FtpProxy):
       <section id="ftp_features">
         <title>Configuring policies for FTP features and FTPS support</title>
           <para>
-            FTP servers send the list of supported features to the clients. For example, proftpd supports the following features: <parameter>LANG en, MDTM, UTF8, AUTH TLS, PBSZ, PROT, REST STREAM, SIZE</parameter>. Zorp can change the default behavior of Ftp features using the hash attribute <parameter>feature</parameter>, indexed by the name of the feature (e.g.: UTF8 or AUTH TLS).
+            FTP servers send the list of supported features to the clients. For example, proftpd supports the following features: <parameter>LANG en, MDTM, UTF8, AUTH TLS, PBSZ, PROT, REST STREAM, SIZE</parameter>. Zorp can change the default behavior of Ftp features using the hash attribute <parameter>features</parameter>, indexed by the name of the feature (e.g.: UTF8 or AUTH TLS).
 	     The possible actions are shown in the table below. See <xref linkend="proxy_policies"/> for details.</para>
 	     <para>The built-in Ftp proxies of Zorp permit the use of every feature by default.</para>
 	     <inline type="actiontuple" target="action.ftp.feat"/>
@@ -178,12 +174,10 @@ class AnonFtp(FtpProxy):
 	        <example id="example_ftps">
 	            <title>Configuring FTPS support</title>
                     <para>This example is a standard FtpProxy with FTPS support enabled.</para>
-                   <literallayout>
-class FtpsProxy(FtpProxy):
+                   <synopsis>class FtpsProxy(FtpProxy):
 	def config(self):
 		self.ssl.client_connection_security = SSL_ACCEPT_STARTTLS
-		self.ssl.server_connection_security = SSL_FORWARD_STARTTLS
-                   </literallayout>
+		self.ssl.server_connection_security = SSL_FORWARD_STARTTLS</synopsis>
                 </example>
 	    </section>
       </section>
@@ -236,9 +230,9 @@ class FtpsProxy(FtpProxy):
       <description>
         Data flow control hashes.
       </description>
-      <item><name>FTP_DATA_KEEP</name></item>
-      <item><name>FTP_DATA_PASSIVE</name></item>
-      <item><name>FTP_DATA_ACTIVE</name></item>
+      <item><name>FTP_DATA_KEEP</name><description>Leave untouched</description></item>
+      <item><name>FTP_DATA_PASSIVE</name><description>Force passive mode</description></item>
+      <item><name>FTP_DATA_ACTIVE</name><description>Force active mode</description></item>
     </enum>
     <enum maturity="stable" id="enum.ftp.req">
       <description>
@@ -258,13 +252,13 @@ class FtpsProxy(FtpProxy):
       <item><name>FTP_RSP_ABORT</name></item>
       <item><name>FTP_RSP_POLICY</name></item>
     </enum>
-    <enum internal="yes" id="enum.ftp.active">
+    <enum maturity="stable" id="enum.ftp.active">
       <description>
         Ftp proxy data port controll hashes.
       </description>
-      <item><name>FTP_ACTIVE_MINUSONE</name></item>
-      <item><name>FTP_ACTIVE_TWENTY</name></item>
-      <item><name>FTP_ACTIVE_RANDOM</name></item>
+      <item><name>FTP_ACTIVE_MINUSONE</name><description>Command port minus one</description></item>
+      <item><name>FTP_ACTIVE_TWENTY</name><description>Port 20</description></item>
+      <item><name>FTP_ACTIVE_RANDOM</name><description>Random port</description></item>
     </enum>
     <enum maturity="stable" id="enum.ftp.stk">
       <description>
@@ -297,28 +291,30 @@ class FtpsProxy(FtpProxy):
       <description>
 	Action codes for commands in FTP
       </description>
-      <tuple action="FTP_REQ_ACCEPT">
+      <tuple action="FTP_REQ_ACCEPT" display_name="Accept the request">
 	<args/>
 	<description>
 	  Allow the request to pass.
 	</description>
       </tuple>
-      <tuple action="FTP_REQ_REJECT">
+      <tuple action="FTP_REQ_REJECT" display_name="Reject with custom error message">
 	<args>
-          <string/>
+          <string display_name="Error message"/>
         </args>
 	<description>
 	  Reject the request with the error message specified in the
 	  second optional parameter.
 	</description>
       </tuple>
-      <tuple action="FTP_REQ_POLICY">
+      <!-- FIXME: METHOD currently unsupported by the GUI
+      <tuple action="FTP_REQ_POLICY" display_name="">
 	<args>METHOD</args>
 	<description>
 	  Call the function specified to make a decision about the event. The function receives two parameters: 'self', and 'command'. See <xref linkend="proxy_policies"/> for details.
 	</description>
       </tuple>
-      <tuple action="FTP_REQ_ABORT">
+      -->
+      <tuple action="FTP_REQ_ABORT" display_name="Terminate the connection">
 	<args/>
 	<description>
 	  Terminate the connection.
@@ -329,21 +325,22 @@ class FtpsProxy(FtpProxy):
       <description>
 	Action codes for responses in FTP
       </description>
-      <tuple action="FTP_RSP_ACCEPT">
+      <tuple action="FTP_RSP_ACCEPT" display_name="Accept the response">
 	<args/>
 	<description>
 	  Allow the response to pass.
 	</description>
       </tuple>
-      <tuple action="FTP_RSP_REJECT">
+      <tuple action="FTP_RSP_REJECT" display_name="Modify response to the specified error">
 	<args>
-          <string/>
+          <string display_name="Error message"/>
         </args>
 	<description>
 	  Modify the response to a general failure with error message
 	  specified in the optional second parameter.
 	</description>
       </tuple>
+      <!-- FIXME: METHOD currently unsupported by the GUI
       <tuple action="FTP_RSP_POLICY">
 	<args>METHOD</args>
 	<description>
@@ -352,7 +349,8 @@ class FtpsProxy(FtpProxy):
 	  See <xref linkend="proxy_policies"/> for details.
 	</description>
       </tuple>
-      <tuple action="FTP_RSP_ABORT">
+      -->
+      <tuple action="FTP_RSP_ABORT" display_name="Terminate the connection">
 	<args/>
 	<description>
 	  Terminate the connection.
@@ -378,15 +376,15 @@ class FtpsProxy(FtpProxy):
       <description>
 	Policy about enabling FTP features.
       </description>
-      <tuple action="FTP_FEATURE_ACCEPT">
+      <tuple action="FTP_FEATURE_ACCEPT" display_name="Accept this feature">
 	<args/>
 	<description>Forward the availability of the feature from the server to the client.</description>
       </tuple>
-      <tuple action="FTP_FEATURE_DROP">
+      <tuple action="FTP_FEATURE_DROP" display_name="Drop this feature">
 	<args/>
 	<description>Remove the feature from the feature list sent by the server.</description>
       </tuple>
-      <tuple action="FTP_FEATURE_INSERT">
+      <tuple action="FTP_FEATURE_INSERT" display_name="Insert this feature">
 	<args/>
 	<description>Add the feature into the list of available features.</description>
       </tuple>
@@ -681,10 +679,10 @@ class AbstractFtpProxy(Proxy):
               <type>
                 <hash>
                   <key>
-                    <string/>
+                    <string display_name="Command name"/>
                   </key>
                   <value>
-                    <link id="enum.ftp.req"/>
+                    <link id="action.ftp.req"/>
                   </value>
                 </hash>
               </type>
@@ -708,12 +706,12 @@ class AbstractFtpProxy(Proxy):
                 <hash>
                   <key>
                     <tuple>
-                      <string/>
-                      <string/>
+                      <string display_name="Command name"/>
+                      <string display_name="Answer code"/>
                     </tuple>
                   </key>
                   <value>
-                    <link id="enum.ftp.rsp"/>
+                    <link id="action.ftp.rsp"/>
                   </value>
                 </hash>
               </type>
@@ -815,7 +813,7 @@ class AbstractFtpProxy(Proxy):
               <type>
                 <string/>
               </type>
-              <default>21</default>
+              <default>"21"</default>
               <conftime>
                 <read/>
                 <write/>
@@ -901,7 +899,7 @@ class AbstractFtpProxy(Proxy):
               <type>
                 <string/>
               </type>
-              <default>a-zA-Z0-9._@</default>
+              <default>"a-zA-Z0-9._@"</default>
               <conftime>
                 <read/>
                 <write/>
@@ -1068,23 +1066,6 @@ class AbstractFtpProxy(Proxy):
                 The password to be used for proxy authentication given by the user, when inband authentication is used.
               </description>
             </attribute>
-            <attribute maturity="stable">
-              <name>feature</name>
-              <type>
-                <link id="enum.ftp.feat"/>
-              </type>
-              <default/>
-              <conftime>
-                <read/>
-                <write/>
-              </conftime>
-              <runtime>
-                <read/>
-              </runtime>
-              <description>
-                A policy hash for FTP features, indexed by the name of the feature.
-              </description>
-            </attribute>
             <attribute internal="yes">
               <name>auth</name>
               <type>
@@ -1105,7 +1086,7 @@ class AbstractFtpProxy(Proxy):
               <type>
                 <hash>
                   <key>
-                    <string/>
+                    <string display_name="Feature identifier"/>
                   </key>
                   <value>
                     <link id="action.ftp.feat"/>

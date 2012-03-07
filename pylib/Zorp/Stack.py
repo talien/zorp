@@ -45,7 +45,7 @@
 from Zorp import *
 import Globals
 
-class StackingProvider:
+class StackingProvider(object):
         """
         <class type="stackingprov">
           <summary>This is a policy class that is used to reference a configured 
@@ -75,7 +75,7 @@ class StackingProvider:
             </para>
             <synopsis>class StackingFtpProxy(FtpProxy):
     def config(self):
-        FtpProxy.config(self)
+        super(StackingFtpProxy, self).config()
         self.request_stack["RETR"]=(FTP_STK_DATA, (Z_STACK_PROVIDER, "demo_stackingprovider", "default_rulegroup"))        
 
 StackingProvider(name="demo_stackingprovider_socket", backend=RemoteStackingBackend(addrs=(SockAddrUnix('/var/run/zcv/zcv.sock'),)))</synopsis>
@@ -138,7 +138,7 @@ def getStackingProviderBackend(name):
                         log(None, CORE_POLICY, 3, "No such stacking provider; provider='%s'", (name))
         return None
 
-class AbstractStackingBackend:
+class AbstractStackingBackend(object):
         """        
         <class maturity="stable" abstract="yes" type="stackingbackend">
           <summary>This is an abstract class, currently without any functionality.
@@ -211,7 +211,7 @@ class RemoteStackingBackend(AbstractStackingBackend):
                   </metainfo>
                 </method>
                 """
-                AbstractStackingBackend.__init__(self)
+                super(RemoteStackingBackend, self).__init__()
                 self.addrs = addrs
                 self.current_host = 0
 

@@ -142,8 +142,8 @@ telnet_config_init(TelnetProxy *self)
 
   for (i = 0; i < EP_MAX; i++)
     {
-      self->write_buffers[i].buf = g_new0(guchar, TELNET_BUFFER_SIZE);
-      self->write_buffers[i].size = TELNET_BUFFER_SIZE;
+      self->write_buffers[i].buf = g_new0(guchar, TELNET_BUFFER_SIZE + 1);
+      self->write_buffers[i].size = TELNET_BUFFER_SIZE + 1;
       self->write_buffers[i].ofs = self->write_buffers[i].end = 0;
     }
   z_proxy_return(self);
@@ -487,6 +487,10 @@ telnet_process_buf(TelnetProxy *self, ZIOBuffer *buf, ZIOBufferDyn *dbuf, ZIOBuf
             {
               self->state[ep] = TELNET_GOT_IAC;
               ptr++;
+              if (ptr == buf->end)
+              {
+                  self->state[ep] = TELNET_DATA;
+              }
             }
           break;
 
@@ -1034,15 +1038,7 @@ ZProxyFuncs telnet_proxy_funcs =
   .main = telnet_main,
 };
 
-ZClass TelnetProxy__class = 
-{
-  Z_CLASS_HEADER,
-  &ZProxy__class,
-  "TelnetProxy",
-  sizeof(TelnetProxy),
-  &telnet_proxy_funcs.super
-};
-
+Z_CLASS_DEF(TelnetProxy, ZProxy, telnet_proxy_funcs);
 
 /**
  * zorp_module_init:

@@ -345,14 +345,7 @@ ZTransfer2Funcs smtp_transfer_funcs =
   .progress = smtp_transfer_progress
 };
 
-ZClass SmtpTransfer__class = 
-{
-  Z_CLASS_HEADER,
-  &ZTransfer2__class,
-  "SmtpTransfer",
-  sizeof(SmtpTransfer),
-  &smtp_transfer_funcs.super
-};
+Z_CLASS_DEF(SmtpTransfer, ZTransfer2, smtp_transfer_funcs);
 
 /**
  * smtp_transfer_new:

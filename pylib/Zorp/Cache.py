@@ -39,7 +39,7 @@ from Zorp import *
 
 import time, threading
 
-class AbstractCache:
+class AbstractCache(object):
         """
         <class internal="yes" abstract="yes">
           <metainfo>
@@ -96,7 +96,7 @@ class ShiftCache(AbstractCache):
                 <method internal="yes">
                 </method>
                 """
-                AbstractCache.__init__(self, name)
+                super(ShiftCache, self).__init__(name)
                 self.cache = {}
                 self.old_cache = {}
                 self.shift_threshold = shift_threshold
@@ -166,7 +166,7 @@ class TimedCache(AbstractCache):
                 <method internal="yes">
                 </method>
                 """
-                AbstractCache.__init__(self, name)
+                super(TimedCache, self).__init__(name)
                 self.timeout = timeout
                 self.update_stamp = update_stamp
                 self.cleanup_threshold = cleanup_threshold

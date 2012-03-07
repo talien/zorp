@@ -66,7 +66,7 @@ typedef struct _ZorpBalancePolicy
 
 typedef struct _ZorpBalanceStruct
 {
-  guint32 timestamp;
+  time_t timestamp;
   guint32 policy_num;
   ZorpBalancePolicy policies[Z_LB_POLICY_MAX];
 } ZorpBalanceStruct;

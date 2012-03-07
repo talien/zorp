@@ -54,10 +54,11 @@ z_policy_dispatch_bind_get_db(ZPolicyObj *self)
 ZPolicyObj *
 z_policy_dispatch_format(ZPolicyObj *s)
 {
-  ZPolicyObj *res = Py_None;
+  ZPolicyObj *res = NULL;
   ZDispatchBind *bind = z_policy_dispatch_bind_get_db(s);
-  assert(bind != NULL);
   char buf[MAX_SOCKADDR_STRING];
+
+  g_assert(bind != NULL);
 
   switch(bind->type)
     {
@@ -78,6 +79,7 @@ z_policy_dispatch_format(ZPolicyObj *s)
       break;
     }
   z_dispatch_bind_unref(bind);
+
   return res;
 }
 
@@ -316,16 +318,10 @@ z_policy_dispatch_accept(ZConnection *conn, gpointer user_data)
     }
   else
     {
-      local = Py_None;
-      addr = Py_None;
-      bound = Py_None;
-      pystream = Py_None;
-      
-      Py_XINCREF(local);
-      Py_XINCREF(addr);
-      Py_XINCREF(bound);
-      Py_XINCREF(pystream);
-      
+      local = z_policy_none_ref();
+      addr = z_policy_none_ref();
+      bound = z_policy_none_ref();
+      pystream = z_policy_none_ref();
     }
   res = PyEval_CallFunction(self->handler, "(OOOO)",
 			    pystream, addr, local, bound);
@@ -343,7 +339,7 @@ z_policy_dispatch_accept(ZConnection *conn, gpointer user_data)
       if (conn)
         z_stream_close(conn->stream, NULL);
     }
-  else if (res == Py_None)
+  else if (res == z_policy_none)
     {
       gchar buf[256];
       /*LOG
@@ -411,8 +407,7 @@ z_policy_dispatch_destroy_method(ZPolicyDispatch *self, PyObject *args G_GNUC_UN
   Py_XDECREF(self->handler);
   self->handler = NULL;
 
-  Py_XINCREF(Py_None);
-  return Py_None;
+  return z_policy_none_ref();
 }
 
 /**
@@ -453,6 +448,7 @@ z_policy_dispatch_new_instance(PyObject *o G_GNUC_UNUSED, PyObject *args)
 {
   ZPolicyDispatch *self = NULL;
   PyObject *addr;
+  ZSockAddr *bound_addr;
   PyObject *handler, *keywords, *fake_args = NULL;
   ZDispatchBind *db;
   gint prio;
@@ -463,13 +459,13 @@ z_policy_dispatch_new_instance(PyObject *o G_GNUC_UNUSED, PyObject *args)
   gchar *udp_keywords[] = { "session_limit", "rcvbuf", "threaded", "mark_tproxy", "transparent", NULL };
 
   /* called by python, so interpreter is locked */
-  
+
   if (current_policy == NULL)
     {
       PyErr_SetString(PyExc_RuntimeError, "Parsing phase has not completed yet, Listener & Receiver must be defined in the instance init() function.");
       return NULL;
     }
-  
+
   /* res is a borrowed reference, no need to unref it */
   if (!PyArg_ParseTuple(args, "sOiOO", &session_id, &addr, &prio, &handler, &keywords))
     return NULL;
@@ -479,7 +475,7 @@ z_policy_dispatch_new_instance(PyObject *o G_GNUC_UNUSED, PyObject *args)
       PyErr_SetString(PyExc_TypeError, "Handler parameter must be callable");
       return NULL;
     }
-    
+
   if (!z_policy_dispatch_bind_check(addr))
     {
       PyErr_SetString(PyExc_TypeError, "addr parameter must be a DispatchBind object (DBIface or DBSockAddr)");
@@ -487,7 +483,7 @@ z_policy_dispatch_new_instance(PyObject *o G_GNUC_UNUSED, PyObject *args)
     }
 
   /* from this point, we must exit by goto error_exit */
-  
+
   db = z_policy_dispatch_bind_get_db(addr);
   fake_args = PyTuple_New(0);
   params.common.threaded = FALSE;
@@ -539,7 +535,7 @@ z_policy_dispatch_new_instance(PyObject *o G_GNUC_UNUSED, PyObject *args)
    */
   z_log(session_id, CORE_DEBUG, 7, "Dispatcher on address; local='%s', prio='%d'", 
         z_dispatch_bind_format(db, buf, sizeof(buf)), prio);
-    
+
   Py_XINCREF(self);
   self->handler = handler;
   Py_XINCREF(handler);
@@ -548,7 +544,7 @@ z_policy_dispatch_new_instance(PyObject *o G_GNUC_UNUSED, PyObject *args)
 
   self->policy_thread = z_policy_thread_new(self->policy);
   z_policy_thread_ready(self->policy_thread);
-  
+
   /* z_dispatch_register uses a lock also locked by the callback mechanism which keeps it locked
      while our callback is running, this makes a possible cross-lock deadlock:
      1) This function (Python lock) -> z_dispatch_register (chain lock)
@@ -557,8 +553,26 @@ z_policy_dispatch_new_instance(PyObject *o G_GNUC_UNUSED, PyObject *args)
      That's the reason for BEGIN_ALLOW_THREADS here.
    */
   Py_BEGIN_ALLOW_THREADS;
-  self->dispatch = z_dispatch_register(session_id, db, NULL, prio, &params, z_policy_dispatch_accept, self, z_policy_dispatch_destroy_notify);
+  self->dispatch = z_dispatch_register(session_id, db, &bound_addr, prio, &params, z_policy_dispatch_accept, self, z_policy_dispatch_destroy_notify);
   Py_END_ALLOW_THREADS;
+
+  if (bound_addr)
+    {
+      /* In case of unspecified ports for DBSockAddr dispatch bind structures *
+       * we update the port to the value we're actually bound to */
+      if (db->type == ZD_BIND_SOCKADDR)
+        {
+          if (z_sockaddr_inet_check(db->sa.addr))
+            {
+              z_sockaddr_inet_set_port(db->sa.addr, z_sockaddr_inet_get_port(bound_addr));
+            }
+          else if (z_sockaddr_inet6_check(db->sa.addr))
+            {
+              z_sockaddr_inet6_set_port(db->sa.addr, z_sockaddr_inet6_get_port(bound_addr));
+            }
+        }
+      z_sockaddr_unref(bound_addr);
+    }
 
   if (!self->dispatch)
     {
@@ -614,30 +628,12 @@ static PyMethodDef z_policy_dispatch_methods[] =
 
 static PyTypeObject z_policy_dispatch_type = 
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "ZPolicyDispatch",
-  sizeof(ZPolicyDispatch),
-  0,
-  (destructor) z_policy_dispatch_free,
-  0,
-  (getattrfunc) z_policy_dispatch_getattr,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  "ZPolicyDispatch class for Zorp",
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  .tp_name = "ZPolicyDispatch",
+  .tp_basicsize = sizeof(ZPolicyDispatch),
+  .tp_dealloc = (destructor) z_policy_dispatch_free,
+  .tp_getattr =(getattrfunc) z_policy_dispatch_getattr,
+  .tp_doc = "ZPolicyDispatch class for Zorp",
 };
 
 /**
@@ -656,18 +652,21 @@ static PyObject *
 z_policy_dispatch_get_kzorp_result(PyObject *o G_GNUC_UNUSED, PyObject *args)
 {
   gint fd;
+  gint family;
   struct z_kzorp_lookup_result buf;
   PyObject *ret;
 
-  if (!PyArg_ParseTuple(args, "i", &fd))
-    return NULL;
+  if (!PyArg_ParseTuple(args, "ii", &family, &fd))
+    {
+      return z_policy_none_ref();
+    }
 
   memset(&buf, 0, sizeof(buf));
 
-  if (!z_kzorp_get_lookup_result(fd, &buf)) {
-    Py_XINCREF(Py_None);
-    return Py_None;
-  }
+  if (!z_kzorp_get_lookup_result(family, fd, &buf))
+    {
+      return z_policy_none_ref();
+    }
 
   ret = Py_BuildValue("(ssss)", &buf.czone_name, &buf.szone_name,
                       &buf.dispatcher_name, &buf.service_name);

@@ -267,6 +267,9 @@ void smtp_init_cmd_hash(void);
 gboolean smtp_copy_response(SmtpProxy *self);
 void smtp_clear_response(SmtpProxy *self);
 
+ZPolicyObj *smtp_policy_sanitize_address(SmtpProxy *self, ZPolicyObj *args);
+
+
 #define SMTP_SET_RESPONSE(smtp_msg_type) \
 G_STMT_START{ \
   smtp_clear_response(self);\

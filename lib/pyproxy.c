@@ -148,6 +148,7 @@ z_policy_proxy_bind_implementation(PyObject *s)
   return TRUE;
 }
 
+
 /**
  * z_policy_proxy_getattr:
  * @self this

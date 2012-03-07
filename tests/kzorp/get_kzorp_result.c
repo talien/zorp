@@ -94,7 +94,7 @@ main(void)
       exit(EXIT_FAILURE);
     }
 
-  fprintf(stderr, "Listening on port %hd\n", PORT);
+  fprintf(stderr, "Listening on port %d\n", PORT);
 
   size = sizeof(clientname);
   new = accept(sock, (struct sockaddr *) &clientname, &size);

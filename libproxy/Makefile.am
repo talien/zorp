@@ -1,5 +1,4 @@
-
-SUBDIRS = . zorp
+SUBDIRS = zorp
 
 LIBS = @DEPS_LIBS@ @ZORP_LIBS@
 lib_LTLIBRARIES = libzorpproxy.la

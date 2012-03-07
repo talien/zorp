@@ -2,12 +2,12 @@
 .\"     Title: instances.conf
 .\"    Author: [see the "Author" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 01/21/2012
+.\"      Date: 03/06/2012
 .\"    Manual: [FIXME: manual]
 .\"    Source: [FIXME: source]
 .\"  Language: English
 .\"
-.TH "INSTANCES\&.CONF" "5" "01/21/2012" "[FIXME: source]" "[FIXME: manual]"
+.TH "INSTANCES\&.CONF" "5" "03/06/2012" "[FIXME: source]" "[FIXME: manual]"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -96,13 +96,20 @@ zorp(8)) multiplied by 2\&.
 .RS 4
 Explicitly enable core dumps for Zorp processes\&. The core limit is inherited from the local starting environment (e\&.g\&.: starting shell) if not specified\&.
 .RE
+.PP
+\fB\-\-parallel\-instances <number>\fR or \fB\-P <number> \fR
+.RS 4
+Run <number> of processes for the instance\&.
+\fBzorpctl\fR
+starts exactly one Zorp process in master mode and <number> of slave Zorp processes\&. This mode of operation is incompatible with old\-style dispatchers, you must use the new rule\-based policy with this option\&.
+.RE
 .SH "EXAMPLES"
 .PP
 .PP
 
 \fBzorp_ftp \-\-policy /etc/zorp/policy\&.py \-\-verbose 5 \fR
 .PP
-The line above describes a zorp instance named
+The line above describes a Zorp instance named
 \fIzorp_ftp\fR
 using policy file
 \fI/etc/zorp/policy\&.py\fR, and having verbosity level 5\&.

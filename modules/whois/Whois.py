@@ -54,12 +54,10 @@
       </para>
       <example>
         <title>Example WhoisProxy logging all whois requests</title>
-        <literallayout>
-class MyWhoisProxy(AbstractWhoisProxy):
+        <synopsis>class MyWhoisProxy(AbstractWhoisProxy):
 	def whoisRequest(self, request):
 		log(None, CORE_DEBUG, 3, "Whois request: '%s'" % (request))
-		return Z_ACCEPT
-        </literallayout>
+		return ZV_ACCEPT</synopsis>
       </example>
     </section>
     <section>
@@ -252,7 +250,7 @@ class AbstractWhoisProxy(Proxy):
 
                 FIXME: xml-isation
 		"""
-		return Z_ACCEPT
+		return ZV_ACCEPT
 
 class WhoisProxy(AbstractWhoisProxy):
 	"""<class maturity="stable">

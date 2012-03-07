@@ -186,7 +186,7 @@ Listener(bindto=SockAddrInet('192.168.2.1', 50080), service="demo_http_service",
                 </method>
                 """
 
-                Dispatcher.__init__(self, convertSockAddrToDB(bindto, ZD_PROTO_TCP), service, **kw)
+                super(Listener, self).__init__(convertSockAddrToDB(bindto, ZD_PROTO_TCP), service, **kw)
 
 class ZoneListener(ZoneDispatcher):
         """
@@ -294,7 +294,7 @@ class ZoneListener(ZoneDispatcher):
                   </metainfo>
                 </method>
                 """
-                ZoneDispatcher.__init__(self, convertSockAddrToDB(bindto, ZD_PROTO_TCP), services, **kw)
+                super(ZoneListener, self).__init__(convertSockAddrToDB(bindto, ZD_PROTO_TCP), services, **kw)
 
 class CSZoneListener(CSZoneDispatcher):
         """
@@ -419,4 +419,4 @@ Listener(bindto=SockAddrInet('192.168.2.1', 50080), services={("internet", "DMZ"
                   </metainfo>
                 </method>
                 """
-                CSZoneDispatcher.__init__(self, convertSockAddrToDB(bindto, ZD_PROTO_TCP), services, **kw)
+                super(CSZoneListener, self).__init__(convertSockAddrToDB(bindto, ZD_PROTO_TCP), services, **kw)

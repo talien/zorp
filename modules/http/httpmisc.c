@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include <zorp/log.h>
 
-#define HTTP_URL_HOST_ESCAPE_CHARS      "/$&+,:;=?@ \"'<>#%{}|\\^~[]`"
+#define HTTP_URL_HOST_ESCAPE_CHARS      "/$&+,;=?@ \"'<>#%{}|\\^~[]`"
 #define HTTP_URL_USER_ESCAPE_CHARS      "/$&+,:;=?@ \"'<>#%{}|\\^~[]`"
 #define HTTP_URL_PASSWD_ESCAPE_CHARS    "/$&+,:;=?@ \"'<>#%{}|\\^~[]`"
 #define HTTP_URL_FILE_ESCAPE_CHARS      "?#% \"<>"
@@ -598,6 +598,7 @@ http_parse_url(HttpURL *url, gboolean permit_unicode_url, gboolean permit_invali
   gchar *p, *end, *part[4], *sep[4], *query_start, *fragment_start, *file_start;
   gsize file_len, query_len = 0, fragment_len = 0;
   int i;
+  gboolean inside_brackets = FALSE;
 
   z_enter();
   g_string_truncate(url->scheme, 0);
@@ -634,8 +635,15 @@ http_parse_url(HttpURL *url, gboolean permit_unicode_url, gboolean permit_invali
   for (i = 0; i < 4; i++)
     {
       part[i] = p;
-      while (*p && *p != ':' && *p != '/' && *p != '@' && *p != '?' && *p != '#')
-        p++;
+      while (*p && (inside_brackets || *p != ':') && *p != '/' && *p != '@' && *p != '?' && *p != '#')
+        {
+          if (*p == '[')
+            inside_brackets = TRUE;
+          else if (inside_brackets && *p == ']')
+            inside_brackets = FALSE;
+
+          p++;
+        }
       sep[i] = p;
       if (!*p || *p == '/')
         break;
@@ -733,6 +741,14 @@ http_parse_url(HttpURL *url, gboolean permit_unicode_url, gboolean permit_invali
       z_return(FALSE);
     }
 
+  if (url->host->str[0] == '[' && url->host->str[url->host->len-1] == ']')
+    {
+      /* IPv6 addresses are surrounded by [], remove them. */
+      url->need_brackets = TRUE;
+      g_string_erase(url->host, 0, 1);
+      g_string_truncate(url->host, url->host->len-1);
+    }
+
  relative_url:
 
   file_start = p;
@@ -823,8 +839,14 @@ http_format_url(HttpURL *url, GString *encode_buf, gboolean format_absolute, gbo
         }
       if (url->user->len || url->passwd->len)
         g_string_append_c(encode_buf, '@');
+
+      if (url->need_brackets)
+        g_string_append_c(encode_buf, '[');
       if (!http_string_append_url_encode(encode_buf, HTTP_URL_HOST_ESCAPE_CHARS, url->host->str, url->host->len, reason))
         return FALSE;
+      if (url->need_brackets)
+        g_string_append_c(encode_buf, ']');
+
       if (url->port)
         g_string_sprintfa(encode_buf, ":%d", url->port);
     }
@@ -872,6 +894,7 @@ http_init_url(HttpURL *url)
   url->file = g_string_sized_new(64);
   url->query = g_string_sized_new(0);
   url->fragment = g_string_sized_new(0);
+  url->need_brackets = FALSE;
 }
 
 /**

@@ -699,9 +699,10 @@ z_proxy_connect_server(ZProxy *self, const gchar *host, gint port)
  * authenticated by some inband authentication method.
  **/
 gboolean
-z_proxy_user_authenticated(ZProxy *self, const gchar *entity, gchar const **groups)
+z_proxy_user_authenticated(ZProxy *self, const gchar *entity, gchar const **groups, ZProxyUserAuthType type)
 {
-  ZPolicyObj *res, *groups_tuple;
+  ZPolicyObj *res = NULL;
+  ZPolicyObj *groups_tuple;
   gboolean called;
   gboolean rc = TRUE;
   
@@ -714,13 +715,36 @@ z_proxy_user_authenticated(ZProxy *self, const gchar *entity, gchar const **grou
     }
   else
     {
-      groups_tuple = z_policy_none;
-      z_policy_var_ref(groups_tuple);
+      groups_tuple = z_policy_none_ref();
     }
-  res = z_policy_call(self->handler, "userAuthenticated", z_policy_var_build("(sOs)", entity, groups_tuple, "inband"), &called, self->session_id);
+
+  gchar *auth_info = "";
+  switch (type)
+    {
+      case Z_PROXY_USER_AUTHENTICATED_NONE:
+        z_proxy_log(self, CORE_INFO, 6, "Internal problem, NONE authentication should not be used for userAuthenticated function from Zorp; type='%d'", type);
+        auth_info = "none";
+        break;
+
+      case Z_PROXY_USER_AUTHENTICATED_INBAND:
+        auth_info = "inband";
+        break;
+
+      case Z_PROXY_USER_AUTHENTICATED_GATEWAY:
+        auth_info = "gw-auth";
+        break;
+
+      case Z_PROXY_USER_AUTHENTICATED_SERVER:
+        auth_info = "server";
+        break;
+    }
+
+  res = z_policy_call(self->handler, "userAuthenticated", z_policy_var_build("(sOs)", entity, groups_tuple, auth_info), &called, self->session_id);
   z_policy_var_unref(groups_tuple);
+
   if (!res)
     rc = FALSE;
+
   z_policy_var_unref(res);
   z_policy_thread_release(self->thread);
   z_proxy_leave(self);
@@ -732,14 +756,13 @@ z_proxy_user_authenticated(ZProxy *self, const gchar *entity, gchar const **grou
 
 
 /**
- * z_proxy_get_addresses_locked:
- * @self: proxy instance
- * @protocol: the protocol number (ZD_PROTO_*) is returned here
- * @client_address: the remote address of the client is returned here
- * @client_local: the local address of the connection to the client is returned here
- * @server_address: the remote address of the server is returned here
- * @server_local: the local address of the connection to the server is returned here
- * @client_listen: the address of the listener which initiated this session is returned here
+ * @param self proxy instance
+ * @param protocol the protocol number (ZD_PROTO_*) is returned here
+ * @param client_address the remote address of the client is returned here
+ * @param client_local the local address of the connection to the client is returned here
+ * @param server_address the remote address of the server is returned here
+ * @param server_local the local address of the connection to the server is returned here
+ * @param client_listen the address of the listener which initiated this session is returned here
  *
  * This function is used to query the addresses used to connecting the proxy
  * to the client and server. The utilized application protocol is also
@@ -810,14 +833,13 @@ z_proxy_get_addresses_locked(ZProxy *self,
 }
 
 /**
- * z_proxy_get_addresses:
- * @self: proxy instance
- * @protocol: the protocol number (ZD_PROTO_*) is returned here
- * @client_address: the remote address of the client is returned here
- * @client_local: the local address of the connection to the client is returned here
- * @server_address: the remote address of the server is returned here
- * @server_local: the local address of the connection to the server is returned here
- * @client_listen: the address of the listener which initiated this session is returned here
+ * @param self proxy instance
+ * @param protocol the protocol number (ZD_PROTO_*) is returned here
+ * @param client_address the remote address of the client is returned here
+ * @param client_local the local address of the connection to the client is returned here
+ * @param server_address the remote address of the server is returned here
+ * @param server_local the local address of the connection to the server is returned here
+ * @param client_listen the address of the listener which initiated this session is returned here
  *
  * This function is used to query the addresses used to connecting the proxy
  * to the client and server. The utilized application protocol is also
@@ -1561,14 +1583,7 @@ static ZProxyFuncs z_proxy_funcs =
   .wakeup = z_proxy_wakeup_method
 };
 
-ZClass ZProxy__class = 
-{
-  Z_CLASS_HEADER,
-  &ZObject__class,
-  "ZProxy",
-  sizeof(ZProxy),
-  &z_proxy_funcs.super,
-};
+Z_CLASS_DEF(ZProxy, ZObject, z_proxy_funcs);
 
 /* ZProxyIface */
 
@@ -1613,14 +1628,8 @@ ZObjectFuncs z_proxy_iface_funcs =
   z_proxy_iface_free_method,
 };
 
-ZClass ZProxyIface__class =
-{
-  Z_CLASS_HEADER,
-  Z_CLASS(ZObject),
-  "ZProxyIface",
-  sizeof(ZProxyIface),
-  &z_proxy_iface_funcs
-};
+Z_CLASS_DEF(ZProxyIface, ZObject, z_proxy_iface_funcs);
+
 
 /* ZProxyBasicIface */
 
@@ -1683,15 +1692,7 @@ ZProxyBasicIfaceFuncs z_proxy_basic_iface_funcs =
   .set_var = z_proxy_basic_iface_set_var_method,
 };
 
-ZClass ZProxyBasicIface__class =
-{
-  Z_CLASS_HEADER,
-  Z_CLASS(ZProxyIface),
-  "ZProxyBasicIface",
-  sizeof(ZProxyBasicIface),
-  &z_proxy_basic_iface_funcs.super
-};
-
+Z_CLASS_DEF(ZProxyBasicIface, ZProxyIface, z_proxy_basic_iface_funcs);
 
 ZProxyStackIfaceFuncs z_proxy_stack_iface_funcs =
 {
@@ -1704,14 +1705,7 @@ ZProxyStackIfaceFuncs z_proxy_stack_iface_funcs =
   .set_content_hint = NULL
 };
 
-ZClass ZProxyStackIface__class =
-{
-  Z_CLASS_HEADER,
-  Z_CLASS(ZProxyIface),
-  "ZProxyStackIface",
-  sizeof(ZProxyStackIface),
-  &z_proxy_stack_iface_funcs.super
-};
+Z_CLASS_DEF(ZProxyStackIface, ZProxyIface, z_proxy_stack_iface_funcs);
 
 ZProxyHostIfaceFuncs z_proxy_host_iface_funcs =
 {
@@ -1722,13 +1716,4 @@ ZProxyHostIfaceFuncs z_proxy_host_iface_funcs =
   .check_name = NULL,
 };
 
-
-ZClass ZProxyHostIface__class =
-{
-  Z_CLASS_HEADER,
-  Z_CLASS(ZProxyIface),
-  "ZProxyHostIface",
-  sizeof(ZProxyHostIface),
-  &z_proxy_host_iface_funcs.super
-};
-
+Z_CLASS_DEF(ZProxyHostIface, ZProxyIface, z_proxy_host_iface_funcs);

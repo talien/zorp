@@ -113,7 +113,7 @@ ftp_transfer_dst_shutdown(ZTransfer2 *s, ZStream *stream, GError **err)
   if (self->dst_write_state == FTP_DW_INITIAL)
     self->dst_write_state = FTP_DW_WRITE_PREAMBLE;
 
-  if (self->super.stack_decision == Z_ACCEPT)
+  if (self->super.stack_decision == ZV_ACCEPT)
     {
       if (self->dst_write_state == FTP_DW_WRITE_PREAMBLE)
         {
@@ -215,14 +215,7 @@ ZTransfer2Funcs ftp_transfer_funcs =
   .progress = NULL
 };
 
-ZClass FtpTransfer__class =
-{
-  Z_CLASS_HEADER,
-  &ZTransfer2__class,
-  "FtpTransfer",
-  sizeof(FtpTransfer),
-  &ftp_transfer_funcs.super
-};
+Z_CLASS_DEF(FtpTransfer, ZTransfer2, ftp_transfer_funcs);
 
 gboolean
 ftp_data_transfer(FtpProxy *self, ZStream *from_stream, ZStream *to_stream)
@@ -265,7 +258,7 @@ ftp_data_transfer(FtpProxy *self, ZStream *from_stream, ZStream *to_stream)
     }
   
   /* transfer was successful, check if the stacked proxy told us something important */
-  if (t->super.stack_decision != Z_ACCEPT)
+  if (t->super.stack_decision != ZV_ACCEPT)
     {
       res = FALSE;
       /*LOG

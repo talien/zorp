@@ -31,13 +31,27 @@
 #include <netinet/ip.h>
 
 gboolean
-z_kzorp_get_lookup_result(gint fd, struct z_kzorp_lookup_result *result)
+z_kzorp_get_lookup_result(guint8 family, gint fd, struct z_kzorp_lookup_result *result)
 {
   socklen_t size = sizeof(*result);
+  int level;
 
   z_enter();
 
-  if (getsockopt(fd, SOL_IP, SO_KZORP_RESULT, result, &size) < 0)
+  switch (family)
+    {
+    case PF_INET:
+      level = SOL_IP;
+      break;
+    case PF_INET6:
+      level = SOL_IPV6;
+      break;
+    default:
+      g_assert_not_reached();
+      break;
+    }
+
+  if (getsockopt(fd, level, SO_KZORP_RESULT, result, &size) < 0)
     {
       z_log(NULL, CORE_ERROR, 3, "Error querying KZorp lookup result; fd='%d', error='%s'", fd, g_strerror(errno));
       z_return(FALSE);

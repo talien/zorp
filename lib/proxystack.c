@@ -126,8 +126,7 @@ z_proxy_stack_proxy(ZProxy *self, ZPolicyObj *proxy_class, ZStackedProxy **stack
     }
   else
     {
-      Py_XINCREF(Py_None);
-      stack_info_obj = Py_None;
+      stack_info_obj = z_policy_none_ref();
     }
 
   res = z_policy_call(self->handler, "stackProxy", z_policy_var_build("(OOOO)", client_stream, server_stream, proxy_class, stack_info_obj),
@@ -258,17 +257,17 @@ z_proxy_control_stream_read(ZStream *stream, GIOCondition cond G_GNUC_UNUSED, gp
             }
 
 	  if (strcmp(hdr1->value->str, "Z_ACCEPT") == 0)
-	    verdict = Z_ACCEPT;
+	    verdict = ZV_ACCEPT;
 	  else if (strcmp(hdr1->value->str, "Z_REJECT") == 0)
-            verdict = Z_REJECT;
+            verdict = ZV_REJECT;
 	  else if (strcmp(hdr1->value->str, "Z_DROP") == 0)
-            verdict = Z_DROP;
+            verdict = ZV_DROP;
 	  else if (strcmp(hdr1->value->str, "Z_ERROR") == 0)
-	    verdict = Z_ERROR;
+	    verdict = ZV_ERROR;
 	  else
-	    verdict = Z_UNSPEC;
+	    verdict = ZV_UNSPEC;
           
-          z_proxy_stack_iface_set_verdict(iface, verdict, hdr2 ? hdr2->value->str : NULL);
+          z_proxy_stack_iface_set_verdict(siface, verdict, hdr2 ? hdr2->value->str : NULL);
         }
     }
   else

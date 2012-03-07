@@ -150,13 +150,13 @@ telnet_policy_option(TelnetProxy *self)
             {
               switch (res)
                 {
-                case Z_ACCEPT:
+                case ZV_ACCEPT:
                   z_proxy_log(self, TELNET_POLICY, 6, "Policy function accepted option; option='%s'", lookup_str);
                   res = TELNET_CHECK_OK;
                   break;
 
-                case Z_UNSPEC:
-                case Z_DROP:
+                case ZV_UNSPEC:
+                case ZV_DROP:
                   z_proxy_log(self, TELNET_POLICY, 3, "Policy function drop option; option='%s'", lookup_str);
                   res = TELNET_CHECK_DROP;
                   break;
@@ -166,7 +166,7 @@ telnet_policy_option(TelnetProxy *self)
                   res = TELNET_CHECK_REJECT;
                   break;
 
-                case Z_ABORT:
+                case ZV_ABORT:
                 default:
                   z_proxy_log(self, TELNET_POLICY, 1, "Policy function aborted session; option='%s'", lookup_str);
                   res = TELNET_CHECK_ABORT;
@@ -288,19 +288,19 @@ telnet_policy_suboption(TelnetProxy *self, guchar command, gchar *name, gchar *v
             {
               switch (res)
                 {
-                case Z_ACCEPT:
+                case ZV_ACCEPT:
                   z_proxy_log(self, TELNET_POLICY, 6, "Policy function accepted suboption; command=`%s', option=`%s'", lookup_str[1], lookup_str[0]);
                   res = TELNET_CHECK_OK;
                   break;
 
-                case Z_UNSPEC:
-                case Z_REJECT:
-                case Z_DROP:
+                case ZV_UNSPEC:
+                case ZV_REJECT:
+                case ZV_DROP:
                   z_proxy_log(self, TELNET_POLICY, 3, "Policy function denied suboption; command=`%s', option=`%s'", lookup_str[1], lookup_str[0]);
                   res = TELNET_CHECK_DROP;
                   break;
 
-                case Z_ABORT:
+                case ZV_ABORT:
                 default:
                   z_proxy_log(self, TELNET_POLICY, 3, "Policy function aborted suboption; command=`%s', option=`%s'", lookup_str[1], lookup_str[0]);
                   res = TELNET_CHECK_ABORT;

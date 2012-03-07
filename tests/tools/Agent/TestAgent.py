@@ -1,0 +1,2 @@
+class TestAgent:
+	pass

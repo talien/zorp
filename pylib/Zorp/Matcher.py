@@ -40,9 +40,10 @@
 
 from Zorp import *
 from Cache import TimedCache
+from Exceptions import MatcherException
 import os, re, string, DNS, types, time, smtplib, socket, traceback
 
-class MatcherPolicy:
+class MatcherPolicy(object):
         """<class maturity="stable" type="matcherpolicy">
           <summary>
             Class encapsulating a Matcher which can be used by a name.
@@ -108,7 +109,7 @@ def getMatcher(matcher_or_name_or_whatever):
                 raise MatcherException, "Matcher is of invalid type"
 
 
-class AbstractMatcher:
+class AbstractMatcher(object):
         """
         <class maturity="stable" abstract="yes">
           <summary>
@@ -246,7 +247,7 @@ MatcherPolicy(name="Smtpdomains", matcher=RegexpMatcher (match_list=("smtp.examp
                   </metainfo>
                 </method>
                 """
-                AbstractMatcher.__init__(self)
+                super(RegexpMatcher, self).__init__()
                 self.match = []
                 self.ignore = []
                 self.ignore_case = ignore_case
@@ -393,7 +394,7 @@ MatcherPolicy(name="demo_regexpfilematcher", matcher=RegexpFileMatcher(match_fna
                   </metainfo>
                 </method>
                 """
-                RegexpMatcher.__init__(self)
+                super(RegexpFileMatcher, self).__init__()
                 self.match_file = match_fname
                 self.match_date = 0
                 self.ignore_file = ignore_fname
@@ -492,7 +493,7 @@ MatcherPolicy(name="demo_regexpfilematcher", matcher=RegexpFileMatcher(match_fna
                                 ##
                                 log(None, CORE_POLICY, 3, "Error opening ignore file; filename='%s'", (self.ignore_file,))
 
-                return RegexpMatcher.checkMatch(self, str)
+                return super(RegexpFileMatcher, self).checkMatch(str)
 
 class CombineMatcher(AbstractMatcher):
         """
@@ -580,7 +581,7 @@ Python:
 class SmtpRecipientMatcherProxy(SmtpProxy):
   recipient_matcher="SmtpCombineMatcher"
   def config(self):
-    SmtpProxy.config(self)
+    super(SmtpRecipientMatcherProxy, self).config()
 
 MatcherPolicy(name="SmtpCombineMatcher", matcher=CombineMatcher (expr=(Z_AND, "SmtpCheckrecipient", "SmtpWhitelist")))
 MatcherPolicy(name="SmtpWhitelist", matcher=RegexpMatcher (match_list=("info@example.com",), ignore_list=None))
@@ -628,7 +629,7 @@ MatcherPolicy(name="SmtpCheckrecipient", matcher=SmtpInvalidRecipientMatcher (se
                 </metainfo>
                 </method>
                 """
-                AbstractMatcher.__init__(self)
+                super(CombineMatcher, self).__init__()
                 self.arg = []
 
                 # check for operator and argument count
@@ -783,49 +784,96 @@ MatcherPolicy(name="ExampleDomainMatcher", matcher=DNSMatcher(server="dns.exampl
                   </metainfo>
                 </method>
                 """
-                self.expires = -1
                 self.server = server
                 if type(hosts) == type(''):
-                        self.hosts = [hosts]
+                        self.hosts = [ hosts ]
                 else:
                         self.hosts = hosts
 
-        def fillCache(self, now=None):
+                # address -> set of names
+                self.cache_address_to_names = {}
+                # name -> set of addresses
+                self.cache_name_to_addresses = {}
+                # hostname -> expiry timestamp
+                self.expires = {}
+
+        def addHostToCache(self, host, addresses):
                 """<method internal="yes">
                 </method>
                 """
-                self.cache = {}
+                self.cache_name_to_addresses.setdefault(host, set()).update(set(addresses))
+
+                for address in addresses:
+                        self.cache_address_to_names.setdefault(address, set()).add(host)
+
+        def dropHostFromCache(self, host):
+                """<method internal="yes">
+                </method>
+                """
+                if host not in self.cache_name_to_addresses:
+                        return
+
+                for address in self.cache_name_to_addresses[host]:
+                        self.cache_address_to_names[address].remove(host)
+                        if len(self.cache_address_to_names[address]) == 0:
+                                del self.cache_address_to_names[address]
+
+                del self.cache_name_to_addresses[host]
+
+        def updateCachedHost(self, host, now):
+                """<method internal="yes">
+                </method>
+                """
+                # drop old cached values
+                self.dropHostFromCache(host)
+
+                # do lookup
+                params = { "name": host, "qtype": DNS.Type.ANY }
+                if self.server:
+                        params["server"] = self.server
+                request = DNS.DnsRequest(**params)
+                try:
+                        answer = request.req()
+                except DNSError:
+                        log(None, CORE_ERROR, 3, "Error resolving host; host='%s'", host)
+                        return
+
+                if len(answer.answers) > 0:
+                        # filter A and AAAA records
+                        addresses = filter(lambda x: x["typename"] == "A" or x["typename"] == "AAAA", answer.answers)
+                        # got A or AAA records, find minimum TTL and update cache
+                        ttl = min(map(lambda x: x["ttl"], addresses) )
+
+                        # IPv4 addresses are already in a string form in the data attribute
+                        self.addHostToCache(host, map(lambda x: x["data"], filter(lambda y: y["typename"] == "A", addresses )))
+                        # while IPv6 addresses are represented in their network representation, need to be converted
+                        self.addHostToCache(host, map(lambda x: socket.inet_ntop(socket.AF_INET6, x["data"]),
+                                                      filter(lambda y: y["typename"] == "AAAA", addresses)))
+                else:
+                        # no records, cache failure for negative TTL secs
+                        ttl = answer.authority[0]["data"][6][1]
+                        log(None, CORE_DEBUG, 6, "No such host found; host='%s'", host)
+
+                # set expiry
+                self.expires[host] = now + ttl
+
+        def updateCache(self, now):
+                """<method internal="yes">
+                </method>
+                """
                 for host in self.hosts:
-
-                        params={}
-                        params["name"]  = host
-                        params["qtype"] = "A"
-                        if self.server:
-                                params["server"] = self.server
-                        r = DNS.DnsRequest(**params)
-                        a = r.req()
-                        if not now:
-                                now = time.time()
-
-                        ttl = -1
-                        for answer in a.answers:
-                                self.cache[answer["data"]] = 1
-                                if ttl > answer["ttl"] or ttl == -1:
-                                        ttl = answer["ttl"]
-
-                        if ttl < 0:
-                                log(None, CORE_ERROR, 3, "Error resolving host; host='%s'", host)
-
-                        if (now + ttl) < self.expires:
-                                self.expires = now + ttl
+                        if now < self.expires.get(host, -1.0):
+                                log(None, CORE_DEBUG, 6, "Host already in DNS matcher cache and within TTL; host='%s'", host)
+                        else:
+                                log(None, CORE_INFO, 5, "Host not in DNS matcher cache or has expired, doing lookup; host='%s'", host)
+                                self.updateCachedHost(host, now)
 
         def checkMatch(self, str):
                 """<method internal="yes"/>
                 """
-                now = time.time()
-                if self.expires < 0 or now > self.expires:
-                        self.fillCache(now)
-                if self.cache.has_key(str):
+                self.updateCache(time.time())
+
+                if self.cache_address_to_names.has_key(str):
                         return TRUE
                 else:
                         return FALSE
@@ -884,7 +932,7 @@ MatcherPolicy(name="demo_windowsupdatematcher", matcher=WindowsUpdateMatcher())
                   </metainfo>
                 </method>
                 """
-                DNSMatcher.__init__(self,
+                super(WindowsUpdateMatcher, self).__init__(
                                     ['v5.windowsupdate.microsoft.nsatc.net', 'v4.windowsupdate.microsoft.nsatc.net', 'update.microsoft.com.nsatc.net'],
                                     server)
 
@@ -945,7 +993,7 @@ Python:
 class SmtpRecipientMatcherProxy(SmtpProxy):
   recipient_matcher="SmtpCheckrecipient"
   def config(self):
-    SmtpProxy.config(self)
+    super(SmtpRecipientMatcherProxy, self).config()
 
 MatcherPolicy(name="SmtpCheckrecipient", matcher=SmtpInvalidRecipientMatcher (server_port=25, cache_timeout=60, attempt_delivery=FALSE, force_delivery_attempt=FALSE, server_name="recipientcheck.example.com"))
             </synopsis>
@@ -1041,7 +1089,7 @@ MatcherPolicy(name="SmtpCheckrecipient", matcher=SmtpInvalidRecipientMatcher (se
                   </metainfo>
                 </method>
                 """
-                AbstractMatcher.__init__(self)
+                super(SmtpInvalidRecipientMatcher, self).__init__()
                 self.force_delivery_attempt = force_delivery_attempt
                 self.server_name = server_name
                 self.server_port = server_port

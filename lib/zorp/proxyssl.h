@@ -59,6 +59,9 @@ typedef struct _ZProxySsl {
   STACK_OF(X509_NAME) *server_peer_ca_list;
   STACK_OF(X509_CRL) *local_crl_list[EP_MAX];
 
+  GString *verify_ca_directory[EP_MAX];
+  GString *verify_crl_directory[EP_MAX];
+
   gboolean force_connect_at_handshake;
   gint handshake_timeout;
   gint handshake_seq;
@@ -72,6 +75,7 @@ typedef struct _ZProxySsl {
   gboolean disable_proto_tlsv1[EP_MAX];
 
   gboolean permit_invalid_certificates;
+  gboolean permit_missing_crl;
   gboolean server_check_subject;
   GString  *local_privkey_passphrase[EP_MAX];
 

@@ -29,5 +29,5 @@ libzorp_la_SOURCES = \
 	pyaudit.c timestamp.c idsconn.c \
 	proxyssl.c pyx509.c proxysslhostiface.c \
 	bllookup.c \
-	kzorp.c
-
+	kzorp.c \
+	credentials.c

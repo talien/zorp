@@ -74,13 +74,11 @@
       </para>
       <example>
         <title>Controlling the number of max hops</title>
-        <literallayout>
-def MyFingerProxy(FingerProxy):
+        <synopsis>def MyFingerProxy(FingerProxy):
 	def config(self):
 		FingerProxy.config(self)
 		self.max_hop_count = 2
-		self.timeout = 30
-        </literallayout>
+		self.timeout = 30</synopsis>
       </example>
   </section>
   <section>
@@ -361,7 +359,7 @@ class AbstractFingerProxy(Proxy):
                 </metainfo>
                 </method>
 		"""
-		return Z_ACCEPT
+		return ZV_ACCEPT
 
 	def config(self):
 		"""<method internal="yes">

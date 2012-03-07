@@ -170,6 +170,11 @@ smtp_register_vars(SmtpProxy *self)
                   Z_VAR_TYPE_INT | Z_VAR_SET_CONFIG | Z_VAR_GET,
                   &self->tls_passthrough);
 
+  z_proxy_var_new(&self->super, "sanitizeAddress",
+                  Z_VAR_TYPE_METHOD | Z_VAR_GET,
+                  self, smtp_policy_sanitize_address);
+
+
   z_proxy_return(self);
 }
 
@@ -1078,7 +1083,7 @@ smtp_process_transfer(SmtpProxy *self)
       else if (tr == ZT2_RESULT_FINISHED)
         {
           /* empty message */
-          if (z_transfer2_get_stack_decision(self->transfer) == Z_REJECT)
+          if (z_transfer2_get_stack_decision(self->transfer) == ZV_REJECT)
             {
 	      /*LOG
 	        This message indicates that the content was declared invalid by the stacked proxy and Zorp
@@ -1088,13 +1093,13 @@ smtp_process_transfer(SmtpProxy *self)
               
               smtp_format_stack_info(self, "Error storing message", z_transfer2_get_stack_info(self->transfer));
             }
-          else if (z_transfer2_get_stack_decision(self->transfer) == Z_DROP)
+          else if (z_transfer2_get_stack_decision(self->transfer) == ZV_DROP)
             {
               z_proxy_log(self, SMTP_POLICY, 3, "Message dropped, invalid contents; stack_info='%s'", z_transfer2_get_stack_info(self->transfer));
               g_string_assign(self->error_code, "250");
               smtp_format_stack_info(self, "Message discarded", z_transfer2_get_stack_info(self->transfer));
             }
-          else if (z_transfer2_get_stack_decision(self->transfer) == Z_ERROR)
+          else if (z_transfer2_get_stack_decision(self->transfer) == ZV_ERROR)
             {
               /*LOG
                 This message inidicates that an error occured during stacked proxy handle the contents and Zorp
@@ -1618,15 +1623,7 @@ ZProxyFuncs smtp_proxy_funcs =
   NULL
 };
 
-ZClass SmtpProxy__class =
-{
-  Z_CLASS_HEADER,
-  &ZProxy__class,
-  "SmtpProxy",
-  sizeof(SmtpProxy),
-  &smtp_proxy_funcs.super
-};
-
+Z_CLASS_DEF(SmtpProxy, ZProxy, smtp_proxy_funcs);
 
 /**
  * zorp_module_init:

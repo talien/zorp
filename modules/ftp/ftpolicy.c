@@ -257,8 +257,8 @@ ftp_policy_command_hash_do(FtpProxy *self)
                 case FTP_REQ_REJECT:
                   break;
                   
-                case Z_UNSPEC:
-                case Z_DROP:
+                case ZV_UNSPEC:
+                case ZV_DROP:
                   ret = FTP_REQ_REJECT;
                   break;
 
@@ -426,8 +426,8 @@ ftp_policy_answer_hash_do(FtpProxy *self)
                 case FTP_RSP_ABORT:
                   break;
                   
-                case Z_DROP:
-                case Z_UNSPEC:
+                case ZV_DROP:
+                case ZV_UNSPEC:
                   ret = FTP_RSP_REJECT;
                   break;
                   

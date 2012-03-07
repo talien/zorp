@@ -78,6 +78,18 @@ enum
 #define Z_VAR_TYPE_OBSOLETE     0x00000A00      /* variable is an obsolete alias of another variable */
 #define Z_VAR_TYPE_INT64        0x00000B00      /* variable is an int64 */
 
+/** The authentication type of z_proxy_user_authenticated() (#ZProxy.userAuthenticated()), indicating which type of authentication
+ * occured before calling z_proxy_user_authenticated(). Its "auth_info" parameter is also changed
+ */
+typedef enum _ZProxyUserAuthType
+{
+  Z_PROXY_USER_AUTHENTICATED_NONE,               /**< The auth type is not explicitly specified, none of the others.
+                                                  *  From Zorp, the auth_info parameter is "none", from Python this can be any other, too
+                                                  */
+  Z_PROXY_USER_AUTHENTICATED_INBAND,             /**< The authentication is an inband authentication. Auth_info param is "inband". */
+  Z_PROXY_USER_AUTHENTICATED_GATEWAY,       /**< The authentication is a gateway authentication. Auth_info param is "gw-auth". */
+  Z_PROXY_USER_AUTHENTICATED_SERVER,             /**< The authentication is a server-side authentication. Auth_info param is "server". */
+} ZProxyUserAuthType;
 
 typedef struct _ZProxyParams ZProxyParams;
 typedef struct _ZProxyIface ZProxyIface;
@@ -214,7 +226,17 @@ void z_proxy_set_group(ZProxy *self, ZProxyGroup *proxy_group);
 /* misc helper functions */
 gboolean z_proxy_set_server_address(ZProxy *self, const gchar *host, gint port);
 gint z_proxy_connect_server(ZProxy *self, const gchar *host, gint port);
-gint z_proxy_user_authenticated(ZProxy *self, const gchar *entity, gchar const **groups);
+gint z_proxy_user_authenticated(ZProxy *self, const gchar *entity, gchar const **groups, ZProxyUserAuthType type);
+
+
+/** Wrapper for z_proxy_user_authenticated() with the default #Z_PROXY_USER_AUTHENTICATED_INBAND parameter.
+ * @see z_proxy_user_authenticated()
+ */
+static inline gint
+z_proxy_user_authenticated_default(ZProxy *self, const gchar *entity, gchar const **groups)
+{
+  return z_proxy_user_authenticated(self, entity, groups, Z_PROXY_USER_AUTHENTICATED_INBAND);
+}
 
 gboolean
 z_proxy_get_addresses(ZProxy *self, 

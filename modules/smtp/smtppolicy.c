@@ -304,3 +304,34 @@ smtp_policy_is_extension_permitted(SmtpProxy *self, gchar *extension)
 
   z_proxy_return(self, found && (verdict == SMTP_EXT_ACCEPT));
 }
+
+ZPolicyObj *
+smtp_policy_sanitize_address(SmtpProxy *self, ZPolicyObj *args)
+{
+  gchar *address;
+  gchar *final_end;
+  GString *sanitized_address;
+  ZPolicyObj *res = NULL;
+
+  z_proxy_enter(self);
+  if (!z_policy_var_parse_tuple(args, "s", &address))
+    {
+      z_policy_raise_exception_obj(z_policy_exc_value_error, "Invalid arguments");
+      z_proxy_leave(self);
+      return NULL;
+    }
+
+  sanitized_address = g_string_new("");
+  if (!smtp_sanitize_address(self, sanitized_address, address, TRUE, &final_end))
+    {
+      z_policy_raise_exception_obj(z_policy_exc_value_error, "Invalid address");
+      goto exit;
+    }
+
+  res = z_policy_var_build("s", sanitized_address->str);
+
+ exit:
+  g_string_free(sanitized_address, TRUE);
+  z_proxy_leave(self);
+  return res;
+}

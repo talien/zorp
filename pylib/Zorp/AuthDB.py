@@ -51,7 +51,7 @@ Z_AUTH_REJECT     = 8
 
 
 
-class AuthenticationProvider:
+class AuthenticationProvider(object):
         """
         <class type="authprov">
           <summary>A database-independent class used by Zorp to connect to an 
@@ -127,7 +127,7 @@ def getAuthenticationProviderBackend(name):
                         log(None, CORE_POLICY, 3, "No such authentication provider; provider='%s'", (name))
         return None
 
-class AbstractAuthenticationBackend:
+class AbstractAuthenticationBackend(object):
         """
         <class maturity="stable" abstract="yes" type="authdb">
           <summary>
@@ -246,7 +246,7 @@ class AbstractAuthenticationBackend:
                   </metainfo>
                 </method>
                 """
-                return ()
+                return None
 
         def setMethod(self, session_id, method):
                 """

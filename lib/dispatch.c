@@ -113,7 +113,7 @@ z_listener_entry_new(ZListener * listener)
   ZListenerEntry *self = g_new0(ZListenerEntry, 1);
   g_assert(listener != NULL);
 
-  self->listener = listener;
+  self->listener = z_listener_ref(listener);
   z_refcount_set(&self->ref_cnt, 1);
   return self;
 }
@@ -200,15 +200,22 @@ z_dispatch_bind_equal(ZDispatchBind *key1, ZDispatchBind *key2)
 static guint 
 z_dispatch_bind_hash(ZDispatchBind *key)
 {
-  struct sockaddr_in *s_in;
-  
   switch (key->type)
     {
     case ZD_BIND_SOCKADDR:
-      g_assert(z_sockaddr_inet_check(key->sa.addr));
-  
-      s_in = (struct sockaddr_in *) &key->sa.addr->sa;
-      return s_in->sin_family + ntohs(s_in->sin_port) + ntohl(s_in->sin_addr.s_addr) + key->protocol; 
+      if (z_sockaddr_inet_check(key->sa.addr))
+        {
+          struct sockaddr_in *s_in = (struct sockaddr_in *) &key->sa.addr->sa;
+          return s_in->sin_family + ntohs(s_in->sin_port) + ntohl(s_in->sin_addr.s_addr) + key->protocol;
+        }
+      else if (z_sockaddr_inet6_check(key->sa.addr))
+        {
+          struct sockaddr_in *s_in = (struct sockaddr_in *) &key->sa.addr->sa;
+          return s_in->sin_family + ntohs(s_in->sin_port) + ntohl(s_in->sin_addr.s_addr) + key->protocol;
+        }
+      else
+        g_assert_not_reached();
+
     case ZD_BIND_IFACE:
       return g_str_hash(key->iface.iface) + ntohs(key->iface.port);
     case ZD_BIND_IFACE_GROUP:
@@ -249,6 +256,8 @@ z_dispatch_bind_is_wildcard(ZDispatchBind *self)
     {
     case ZD_BIND_SOCKADDR:
       if (z_sockaddr_inet_check(self->sa.addr) && z_sockaddr_inet_get_port(self->sa.addr) == 0)
+        return TRUE;
+      if (z_sockaddr_inet6_check(self->sa.addr) && z_sockaddr_inet6_get_port(self->sa.addr) == 0)
         return TRUE;
       break;
     case ZD_BIND_IFACE:
@@ -315,9 +324,11 @@ z_dispatch_bind_new_iface(guint protocol, const gchar *iface, gint family, const
   switch (family)
     {
     case AF_INET:
-      z_inet_aton(ip, &self->iface.ip4);
-      break;
+      if (z_inet_aton(ip, &self->iface.ip4))
+        break;
+      // fallthrough in case of parse error
     default:
+      z_log(NULL, CORE_ERROR, 1, "Error parsing bind ip of dispatcher; interface='%s', ip='%s'", iface, ip);
       g_assert_not_reached();
     }
 
@@ -866,6 +877,8 @@ z_dispatch_bind_iface_change(const gchar *iface G_GNUC_UNUSED, ZIfChangeType cha
                       chain->listeners = g_list_remove(chain->listeners, listener_entry);
                       z_listener_entry_unref(listener_entry);
                     }
+
+                  z_listener_unref(listener);
                 }
             }
           else
@@ -972,13 +985,14 @@ z_dispatch_bind_listener(ZDispatchChain *chain, ZDispatchBind **bound_key)
         {
           ZListenerEntry *entry = z_listener_entry_new(listener);
 
+          z_listener_unref(listener);
+
           chain->listeners = g_list_prepend(chain->listeners, entry);
           /* open fd so that we can get the local address */
           if (!z_listener_open(listener))
             {
               chain->listeners = g_list_remove(chain->listeners, entry);
               z_listener_entry_unref(entry);
-              z_listener_unref(listener);
               rc = FALSE;
               break;
             }
@@ -989,7 +1003,6 @@ z_dispatch_bind_listener(ZDispatchChain *chain, ZDispatchBind **bound_key)
               z_sockaddr_unref(listener->local);
               chain->listeners = g_list_remove(chain->listeners, entry);
               z_listener_entry_unref(entry);
-              z_listener_unref(listener);
               rc = FALSE;
               break;
 

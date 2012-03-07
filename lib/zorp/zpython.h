@@ -29,36 +29,6 @@
 
 #include <zorp/zorp.h>
 
-#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 4
-#  define Z_PYTYPE_TRAILER_COMMON 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-#  ifdef COUNT_ALLOCS
-#    define Z_PYTYPE_TRAILER_COUNT_ALLOCS , 0, 0, 0, 0
-#  else
-#    define Z_PYTYPE_TRAILER_COUNT_ALLOCS
-#  endif
-#  define Z_PYTYPE_TRAILER Z_PYTYPE_TRAILER_COMMON Z_PYTYPE_TRAILER_COUNT_ALLOCS
-#elif PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 5
-#  define Z_PYTYPE_TRAILER_COMMON 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-#  ifdef COUNT_ALLOCS
-#    define Z_PYTYPE_TRAILER_COUNT_ALLOCS , 0, 0, 0, 0, 0
-#  else
-#    define Z_PYTYPE_TRAILER_COUNT_ALLOCS
-#  endif
-#  define Z_PYTYPE_TRAILER Z_PYTYPE_TRAILER_COMMON Z_PYTYPE_TRAILER_COUNT_ALLOCS
-#elif PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 6
-#  define Z_PYTYPE_TRAILER_COMMON 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-#  ifdef COUNT_ALLOCS
-#    define Z_PYTYPE_TRAILER_COUNT_ALLOCS , 0, 0, 0, 0, 0
-#  else
-#    define Z_PYTYPE_TRAILER_COUNT_ALLOCS
-#  endif
-#  define Z_PYTYPE_TRAILER Z_PYTYPE_TRAILER_COMMON Z_PYTYPE_TRAILER_COUNT_ALLOCS
-#elif PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 3
-#  define Z_PYTYPE_TRAILER 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-#else
-#  define Z_PYTYPE_TRAILER
-#endif
-
 #if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION >= 5
 #  define Z_PYMAPPING_LENFUNC_TYPE lenfunc
 #  define Z_PYTHON_SIZE_TYPE gssize

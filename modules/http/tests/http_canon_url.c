@@ -93,6 +93,7 @@ struct
   /* no canonicalization, URL must remain the same, except the username/password part */
   { "http://use%72:p%61ss%40@test.host/fi%2f%2e%2e%2fle?%u003f%61&%26#%40",  
                                                FALSE, TRUE,  TRUE,  FALSE, "http://user:pass%40@test.host/fi%2f%2e%2e%2fle?%u003f%61&%26#%40" },
+  { "http://[::1]:80/file",                   FALSE, FALSE, TRUE,  TRUE, "http://[::1]:80/file" },
   { NULL, 0,0,0,0, NULL }
 };
 

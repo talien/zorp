@@ -35,15 +35,21 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = lib/zorp
 DIST_COMMON = $(pkginclude_HEADERS) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in
+	$(srcdir)/Makefile.in $(srcdir)/zorpconfig.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/zorpconfig.h
+CONFIG_HEADER = zorpconfig.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 SOURCES =
 DIST_SOURCES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -75,11 +81,13 @@ DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 pkgincludedir = $(includedir)/zorp
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BROCHURE_VERSION = @BROCHURE_VERSION@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -91,7 +99,6 @@ DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DEPS_CPPFLAGS = @DEPS_CPPFLAGS@
 DEPS_LIBS = @DEPS_LIBS@
-DLLTOOL = @DLLTOOL@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -117,6 +124,7 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
+LIBPROXY_CPPFLAGS = @LIBPROXY_CPPFLAGS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIBZORP_LIBS = @LIBZORP_LIBS@
@@ -129,12 +137,10 @@ LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
-MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 MODULES_CPPFLAGS = @MODULES_CPPFLAGS@
 MODULES_LIBS = @MODULES_LIBS@
 MODULETESTS_LIBS = @MODULETESTS_LIBS@
-MODULE_DIRS = @MODULE_DIRS@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -143,10 +149,6 @@ OPENSSL_CFLAGS = @OPENSSL_CFLAGS@
 OPENSSL_CLAGS = @OPENSSL_CLAGS@
 OPENSSL_LIBS = @OPENSSL_LIBS@
 OPENSSL_MIN_VERSION = @OPENSSL_MIN_VERSION@
-OSIP_CFLAGS = @OSIP_CFLAGS@
-OSIP_LIBS = @OSIP_LIBS@
-OSIP_MAX_VERSION = @OSIP_MAX_VERSION@
-OSIP_MIN_VERSION = @OSIP_MIN_VERSION@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -160,9 +162,9 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PCAP_LIBS = @PCAP_LIBS@
 PKG_CONFIG = @PKG_CONFIG@
-PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
-PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PYTHON = @PYTHON@
+PYTHON_CFLAGS = @PYTHON_CFLAGS@
+PYTHON_LIBS = @PYTHON_LIBS@
 PYTHON_MIN_VERSION = @PYTHON_MIN_VERSION@
 RANLIB = @RANLIB@
 RELEASE_TAG = @RELEASE_TAG@
@@ -174,14 +176,7 @@ SOCK_LIBS = @SOCK_LIBS@
 SOURCE_REVISION = @SOURCE_REVISION@
 STRIP = @STRIP@
 TESTCASES = @TESTCASES@
-UUID_CFLAGS = @UUID_CFLAGS@
-UUID_CLAGS = @UUID_CLAGS@
-UUID_LIBS = @UUID_LIBS@
 VERSION = @VERSION@
-WBCLIENT_CFLAGS = @WBCLIENT_CFLAGS@
-WBCLIENT_LIBS = @WBCLIENT_LIBS@
-XMLSEC_CFLAGS = @XMLSEC_CFLAGS@
-XMLSEC_LIBS = @XMLSEC_LIBS@
 ZLIB_LIBS = @ZLIB_LIBS@
 ZORPLIC_CFLAGS = @ZORPLIC_CFLAGS@
 ZORPLIC_LIBS = @ZORPLIC_LIBS@
@@ -200,7 +195,6 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
-ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -233,6 +227,7 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
+lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -250,7 +245,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 zorp_srcdir = @zorp_srcdir@
-ZORP_H = modules.h policy.h proxy.h proxystack.h \
+ZORP_H = zorpconfig.h \
+	modules.h policy.h proxy.h proxystack.h \
 	pyproxy.h \
 	nfdynexpect-kernel.h\
 	dimhash.h zorp.h \
@@ -269,10 +265,11 @@ ZORP_H = modules.h policy.h proxy.h proxystack.h \
 	pybalance.h pyaudit.h timestamp.h idsconn.h \
 	proxyssl.h proxysslhostiface.h proxycommon.h pyx509.h \
 	bllookup.h pyblacklist.h \
-	kzorp.h kzorp-kernel.h
+	kzorp.h kzorp-kernel.h credentials.h
 
 pkginclude_HEADERS = $(ZORP_H)
-all: all-am
+all: zorpconfig.h
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -305,6 +302,23 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
+
+zorpconfig.h: stamp-h1
+	@if test ! -f $@; then \
+	  rm -f stamp-h1; \
+	  $(MAKE) $(AM_MAKEFLAGS) stamp-h1; \
+	else :; fi
+
+stamp-h1: $(srcdir)/zorpconfig.h.in $(top_builddir)/config.status
+	@rm -f stamp-h1
+	cd $(top_builddir) && $(SHELL) ./config.status lib/zorp/zorpconfig.h
+$(srcdir)/zorpconfig.h.in:  $(am__configure_deps) 
+	($(am__cd) $(top_srcdir) && $(AUTOHEADER))
+	rm -f stamp-h1
+	touch $@
+
+distclean-hdr:
+	-rm -f zorpconfig.h stamp-h1
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -342,11 +356,11 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+TAGS:  $(HEADERS) $(SOURCES) zorpconfig.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	set x; \
 	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) zorpconfig.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -364,9 +378,9 @@ TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 	  fi; \
 	fi
 ctags: CTAGS
-CTAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+CTAGS:  $(HEADERS) $(SOURCES) zorpconfig.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) zorpconfig.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -416,7 +430,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(HEADERS)
+all-am: Makefile $(HEADERS) zorpconfig.h
 installdirs:
 	for dir in "$(DESTDIR)$(pkgincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -452,7 +466,7 @@ clean-am: clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
-distclean-am: clean-am distclean-generic distclean-tags
+distclean-am: clean-am distclean-generic distclean-hdr distclean-tags
 
 dvi: dvi-am
 
@@ -512,10 +526,10 @@ ps-am:
 
 uninstall-am: uninstall-pkgincludeHEADERS
 
-.MAKE: install-am install-strip
+.MAKE: all install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libtool ctags distclean distclean-generic \
+	clean-libtool ctags distclean distclean-generic distclean-hdr \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
 	install-data-am install-dvi install-dvi-am install-exec \

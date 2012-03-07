@@ -54,6 +54,7 @@ smtp_parse_atom(SmtpProxy *self G_GNUC_UNUSED, gchar *path, gchar **end)
   gchar specials[] = { '(', ')', '<', '>', '@', ',', ';', ':', '\\', '"', '.', '[', ']', ' ' };
   gint i = 0, j;
   
+  z_proxy_enter(self);
   while (path[i])
     {
       for (j = 0; j < (gint) sizeof(specials); j++)
@@ -61,12 +62,14 @@ smtp_parse_atom(SmtpProxy *self G_GNUC_UNUSED, gchar *path, gchar **end)
           if (path[i] == specials[j])
             {
               *end = &path[i];
+              z_proxy_leave(self);
               return TRUE;
             }
         }
       i++;
     }
   *end = &path[i];
+  z_proxy_leave(self);
   return TRUE;
 }
 
@@ -85,6 +88,7 @@ smtp_parse_domain(SmtpProxy *self, gchar *path, gchar **end)
 {
   gchar *src;
   
+  z_proxy_enter(self);
   if (path[0] == '#')
     {
       IGNORE_UNUSED_RESULT(strtol(&path[1], &src, 10));
@@ -127,8 +131,8 @@ smtp_parse_domain(SmtpProxy *self, gchar *path, gchar **end)
         }
       *end = src;
     }
+  z_proxy_leave(self);
   return src != path;
-    
 }
 
 /**
@@ -147,6 +151,7 @@ smtp_parse_source_route(SmtpProxy *self, gchar *path, gchar **end)
   gchar *src, *p;
   gboolean continued = FALSE;
 
+  z_proxy_enter(self);
   /* Source route format: @fqdn,fqdn,fqdn: */
   
   src = path;
@@ -158,10 +163,12 @@ smtp_parse_source_route(SmtpProxy *self, gchar *path, gchar **end)
       continued = FALSE;
       if (!smtp_parse_domain(self, src, &p))
         {
+          z_proxy_leave(self);
           return FALSE;
         }
       if (*p != ',' && *p != ':')
         {
+          z_proxy_leave(self);
           return FALSE;
         }
       src = p + 1;
@@ -173,6 +180,7 @@ smtp_parse_source_route(SmtpProxy *self, gchar *path, gchar **end)
       continued = TRUE;
     }
   
+  z_proxy_leave(self);
   return !continued;
 }
 
@@ -191,6 +199,7 @@ smtp_parse_local_part(SmtpProxy *self, gchar *path, gchar **end)
 {
   gchar *src;
   
+  z_proxy_enter(self);
   src = path;
   if (*src == '"')
     {
@@ -225,6 +234,7 @@ smtp_parse_local_part(SmtpProxy *self, gchar *path, gchar **end)
         }
       *end = src;
     }
+  z_proxy_leave(self);
   return src != path;
 }
 
@@ -246,6 +256,7 @@ smtp_parse_address(SmtpProxy *self, GString *result, gchar *path, gchar **end)
   gchar *src = path;
   gchar *start;
   
+  z_proxy_enter(self);
   start = src;
   *end = src;
   if (!smtp_parse_local_part(self, src, end))
@@ -254,6 +265,7 @@ smtp_parse_address(SmtpProxy *self, GString *result, gchar *path, gchar **end)
         This message indicates that parsing the local part of the address failed.
        */
       z_proxy_log(self, SMTP_VIOLATION, 2, "Error parsing local part; path='%s'", path);
+      z_proxy_leave(self);
       return FALSE;
     }
   src = *end;
@@ -271,8 +283,10 @@ smtp_parse_address(SmtpProxy *self, GString *result, gchar *path, gchar **end)
 	    not end with a '@' sign.
 	   */
           z_proxy_log(self, SMTP_VIOLATION, 2, "Local part does not end in '@'; path='%s'", path);
+          z_proxy_leave(self);
           return FALSE;
         }
+      z_proxy_leave(self);
       return TRUE;
     }
   src++;
@@ -283,9 +297,11 @@ smtp_parse_address(SmtpProxy *self, GString *result, gchar *path, gchar **end)
         This message indicates that the domain name of the mail is invalid.
        */
       z_proxy_log(self, SMTP_VIOLATION, 2, "Invalid domain name in path; path='%s'", path);
+      z_proxy_leave(self);
       return FALSE;
     }
   g_string_assign_len(result, start, (*end) - start);
+  z_proxy_leave(self);
   return TRUE;
 }
 

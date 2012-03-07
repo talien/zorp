@@ -98,7 +98,7 @@
 from Zorp import *
 from SockAddr import SockAddrInet
 
-class AbstractRouter:
+class AbstractRouter(object):
         """
         <class maturity="stable" abstract="yes">
           <summary>
@@ -343,7 +343,7 @@ Service(name="demo_service", proxy_class=HttpProxy, router=TransparentRouter(for
                   </metainfo>
                 </method>
                 """
-		AbstractRouter.__init__(self, forge_addr, forge_port)
+		super(TransparentRouter, self).__init__(forge_addr, forge_port)
 		self.forced_port = forced_port
 		self.overrideable = overrideable
 
@@ -370,7 +370,7 @@ Service(name="demo_service", proxy_class=HttpProxy, router=TransparentRouter(for
                   </metainfo>
                 </method>
 		"""
-		AbstractRouter.routeConnection(self, session)
+		super(TransparentRouter, self).routeConnection(session)
 
 		addr = session.client_local.clone(FALSE)
 		if self.forced_port:
@@ -483,7 +483,7 @@ Service(name="demo_service", proxy_class=HttpProxy, router=DirectedRouter(dest_a
                   </metainfo>
                 </method>
 		"""
-		AbstractRouter.__init__(self, forge_addr, forge_port)
+		super(DirectedRouter, self).__init__(forge_addr, forge_port)
 		if isinstance(dest_addr, SockAddrType):
 			self.dest_addr = (dest_addr,)
 		else:
@@ -512,7 +512,7 @@ Service(name="demo_service", proxy_class=HttpProxy, router=DirectedRouter(dest_a
                   </metainfo>
                 </method>
 		"""
-		AbstractRouter.routeConnection(self, session)
+		super(DirectedRouter, self).routeConnection(session)
 		session.setTargetAddress(self.dest_addr)
 		session.target_address_inband = self.overrideable
 		
@@ -584,7 +584,7 @@ Service(name="demo_service", proxy_class=HttpProxy, router=InbandRouter(forge_ad
                   </metainfo>
                 </method>
                 """
-                AbstractRouter.__init__(self, forge_addr, forge_port)
+                super(InbandRouter, self).__init__(forge_addr, forge_port)
 
         def routeConnection(self, session):
                 """
@@ -609,5 +609,5 @@ Service(name="demo_service", proxy_class=HttpProxy, router=InbandRouter(forge_ad
                   </metainfo>
                 </method>
 		"""
-		AbstractRouter.routeConnection(self, session)
+		super(InbandRouter, self).routeConnection(session)
 		session.target_address_inband = TRUE

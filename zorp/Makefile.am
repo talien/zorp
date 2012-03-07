@@ -1,11 +1,12 @@
 pkglibdir=$(libdir)/zorp
+pkglibexecdir=$(libdir)/zorp
 LIBS=@ZORP_LIBS@
 
 if PRO
 SUBDIRS = urlfilter
 endif
 
-pkglib_PROGRAMS = zorp
+pkglibexec_PROGRAMS = zorp
 
 zorp_SOURCES = main.c 
 
@@ -22,6 +23,7 @@ install-exec-local:
 	mkdir -p $(DESTDIR)/$(localstatedir)/tmp
 	mkdir -p $(DESTDIR)/$(localstatedir)/audit
 	mkdir -p $(DESTDIR)/$(localstatedir)/urlfilter
+	mkdir -p $(DESTDIR)/$(localstatedir)/cores
 
 main.c: logtags_gperf.c
 

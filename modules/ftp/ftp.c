@@ -2124,7 +2124,7 @@ ftp_proto_nt_server_to_proxy(FtpProxy *self)
         {
           z_proxy_log(self, FTP_ERROR, 3, "Server did not accept PBSZ in non-transparent mode, aborting;");
 
-          SET_ANSWER(MSG_NT_SERVER_PBSZ_REJECT);
+          SET_ANSWER(MSG_NT_SERVER_PBSZV_REJECT);
           ftp_answer_write_with_setup(self, self->answer_cmd->str, self->answer_param->str);
 
           self->state = FTP_QUIT;
@@ -2428,15 +2428,7 @@ ZProxyFuncs ftp_proxy_funcs =
   NULL
 };
 
-ZClass FtpProxy__class = 
-{
-  Z_CLASS_HEADER,
-  &ZProxy__class,
-  "FtpProxy",
-  sizeof(FtpProxy),
-  &ftp_proxy_funcs.super
-};
-
+Z_CLASS_DEF(FtpProxy, ZProxy, ftp_proxy_funcs);
 
 /*+ Zorp initialization function +*/
 gint

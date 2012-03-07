@@ -1,4 +1,5 @@
-ZORP_H = modules.h policy.h proxy.h proxystack.h \
+ZORP_H = zorpconfig.h \
+	modules.h policy.h proxy.h proxystack.h \
 	pyproxy.h \
 	nfdynexpect-kernel.h\
 	dimhash.h zorp.h \
@@ -17,7 +18,7 @@ ZORP_H = modules.h policy.h proxy.h proxystack.h \
 	pybalance.h pyaudit.h timestamp.h idsconn.h \
 	proxyssl.h proxysslhostiface.h proxycommon.h pyx509.h \
 	bllookup.h pyblacklist.h \
-	kzorp.h kzorp-kernel.h
+	kzorp.h kzorp-kernel.h credentials.h
 
 pkgincludedir=$(includedir)/zorp
 pkginclude_HEADERS = $(ZORP_H)

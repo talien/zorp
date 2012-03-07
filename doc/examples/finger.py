@@ -49,7 +49,7 @@ class MyFinger(FingerProxy):
 	
 	def fingerRequest(self, dir):
 		self.username = 'bazsi'
-		return Z_ACCEPT
+		return ZV_ACCEPT
 
 def zorp():
 
