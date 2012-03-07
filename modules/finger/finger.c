@@ -48,11 +48,11 @@
 #define FINGER_VIOLATION "finger.violation"
 
 
-#define FINGER_REQ_UNSPEC Z_UNSPEC
-#define FINGER_REQ_ACCEPT Z_ACCEPT
-#define FINGER_REQ_DROP   Z_DROP
-#define FINGER_REQ_REJECT Z_REJECT
-#define FINGER_REQ_ABORT  Z_ABORT
+#define FINGER_REQ_UNSPEC ZV_UNSPEC
+#define FINGER_REQ_ACCEPT ZV_ACCEPT
+#define FINGER_REQ_DROP   ZV_DROP
+#define FINGER_REQ_REJECT ZV_REJECT
+#define FINGER_REQ_ABORT  ZV_ABORT
 
 /*
  * Finger proxy class.
@@ -223,8 +223,8 @@ finger_init_server_stream(FingerProxy *self)
 static gboolean
 finger_fetch_request(FingerProxy *self)
 {
-  gchar *p, *line, *user;
-  gint left, hop_count, userlen;
+  gchar *p, *line;
+  gint left, hop_count;
   gsize line_length;
   gint res;
   gboolean fetch_user = TRUE;
@@ -278,8 +278,6 @@ finger_fetch_request(FingerProxy *self)
       left--;
     }
   hop_count = 0;
-  user = p;
-  userlen = left;
   g_string_truncate(self->username, 0);
   g_string_truncate(self->hostnames, 0);
   while (*p && left)
@@ -524,7 +522,7 @@ finger_query_policy(FingerProxy *self)
       /* fallthrough */
       
     case FINGER_REQ_DROP:
-      if (res == Z_DROP)
+      if (res == ZV_DROP)
         {
           /*LOG
             This message is about administrator decision to drop
@@ -662,16 +660,7 @@ ZProxyFuncs finger_proxy_funcs =
   NULL
 };
 
-
-ZClass FingerProxy__class = 
-{
-  Z_CLASS_HEADER,
-  &ZProxy__class,
-  "FingerProxy",
-  sizeof(FingerProxy),
-  &finger_proxy_funcs.super
-};
-
+Z_CLASS_DEF(FingerProxy, ZProxy, finger_proxy_funcs);
 
 /*+
 

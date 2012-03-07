@@ -1,14 +1,3 @@
-##############################################################################
-##############################################################################
-##############################################################################
-###
-###
-### DONT CHANGE THIS FILE, CHANGE CONFIGURE.IN.IN INSTEAD
-###
-###
-##############################################################################
-##############################################################################
-##############################################################################
 dnl Process this file with autoconf to produce a configure script.
 dnl
 dnl There are a couple of environment defined variables which this script
@@ -25,6 +14,7 @@ dnl ***************************************************************************
 dnl Definitions
 
 PACKAGE=zorp-pro
+BROCHURE_VERSION="3.9"
 VERSION=`cat $srcdir/VERSION`
 ZORP_PRODUCT_NAME="Zorp Professional"
 ZORP_LICENSE_VERSION="3.4"
@@ -34,15 +24,10 @@ dnl Dependencies
 
 GLIB_MIN_VERSION="2.2.1"
 ZORPLL_MIN_VERSION="3.9.1.0"
-ZORPLIC_MIN_VERSION="4.0.0"
-ZORPMISC_MIN_VERSION="4.0.1.0"
+ZORPLIC_MIN_VERSION="3.9.1"
+ZORPMISC_MIN_VERSION="3.9.1"
 OPENSSL_MIN_VERSION="0.9.8"
 PYTHON_MIN_VERSION="2.6"
-OSIP_MIN_VERSION="2.2.1"
-OSIP_MAX_VERSION="3.4"
-# all samba libs declare themselves as version 0
-WBCLIENT_MIN_VERSION=0
-UUID_MIN_VERSION=2.17
 
 dnl ***************************************************************************
 dnl Initial setup
@@ -62,7 +47,7 @@ if test -r $srcdir/dist.conf; then
         # read defaults, dist.conf does not change
         # values for parameters that are already set
         source $srcdir/dist.conf
-        fi
+fi
 
 if test -z "$ZORP_PACKAGE_LICENSE"; then
         ZORP_PACKAGE_LICENSE="pro"
@@ -80,6 +65,7 @@ fi
 AM_CONDITIONAL(PRO, test x$ZORP_PACKAGE_LICENSE = xpro)
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES])
 
 if test -n "$SNAPSHOT_VERSION"; then
         VERSION=$VERSION+$SNAPSHOT_VERSION
@@ -89,7 +75,7 @@ if test -z "$RELEASE_TAG"; then
         RELEASE_TAG=zorp30dbg
 fi
 
-AM_CONFIG_HEADER(zorpconfig.h)
+AM_CONFIG_HEADER(lib/zorp/zorpconfig.h)
 AC_PREFIX_DEFAULT(/usr/local)
 
 
@@ -104,8 +90,12 @@ AC_ARG_ENABLE(debug,
 	      enable_debug=no)
 
 AC_ARG_ENABLE(trace,
-              [  --enable-trace       Enable debug information & messages (default: no)],,
+              [  --enable-trace       Enable function call tracing (default: no)],,
               enable_trace=no)
+
+AC_ARG_ENABLE(werror,
+              [  --enable-werror      When enabled, consider compiler warnings as errors (default: yes)],,
+              enable_werror=yes)
 
 AC_ARG_ENABLE(coverage,
               [  --enable-coverage    Enable runtime coverage information generation (default: no)],,
@@ -117,7 +107,7 @@ AC_ARG_ENABLE(ip_options,
 
 AC_ARG_ENABLE(ipv6,
               [  --enable-ipv6        Enable IPv6 support (EXPERIMENTAL)],,
-              enable_ipv6=no)
+              enable_ipv6=yes)
               
 AC_ARG_ENABLE(prefork,
               [  --enable-prefork             Enable prefork],,
@@ -180,6 +170,7 @@ PYTHON_PREFIX=`$PYTHON -c "import sys; print sys.prefix"`
 PYTHON_VERSION_MAJOR=[`$PYTHON -c "import sys; print '%d' % (sys.version_info[0]);"`]
 PYTHON_VERSION_MINOR=[`$PYTHON -c "import sys; print '%d' % (sys.version_info[1]);"`]
 PYTHON_VERSION="${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}"
+PYTHON_DEBUG_POSTFIX=[`$PYTHON -c "import sys; print '_d' if sys.pydebug else '';"`]
 AC_MSG_RESULT([$PYTHON, $PYTHON_VERSION, $PYTHON_PREFIX])
 
 AC_MSG_CHECKING(Whether Python is at least 2.3)
@@ -214,7 +205,7 @@ if test "x$blb_cv_msg_proxy" = "xyes"; then
 fi
 
 if test "x$with_python_headers" = "x"; then
-	PYTHON_CFLAGS="-I$PYTHON_PREFIX/include/python$PYTHON_VERSION"
+	PYTHON_CFLAGS="-I$PYTHON_PREFIX/include/python$PYTHON_VERSION$PYTHON_DEBUG_POSTFIX"
 else
 	PYTHON_CFLAGS=$with_python_headers
 fi
@@ -291,25 +282,13 @@ if test "$ZORP_PACKAGE_LICENSE" = "pro"; then
 	AC_CHECK_HEADER(openssl/ts.h, [], [AC_MSG_ERROR([OpenSSL header file <openssl/ts.h> is missing])])
 	CPPFLAGS=$save_CPPFLAGS
 
-	PKG_CHECK_MODULES(OSIP, libosip2 < $OSIP_MAX_VERSION,,
-		AC_MSG_ERROR(Cannot find osip2 library version >= $OSIP_MIN_VERSION and < $OSIP_MAX_VERSION: is pkg-config in path?))
-
 	PKG_CHECK_MODULES(ZORPLIC, libzlicense >= $ZORPLIC_MIN_VERSION,,
 		AC_MSG_ERROR(Cannot find ZORP license library version >= $ZORPLIC_MIN_VERSION: is pkg-config in path?))
 
 	PKG_CHECK_MODULES(ZORPMISC, libzmisc >= $ZORPMISC_MIN_VERSION,,
 		AC_MSG_ERROR(Cannot find Zorp Misc library version >= $ZORPMISC_MIN_VERSION: is pkg-config in path?))
 
-        PKG_CHECK_MODULES(XMLSEC, xmlsec1-openssl >= 1.0.0 libxml-2.0 libxslt,,
-                AC_MSG_ERROR(Cannot find libxmlsec1 libxml-2.0 or libxslt))
-
-	PKG_CHECK_MODULES(WBCLIENT, wbclient >= $WBCLIENT_MIN_VERSION,,
-		AC_MSG_ERROR(Cannot find Samba wbclient library version >= $WBCLIENT_MIN_VERSION: is pkg-config in path?))
-
 	AC_CHECK_LIB(pcap, pcap_open_live, PCAP_LIBS="$PCAP_LIBS -lpcap")
-
-	PKG_CHECK_MODULES(UUID, uuid >= $UUID_MIN_VERSION,,
-		AC_MSG_ERROR(Cannot find uuid library version >= $UUID_MIN_VERSION: is pkg-config in path?))
 
 	AC_CHECK_HEADERS(google/coredumper.h)
 	AC_CHECK_LIB(coredumper, WriteCoreDump, COREDUMP_LIBS="$COREDUMP_LIBS -lcoredumper")
@@ -324,21 +303,21 @@ dnl
 if test "x$with_python_libs" != "xno"; then
 	found=no
 	for pylibpath in '' $PYTHON_PREFIX/lib $PYTHON_PREFIX/lib/python$PYTHON_VERSION/config; do
-                eval `echo unset ac_cv_lib_python$PYTHON_VERSION'_'Py_Finalize | tr '.' '_'`
-                eval `echo unset ac_cv_lib_python$PYTHON_VERSION''___Py_Finalize | tr '.' '_'`
+		eval `echo unset ac_cv_lib_python$PYTHON_VERSION'_'Py_Finalize | tr '.' '_'`
+		eval `echo unset ac_cv_lib_python$PYTHON_VERSION''___Py_Finalize | tr '.' '_'`
 
-                save_LIBS=$LIBS
-                if test "x$pylibpath" != "x"; then
+		save_LIBS=$LIBS
+		if test "x$pylibpath" != "x"; then
                         PYTHON_LIBS="-L$pylibpath -lpython$PYTHON_VERSION $PYTHON_DEPS"
-                else
+		else
                         PYTHON_LIBS="-lpython$PYTHON_VERSION $PYTHON_DEPS"
-                fi
-                LIBS="$LIBS $PYTHON_LIBS"
-                AC_CHECK_LIB(python$PYTHON_VERSION, Py_Finalize, found=yes,,$PYTHON_DEPS)
-                LIBS=$save_LIBS
-                if test "x$found" = "xyes"; then
-                        break
-                fi
+		fi
+		LIBS="$LIBS $PYTHON_LIBS"
+		AC_CHECK_LIB(python$PYTHON_VERSION$PYTHON_DEBUG_POSTFIX, Py_Finalize, found=yes,,$PYTHON_DEPS)
+		LIBS=$save_LIBS
+		if test "x$found" = "xyes"; then
+			break
+		fi
 	done
 	if test "x$found" != "xyes"; then
 		AC_ERROR(Python development libraries required)
@@ -408,7 +387,7 @@ AC_DEFINE_UNQUOTED(ZORP_LIBDIR, "`zorpeval $libdir/zorp`", [libdir])
 AC_DEFINE_UNQUOTED(ZORP_STATEDIR, "`zorpeval $localstatedir`", [localstatedir])
 AC_DEFINE_UNQUOTED(ZORP_PIDFILEDIR, "`zorpeval $pidfiledir`", [pidfiledir])
 
-CFLAGS="$CFLAGS -Wall -W -Werror -Werror-implicit-function-declaration -Wno-pointer-sign -g -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+CFLAGS="$CFLAGS -Wall -W -Werror-implicit-function-declaration -Wno-pointer-sign -g -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 
 dnl ***************************************************************************
 dnl Export results
@@ -443,6 +422,7 @@ dnl Size check of pointers
 AC_CHECK_SIZEOF(void *)
 
 AC_SUBST(RELEASE_TAG)
+AC_SUBST(BROCHURE_VERSION)
 AC_SUBST(SNAPSHOT_VERSION)
 AC_SUBST(SOURCE_REVISION)
 
@@ -452,6 +432,7 @@ AC_SUBST(PACKAGE_SUFFIX)
 AC_DEFINE_UNQUOTED(ZORP_LICENSE_VERSION, "$ZORP_LICENSE_VERSION", [Required license version])
 AC_DEFINE_UNQUOTED(ZORP_PRODUCT_NAME, "$ZORP_PRODUCT_NAME", [Required product name in license])
 
+AC_DEFINE_UNQUOTED(BROCHURE_VERSION, "$BROCHURE_VERSION", [Zorp brochure version])
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Zorp package version])
 AC_DEFINE_UNQUOTED(ZORP_SOURCE_REVISION, "$SOURCE_REVISION", [Zorp source revision number])
 
@@ -466,7 +447,8 @@ DEPS_CPPFLAGS="$CPPFLAGS $ZORPLL_CFLAGS $ZORPLIC_CFLAGS $ZORPMISC_CFLAGS $PYTHON
 # CPPFLAGS defined to access local header files in addition to dependencies
 CPPFLAGS="-I$top_srcdir/lib -I$top_srcdir $DEPS_CPPFLAGS"
 # common libraries (dependencies)
-MODULES_CPPFLAGS="-I$top_srcdir/libproxy/ $CPPFLAGS "
+LIBPROXY_CPPFLAGS="-I$top_srcdir/libproxy/ $CPPFLAGS"
+MODULES_CPPFLAGS="$LIBPROXY_CPPFLAGS"
 
 # Dependencies outside the source tree
 DEPS_LIBS="$SOCK_LIBS $ZORPLL_LIBS $ZORPLIC_LIBS $ZORPMISC_LIBS $PYTHON_LIBS $COREDUMP_LIBS $OPENSSL_LIBS"
@@ -487,20 +469,25 @@ if test "x$enable_coverage" = "xyes"; then
         CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
 fi
 
+if test "x$enable_werror" = "xyes"; then
+        CFLAGS="$CFLAGS -Werror"
+fi
+
 AC_SUBST(DEPS_CPPFLAGS)
 AC_SUBST(DEPS_LIBS)
 AC_SUBST(ZLIB_LIBS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(OPENSSL_LIBS)
 AC_SUBST(OPENSSL_CLAGS)
-AC_SUBST(UUID_LIBS)
-AC_SUBST(UUID_CLAGS)
 AC_SUBST(PCAP_LIBS)
+AC_SUBST(PYTHON_LIBS)
+AC_SUBST(PYTHON_CFLAGS)
 
 AC_SUBST(LIBZORP_LIBS)
 
 AC_SUBST(ZORP_LIBS)
 
+AC_SUBST(LIBPROXY_CPPFLAGS)
 AC_SUBST(MODULES_LIBS)
 AC_SUBST(MODULES_CPPFLAGS)
 
@@ -509,26 +496,14 @@ AC_SUBST(MODULETESTS_LIBS)
 dnl for zorpctl 
 AC_SUBST(SOCK_LIBS)
 
-dnl for xmlsec proxy
-AC_SUBST(XMLSEC_LIBS)
-AC_SUBST(XMLSEC_CFLAGS)
-
 
 date=`date +%Y/%m/%d`
 AC_DEFINE_UNQUOTED(ZORP_CONFIG_DATE, "$date", [Configuration date])
 
-if test -r module.list; then
-	MODULE_DIRS="`cat module.list`"
-else
-	MODULE_DIRS="anypy finger ftp http plug pop3 smtp telnet whois"
-fi
-
-AC_SUBST(MODULE_DIRS)
-
 TESTCASES=""
-for mod in $MODULE_DIRS; do
-	TESTCASES="${TESTCASES} `cd $top_srcdir/tests; find functional/$mod -type f -a ! -path '*.arch-ids*' | tr '\n' ' '`"
-done
+dnl for mod in $MODULE_DIRS; do
+dnl	TESTCASES="${TESTCASES} `cd $top_srcdir/tests; find functional/$mod -type f -a ! -path '*.arch-ids*' | tr '\n' ' '`"
+dnl done
 AC_SUBST(TESTCASES)
 
 
@@ -542,13 +517,11 @@ coverage: $enable_coverage
 ipoptions: $enable_ip_options
 ipv6: $enable_ipv6
 prefork: $enable_prefork
-modules: $MODULE_DIRS
 License: $ZORP_PACKAGE_LICENSE
 
 
 EOF
 
-AC_CONFIG_COMMANDS([zorp-exe], [chmod +x zorp-config])
 AC_CONFIG_COMMANDS([runtest-exe], [chmod +x tests/python/runtest.sh])
 
 AC_SUBST(LIBZORP_LT_RELEASE)
@@ -563,19 +536,13 @@ AC_SUBST(ZORPLIC_MIN_VERSION)
 AC_SUBST(ZORPMISC_MIN_VERSION)
 AC_SUBST(OPENSSL_MIN_VERSION)
 AC_SUBST(PYTHON_MIN_VERSION)
-AC_SUBST(OSIP_MIN_VERSION)
-AC_SUBST(OSIP_MAX_VERSION)
 AC_SUBST(CURRDATE)
 AC_SUBST(pidfiledir)
 
-if test "$ZORP_PACKAGE_LICENSE" = "pro"; then
-PRO_FILES="zorpaddr/Makefile zorpblgen/Makefile"
-else
-PRO_FILES=
-fi
-
 AC_OUTPUT(
-zorp-config
+libzorp.pc
+libzorpproxy.pc
+moduledist.conf
 
 Makefile 
 zorp/Makefile 
@@ -601,7 +568,20 @@ tests/python/Makefile
 tests/python/runtest.sh
 tests/unit/Makefile
 tests/kzorp/Makefile
-$PRO_FILES
+tests/tools/Makefile
 
- modules/anypy/Makefile modules/finger/Makefile modules/ftp/Makefile modules/ftp/tests/Makefile modules/http/Makefile modules/http/tests/Makefile modules/http/messages/Makefile modules/plug/Makefile modules/pop3/Makefile modules/pop3/messages/Makefile modules/pop3modules/smtp/Makefile modules/smtp/tests/Makefile modules/telnet/Makefile modules/whois/Makefile
+modules/pop3/Makefile
+modules/pop3/messages/Makefile
+modules/anypy/Makefile
+modules/http/Makefile
+modules/http/messages/Makefile
+modules/http/tests/Makefile
+modules/smtp/Makefile
+modules/smtp/tests/Makefile
+modules/finger/Makefile
+modules/telnet/Makefile
+modules/whois/Makefile
+modules/ftp/Makefile
+modules/ftp/tests/Makefile
+modules/plug/Makefile
 )

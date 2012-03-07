@@ -54,9 +54,11 @@
 """
 
 from Zorp import *
-from SockAddr import SockAddrInet, inet_ntoa
-from Domain import InetDomain
+from SockAddr import SockAddrInet
+from Subnet import InetSubnet
 from Cache import ShiftCache, TimedCache
+from Exceptions import DACException, LimitException
+from socket import inet_ntoa
 import Globals
 import types
 
@@ -70,7 +72,7 @@ NAT_DNAT = 1
 
 Globals.nat_policies[None] = None
 
-class NATPolicy:
+class NATPolicy(object):
         """
         <class maturity="stable" type="natpolicy">
           <summary>
@@ -210,7 +212,7 @@ def getNATPolicy(name):
 			log(None, CORE_POLICY, 3, "No such NAT policy; policy='%s'", name)
         return None
 
-class AbstractNAT:
+class AbstractNAT(object):
 	"""
         <class maturity="stable" abstract="yes">
           <summary>
@@ -369,17 +371,14 @@ class GeneralNAT(AbstractNAT):
                   </metainfo>
                 </method>
                 """
-		AbstractNAT.__init__(self)
+		super(GeneralNAT, self).__init__()
 		if type(mapping) != types.TupleType and type(mapping) != types.ListType:
 			mapping = (mapping,)
 
 		self.mappings = [[], []]
-		self.compatibility_mode = FALSE
 		for map in mapping:
 			if len(map) == 2:
-				self.mappings[NAT_SNAT].append((map[0], map[0].__class__(), map[1]))
-				self.mappings[NAT_DNAT].append((map[0].__class__(), map[0], map[1]))
-				self.compatibility_mode = TRUE
+                                raise ValueError, "GeneralNAT with old-style mapping parameter is not supported"
 			else:
 				self.mappings[NAT_SNAT].append(map)
 				self.mappings[NAT_DNAT].append(map)
@@ -391,13 +390,12 @@ class GeneralNAT(AbstractNAT):
                 """
 		for map in self.mappings[nat_type]:
 			(src_dom, dst_dom, map_dom) = map
-			if ((not addrs[NAT_SNAT] or src_dom.contains(addrs[NAT_SNAT])) and 
+			if ((not addrs[NAT_SNAT] or src_dom.contains(addrs[NAT_SNAT])) and
 			    (not addrs[NAT_DNAT] or dst_dom.contains(addrs[NAT_DNAT]))):
-			    
 				# we have a match is in domain, do translation
 				addr = addrs[nat_type].clone(FALSE)
 				hostaddr = map[nat_type].getHostAddr(addrs[nat_type])
-				addr.ip = map[2].mapHostAddr(hostaddr)
+				addr.ip = map_dom.mapHostAddr(hostaddr)
 				return addr
 		return addrs[nat_type]
 	
@@ -409,9 +407,6 @@ class GeneralNAT(AbstractNAT):
 		def domainToKZorpTuple(domain):
 			return (kznf.kznfnetlink.KZ_SVC_NAT_MAP_IPS, socket.ntohl(domain.netaddr()), socket.ntohl(domain.broadcast()), 0, 0)
 			
-		if self.compatibility_mode:
-			raise ValueError, "GeneralNAT with old-style mapping parameter does not support KZorp representation"
-		
 		result = []
 		for (src_dom, dst_dom, map_dom) in self.mappings[NAT_SNAT]:
 			result.append((domainToKZorpTuple(src_dom), domainToKZorpTuple(dst_dom), domainToKZorpTuple(map_dom)))
@@ -488,7 +483,7 @@ class StaticNAT(AbstractNAT):
                   </metainfo>
                 </method>
 		"""
-		AbstractNAT.__init__(self)
+		super(StaticNAT, self).__init__()
 		self.addr = addr
 
 	def performTranslation(self, session, addrs, nat_type):
@@ -568,11 +563,11 @@ class OneToOneNAT(AbstractNAT):
                   </metainfo>
                 </method>
 		"""
-		AbstractNAT.__init__(self)
+		super(OneToOneNAT, self).__init__()
 		self.from_domain = from_domain
 		self.to_domain = to_domain
 		self.default_reject = default_reject
-		if from_domain.mask_bits != to_domain.mask_bits:
+		if from_domain.netmaskbits() != to_domain.netmaskbits():
 			raise ValueError, 'OneToOneNAT requires two domains of the same size'
 		
 	def performTranslation(self, session, addrs, nat_type):
@@ -624,7 +619,7 @@ class OneToOneNAT(AbstractNAT):
                 </method>
                 """
                 if addr < from_domain:
-                        ip = (addr.ip & ~to_domain.mask) + (to_domain.ip & to_domain.mask)
+                        ip = (addr.ip & ~to_domain.netmask()) + (to_domain.netaddr() & to_domain.netmask())
                         if nat_type == NAT_SNAT:
                                 return SockAddrInet(inet_ntoa(ip), 0)
                         elif nat_type == NAT_DNAT:
@@ -695,11 +690,11 @@ class OneToOneMultiNAT(OneToOneNAT):
                   </metainfo>
                 </method>
 		"""
-		AbstractNAT.__init__(self)
+		super(OneToOneMultiNAT, self).__init__()
 		self.mapping = mapping
 		self.default_reject = default_reject
 		for (from_domain, to_domain) in mapping:
-			if from_domain.mask_bits != to_domain.mask_bits:
+			if from_domain.netmaskbits() != to_domain.netmaskbits():
 				raise ValueError, 'OneToOneMultiNAT requires two domains of the same size'
 
 	def performTranslation(self, session, addrs, nat_type):
@@ -759,7 +754,7 @@ class RandomNAT(AbstractNAT):
                   </metainfo>
                 </method>
 		"""
-		AbstractNAT.__init__(self)
+		super(RandomNAT, self).__init__()
 		self.addresses = addresses
 	
 	def performTranslation(self, session, addrs, nat_type):
@@ -822,7 +817,7 @@ class HashNAT(AbstractNAT):
                   </metainfo>
                 </method>
 		"""
-		AbstractNAT.__init__(self)
+		super(HashNAT, self).__init__()
 		self.ip_hash = ip_hash
 		self.default_reject = default_reject
 

@@ -29,6 +29,6 @@
 
 #include <zorp/kzorp-kernel.h>
 
-gboolean z_kzorp_get_lookup_result(gint fd, struct z_kzorp_lookup_result *result);
+gboolean z_kzorp_get_lookup_result(gint8 family, gint fd, struct z_kzorp_lookup_result *result);
 
 #endif

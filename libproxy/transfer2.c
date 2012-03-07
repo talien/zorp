@@ -130,14 +130,7 @@ ZProxyStackIfaceFuncs z_transfer2_ps_iface_funcs =
   .get_content_hint = z_transfer2_ps_iface_get_content_hint
 };
 
-ZClass ZTransfer2PSIface__class =
-{
-  Z_CLASS_HEADER,
-  Z_CLASS(ZProxyStackIface),
-  "ZTransfer2PSIface",
-  sizeof(ZTransfer2PSIface),
-  &z_transfer2_ps_iface_funcs.super,
-};
+Z_CLASS_DEF(ZTransfer2PSIface, ZProxyStackIface, z_transfer2_ps_iface_funcs);
 
 /**
  * z_transfer2_buffer_empty:
@@ -988,7 +981,7 @@ z_transfer2_new(ZClass *class,
   self->startup_lock = g_mutex_new();
   
   self->stack_info = g_string_sized_new(32);
-  self->stack_decision = Z_ACCEPT;
+  self->stack_decision = ZV_ACCEPT;
   
   z_proxy_leave(owner);
   return self;
@@ -1076,11 +1069,4 @@ ZTransfer2Funcs z_transfer2_funcs =
   .progress = NULL
 };
 
-ZClass ZTransfer2__class = 
-{
-  Z_CLASS_HEADER,
-  &ZObject__class,
-  "ZTransfer2",
-  sizeof(ZTransfer2),
-  &z_transfer2_funcs.super
-};
+Z_CLASS_DEF(ZTransfer2, ZObject, z_transfer2_funcs);

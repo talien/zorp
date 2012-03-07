@@ -24,9 +24,8 @@
 <module maturity="stable">
   <summary>The Keybridge module implements generic X.509 key bridging.</summary>
   <description>
-    <para>
-      FIXME: missing key bridge documentation
-    </para>
+    <para>Keybridging is a method to let the client see a copy of the server's certificate (or vice versa), allowing it to inspect it and decide about its trustworthiness. Because of proxying the SSL/TLS connection, the client is not able to inspect the certificate of the server directly, therefore Zorp generates a certificate based on the server's certificate on-the-fly. This generated certificate is presented to the client.</para>
+    <para>For details on configuring keybridging, see <xref linkend="keybridging"/>.</para>
   </description>
 </module>
 """
@@ -50,7 +49,7 @@ import hashlib
 #                        the key must be signed by the 'untrusted' CA.
 #
 
-class X509KeyManager:
+class X509KeyManager(object):
         """<class type="x509keymanager" internal="yes">
         </class>"""
         def __init__(self):
@@ -67,56 +66,60 @@ class X509KeyBridge(X509KeyManager):
         <description>
           <para>
             This class is able to generate certificates mimicking another
-            certificate, primarily used to transfer the information of a server's certificate to the client in keybridging. Keybridging is described in detail in the <emphasis>Technical Whitepaper and Tutorial Proxying secure channels - the Secure Socket Layer</emphasis>. Both documents can be downloaded from the BalaBit Documentation Page at <ulink url="http://www.balabit.com/support/documentation/">http://www.balabit.com/support/documentation/</ulink>.
+            certificate, primarily used to transfer the information of a server's certificate to the client in keybridging. For details on configuring keybridging, see <xref linkend="keybridging"/>.
           </para>
-          <para>
-          The class has the following attributes.
-          </para>
-          <table frame="all">
-          <title>Attributer of the X509KeyBridge class</title>
-          <tgroup cols="2">
-          <thead><row><entry>Name</entry><entry>Type</entry><entry>Default</entry><entry>Description</entry></row></thead>
-          <tbody>
-          <row>
-                <entry>key_file</entry>
-                <entry>string</entry>
-                <entry></entry>
-                <entry>Name of the private key to be used for the newly generated certificates.</entry>
-          </row>
-          <row>
-                <entry>key_passphrase</entry>
-                <entry>string</entry>
-                <entry>""</entry>
-                <entry>Passphrase required to access the private key stored in <parameter>key_file</parameter>.</entry>
-          </row>
-          <row>
-                <entry>cache_directory</entry>
-                <entry>string</entry>
-                <entry></entry>
-                <entry>The directory where all automatically generated certificates are cached.</entry>
-          </row>
-          <row>
-                <entry>trusted_ca_files</entry>
-                <entry>certificate</entry>
-                <entry></entry>
-                <entry>A tuple of <parameter>cert_file</parameter>, <parameter>key_file</parameter>, <parameter>passphrase</parameter>) for the CA used for keybridging trusted certificates.</entry>
-          </row>
-          <row>
-          <entry>untrusted_ca_files</entry>
-          <entry></entry>
-          <entry></entry>
-          <entry>A tuple of <parameter>cert_file</parameter>, <parameter>key_file</parameter>, <parameter>passphrase</parameter>) for the CA used for keybridging untrusted certificates.</entry>
-          </row>
-          </tbody>
-          </tgroup>
-          </table>
         </description>
         <metainfo>
-          <attributes/>
+          <attributes>
+              <attribute>
+                  <name>key_file</name>
+                  <type>
+                      <string/>
+                  </type>
+                  <default>""</default>
+                  <description>Name of the private key to be used for the newly generated certificates.</description>
+              </attribute>
+              <attribute>
+                <name>key_passphrase</name>
+                <type>
+                    <string/>
+                </type>
+                <default>""</default>
+                <description>Passphrase required to access the private key stored in <parameter>key_file</parameter>.</description>
+              </attribute>
+              <attribute>
+                <name>cache_directory</name>
+                <type>
+                    <string/>
+                </type>
+                <default>""</default>
+                <description>The directory where all automatically generated certificates are cached.</description>
+              </attribute>
+              <attribute>
+                <name>trusted_ca_files</name>
+                    <type>
+                        <certificate cert="yes" key="yes" ca="yes"/>
+                    </type>
+                    <default>None</default>
+                    <description>A tuple of <parameter>cert_file</parameter>, <parameter>key_file</parameter>, <parameter>passphrase</parameter>) for the CA used for keybridging trusted certificates.</description>
+              </attribute>
+              <attribute>
+                    <name>untrusted_ca_files</name>
+                    <type>
+                      <certificate cert="yes" key="yes" ca="yes"/>
+                    </type>
+                    <default>None</default>
+                    <description>A tuple of <parameter>cert_file</parameter>, <parameter>key_file</parameter>, <parameter>passphrase</parameter>) for the CA used for keybridging untrusted certificates.</description>
+              </attribute>
+          </attributes>
         </metainfo>
         </class>"""
-        def __init__(self, key_file, cache_directory=None, trusted_ca_files=None, untrusted_ca_files=None, key_passphrase = ""):
-                """<method internal="yes">
+
+        default_extension_whitelist = ('keyUsage', 'subjectAltName', 'extendedKeyUsage')
+
+        def __init__(self, key_file, cache_directory=None, trusted_ca_files=None, untrusted_ca_files=None, key_passphrase = "",
+                     extension_whitelist=None):
+                """<method maturity="stable">
                   <metainfo>
                     <arguments>
                       <argument>
@@ -161,6 +164,17 @@ class X509KeyBridge(X509KeyManager):
                           <parameter>passphrase</parameter>) for the CA used for keybridging untrusted certificates.
                         </description>
                       </argument>
+                      <argument>
+                        <name>extension_whitelist</name>
+                        <type>
+                          <list><string/></list>
+                        </type>
+                        <default>None</default>
+                        <description>
+                            <para>Zorp transfers the following certificate extensions to the client side: <parameter>Key Usage</parameter>, <parameter>Subject Alternative Name</parameter>, <parameter>Extended Key Usage</parameter>. Other extensions will be automatically deleted during keybridging. This is needed because some certificate extensions contain references to the Issuer CA, which references become invalid for keybridged certificates. To transfer other extensions, list them in the <parameter>extension_whitelist</parameter> parameter. Note that modifying this parameter replaces the default values, so to extend the list of transferred extensions, include the <parameter>'keyUsage', 'subjectAltName', 'extendedKeyUsage'</parameter> list as well. For example:</para>
+                            <synopsis>self.extension_whitelist = ('keyUsage', 'subjectAltName', 'extendedKeyUsage', 'customExtension')</synopsis>
+                        </description>
+                      </argument>
                     </arguments>
                   </metainfo>
                 </method>"""
@@ -193,6 +207,9 @@ class X509KeyBridge(X509KeyManager):
                         self.cache_directory = "/var/lib/zorp/keybridge-cache"
                 if not trusted_ca_files:
                         trusted_ca_files = (None, None, None)
+                if not extension_whitelist:
+                        extension_whitelist = self.default_extension_whitelist
+                self.extension_whitelist = extension_whitelist
                 self.initialized = 0
                 try:
                         self.key = OpenSSL.crypto.load_privatekey(OpenSSL.crypto.FILETYPE_PEM, open(key_file, 'r').read(), key_passphrase)
@@ -278,6 +295,8 @@ class X509KeyBridge(X509KeyManager):
                 fcntl.lockf(self.lock_file, fcntl.LOCK_UN)
 
         def getLastSerial(self):
+                """<method internal="yes">
+                </method>"""
                 serial = 1
                 for file in os.listdir(self.cache_directory):
                         if file[-4:] != '.crt':
@@ -293,6 +312,33 @@ class X509KeyBridge(X509KeyManager):
                         if cser > serial:
                                 serial = cser
                 return serial
+
+        def genCert(self, key, orig_cert, ca_cert, ca_key, serial):
+                        """<method internal="yes">
+                        </method>"""
+                        filetype = OpenSSL.crypto.FILETYPE_PEM
+
+                        new_cert = OpenSSL.crypto.load_certificate(filetype, OpenSSL.crypto.dump_certificate(filetype, orig_cert))
+                        new_cert.set_serial_number(serial)
+                        new_cert.set_issuer(ca_cert.get_subject())
+                        new_cert.set_pubkey(key)
+                        if ca_key.type() == OpenSSL.crypto.TYPE_DSA:
+                                hash_alg = "DSA-SHA1"      # taken from openssl-0.9.8i/crypto/objects/obj_dat.h
+                        else:
+                                hash_alg = "md5"
+
+                        # delete extensions not on whitelist
+                        ext_index = 0
+                        while ext_index < new_cert.get_extension_count():
+                                ext = new_cert.get_extension(ext_index)
+                                if ext.get_short_name() not in self.extension_whitelist:
+                                        new_cert.del_extension(ext_index)
+                                else:
+                                        ext_index += 1
+
+                        new_cert.sign(ca_key, hash_alg)
+
+                        return new_cert
 
         def getKeypair(self, selector):
                 """<method internal="yes">
@@ -345,18 +391,9 @@ class X509KeyBridge(X509KeyManager):
                                 log(None, CORE_ERROR, 2, "Cannot write serial number of on-line CA; file='%s', error='%s'", (serial_file, e.strerror))
 
                         orig_cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, orig_blob)
-                        new_cert = OpenSSL.crypto.X509()
-                        new_cert.set_serial_number(serial)
-                        new_cert.set_notBefore(orig_cert.get_notBefore())
-                        new_cert.set_notAfter(orig_cert.get_notAfter())
-                        new_cert.set_issuer(ca_pair[0].get_subject())
-                        new_cert.set_subject(orig_cert.get_subject())
-                        new_cert.set_pubkey(self.key)
-                        if ca_pair[1].type() == OpenSSL.crypto.TYPE_DSA:
-                                hash_alg = "DSA-SHA1"      # taken from openssl-0.9.8i/crypto/objects/obj_dat.h
-                        else:
-                                hash_alg = "md5"
-                        new_cert.sign(ca_pair[1], hash_alg)
+
+                        new_cert = self.genCert(self.key, orig_cert, ca_pair[0], ca_pair[1], serial)
+
                         new_blob = OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, new_cert)
 
                         self.storeCachedKey(cert_file, new_blob, orig_blob)

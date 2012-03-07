@@ -38,45 +38,36 @@
         <description>
           Values returned by event handlers.
         </description>
-        <item><name>Z_UNSPEC</name></item>
-        <item><name>Z_ACCEPT</name></item>
-        <item><name>Z_DENY</name></item>
-        <item><name>Z_REJECT</name></item>
-        <item><name>Z_ABORT</name></item>
-        <item><name>Z_DROP</name></item>
-        <item><name>Z_POLICY</name></item>
-      </enum>
-      <enum maturity="stable" id="enum.zorp.log">
-        <description>Log levels</description>
-        <item><name>Z_ERROR</name></item>
-        <item><name>Z_CRITICAL</name></item>
-        <item><name>Z_WARNING</name></item>
-        <item><name>Z_MESSAGE</name></item>
-        <item><name>Z_INFO</name></item>
-        <item><name>Z_DEBUG</name></item>
+        <item><name>ZV_UNSPEC</name></item>
+        <item><name>ZV_ACCEPT</name></item>
+        <item><name>ZV_DENY</name></item>
+        <item><name>ZV_REJECT</name></item>
+        <item><name>ZV_ABORT</name></item>
+        <item><name>ZV_DROP</name></item>
+        <item><name>ZV_POLICY</name></item>
       </enum>
      <enum maturity="stable" id="zorp.proto.id">
-      <description>
-        The network protocol used in the server-side connection.
-      </description>
-      <item>
-        <name>ZD_PROTO_AUTO</name>
         <description>
-          Use the protocol that is used on the client side.
+          The network protocol used in the server-side connection.
         </description>
-      </item>
-      <item>
-        <name>ZD_PROTO_TCP</name>
-        <description>
-          Use the TCP protocol on the server side.
-        </description>
-      </item>
-      <item>
-        <name>ZD_PROTO_UDP</name>
-        <description>
-          Use the UDP protocol on the server side.
-        </description>
-      </item>
+        <item>
+          <name>ZD_PROTO_AUTO</name>
+          <description>
+            Use the protocol that is used on the client side.
+          </description>
+        </item>
+        <item>
+          <name>ZD_PROTO_TCP</name>
+          <description>
+            Use the TCP protocol on the server side.
+          </description>
+        </item>
+        <item>
+          <name>ZD_PROTO_UDP</name>
+          <description>
+            Use the UDP protocol on the server side.
+          </description>
+        </item>
       </enum>
       <enum maturity="stable" id="enum.zorp.forge_port">
       <description>
@@ -119,6 +110,7 @@
       <enum maturity="stable" id="enum.zorp.af">
         <description>address families</description>
         <item><name>AF_UNSPEC</name></item>
+        <item><name>AF_INET</name></item>
         <item><name>AF_INET6</name></item>
       </enum>
       <enum maturity="stable" id="enum.zorp.stack">
@@ -215,13 +207,12 @@
 """
 
 firewall_name = "zorp" # obsolete, not used anymore
-#settings = {}          # configuration is stored in this hash
 
-import Globals
-import Config
 import traceback
 import sys
 import errno
+import socket
+import Config
 
 config = Config
 
@@ -234,14 +225,24 @@ CORE_AUTH = "core.auth"
 CORE_INFO = "core.info"
 
 # return values returned by event handlers
-Z_UNSPEC         = 0
-Z_ACCEPT         = 1
-Z_DENY           = 2
-Z_REJECT         = 3
-Z_ABORT          = 4
-Z_DROP           = 5
-Z_POLICY         = 6
-Z_ERROR          = 7
+ZV_UNSPEC         = 0
+ZV_ACCEPT         = 1
+ZV_DENY           = 2
+ZV_REJECT         = 3
+ZV_ABORT          = 4
+ZV_DROP           = 5
+ZV_POLICY         = 6
+ZV_ERROR          = 7
+
+# Legacy names
+Z_UNSPEC         = ZV_UNSPEC
+Z_ACCEPT         = ZV_ACCEPT
+Z_DENY           = ZV_DENY
+Z_REJECT         = ZV_REJECT
+Z_ABORT          = ZV_ABORT
+Z_DROP           = ZV_DROP
+Z_POLICY         = ZV_POLICY
+Z_ERROR          = ZV_ERROR
 
 # dispatched protocols
 ZD_PROTO_AUTO = 0
@@ -282,9 +283,9 @@ FALSE = 0
 TRUE = 1
 
 # address families
-AF_UNSPEC = 0
-AF_INET6 = 10
-
+AF_UNSPEC = socket.AF_UNSPEC
+AF_INET = socket.AF_INET
+AF_INET6 = socket.AF_INET6
 
 # logical operators
 Z_NOT  = "Z_NOT"
@@ -325,75 +326,9 @@ Z_SSL_VERIFY_OPTIONAL_TRUSTED	= 2
 Z_SSL_VERIFY_REQUIRED_UNTRUSTED	= 3
 Z_SSL_VERIFY_REQUIRED_TRUSTED	= 4
 
-from socket import AF_UNIX, AF_INET, SOCK_STREAM, SOCK_DGRAM
+import Globals
 
-class ZorpException(Exception):
-    def __init__(self, detail):
-        self.what = ''
-        self.detail = detail
-
-    def __str__(self):
-        return '%s: %s' % (self.what, self.detail)
-
-class ZoneException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'Zone not found'
-
-class ServiceException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'Service'
-
-class DACException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'DAC policy violation'
-
-class MACException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'MAC policy violation'
-
-class AAException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'Authentication or authorization failed'
-
-# for compatibility
-AuthException = AAException
-
-class LimitException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'Limit error'
-
-class InternalException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'Internal error occured'
-
-class UserException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'Incorrect, or unspecified parameter'
-
-class LicenseException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'Attempt to use unlicensed components'
-
-class MatcherException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'Matcher error'
-
-class ConfigException(ZorpException):
-    def __init__(self, detail):
-        ZorpException.__init__(self, detail)
-        self.what = 'Configuration error'
-
-def init(names):
+def init(names, virtual_name, is_master):
         """
         <function internal="yes">
           <summary>
@@ -407,16 +342,33 @@ def init(names):
           <metainfo>
             <attributes>
               <attribute maturity="stable">
-                <name>name</name>
+                <name>names</name>
                 <type></type>
-                <description>Name of this instance.</description>
+                <description>Names (instance name and also-as names) of this instance.</description>
+              </attribute>
+              <attribute maturity="stable">
+                <name>virtual_name</name>
+                <type>string</type>
+                <description>
+                  Virtual instance name of this process. If a Zorp instance is backed by multiple
+                  Zorp processes using the same configuration each process has a unique virtual
+                  instance name that is used for SZIG communication, PID file creation, etc.
+                </description>
+              </attribute>
+              <attribute>
+                <name>is_master</name>
+                <type>int</type>
+                <description>
+                  TRUE if Zorp is running in master mode, FALSE for slave processes. Each Zorp instance
+                  should have exactly one master process and an arbitrary number of slaves.
+                </description>
               </attribute>
             </attributes>
           </metainfo>
         </function>
 	"""
 	import __main__
-	import SockAddr, KZorp
+	import SockAddr, KZorp, Rule
         import kznf.nfnetlink
         import kznf.kznfnetlink
         import errno
@@ -457,21 +409,7 @@ def init(names):
 		except IOError:
 			log(None, CORE_ERROR, 1, "Error reading audit signature's certificate; file='%s'", (config.audit.sign_certificate_file))
 
-        Globals.kzorp_responds_to_ping = False
-        if config.options.kzorp_enabled:
-                # ping kzorp to see if it's there
-                try:
-                        h = KZorp.openHandle()
-                        m = h.create_message(kznf.nfnetlink.NFNL_SUBSYS_KZORP, kznf.kznfnetlink.KZNL_MSG_GET_ZONE,
-                                             kznf.nfnetlink.NLM_F_REQUEST | kznf.nfnetlink.NLM_F_DUMP)
-                        m.set_nfmessage(kznf.kznfnetlink.create_get_zone_msg(None))
-                        result = h.talk(m, (0, 0), KZorp.netlinkmsg_handler)
-                        if result < 0:
-                                log(None, CORE_ERROR, 0, "Error pinging KZorp, it is probably unavailable; result='%d'" % (result))
-                        else:
-                                Globals.kzorp_responds_to_ping = True
-                except:
-                        log(None, CORE_ERROR, 0, "Error pinging KZorp, it is probably unavailable; exc_value='%s'" % (sys.exc_value))
+        Globals.rules = Rule.RuleSet()
 
         Globals.instance_name = names[0]
         for i in names:
@@ -486,6 +424,7 @@ def init(names):
                         return FALSE
                 func()
 
+        Globals.kzorp_responds_to_ping = False
         if config.options.kzorp_enabled:
             # ping kzorp to see if it's there
             try:
@@ -503,7 +442,7 @@ def init(names):
 
             if Globals.kzorp_responds_to_ping:
                     try:
-                            KZorp.downloadKZorpConfig(names[0])
+                            KZorp.downloadKZorpConfig(names[0], is_master)
                     except:
                             ## LOG ##
                             # This message indicates that downloading the necessary information to the
@@ -521,7 +460,7 @@ def init(names):
         return TRUE
 
 
-def deinit(name):
+def deinit(names, virtual_name):
 	"""
         <function internal="yes">
         </function>
@@ -529,23 +468,18 @@ def deinit(name):
 	## LOG ##
 	# This message reports that the given instance is stopping.
 	##
-	log(None, CORE_DEBUG, 6, "Deinitialization requested for instance; name='%s'", (name,))
+        log(None, CORE_DEBUG, 6, "Deinitialization requested for instance; name='%s'", (names[0],))
 	for i in Globals.deinit_callbacks:
 		i()
 
 def purge():
-	"""
+        """
         <function internal="yes">
         </function>
 	"""
-	import sys
-	for module in sys.modules.keys():
-		if module != 'sys' and module != '__builtin__' and sys.modules[module]:
-			for sym in sys.modules[module].__dict__.keys():
-				del sys.modules[module].__dict__[sym]
-		del sys.modules[module]
+        pass
 
-def cleanup(names):
+def cleanup(names, virtual_name, is_master):
 	"""
         <function internal="yes">
         </function>
@@ -557,7 +491,7 @@ def cleanup(names):
 	##
 	log(None, CORE_DEBUG, 6, "Cleaning up instance; name='%s'", (names,))
 
-        if Globals.kzorp_responds_to_ping and config.options.kzorp_enabled:
+        if is_master and Globals.kzorp_responds_to_ping and config.options.kzorp_enabled:
                 try:
                         KZorp.flushKZorpConfig(names[0])
                 except:

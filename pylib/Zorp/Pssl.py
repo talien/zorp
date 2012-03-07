@@ -1378,13 +1378,13 @@ class AbstractPsslProxy(AbstractPlugProxy):
                 </method>
                 """
 		self.stack_proxy = None
-		AbstractPlugProxy.__init__(self, session)
+		super(AbstractPsslProxy, self).__init__(session)
 
 	def __pre_config__(self):
 		"""<method internal="yes">
                 </method>
                 """
-		AbstractPlugProxy.__pre_config__(self)
+		super(AbstractPsslProxy, self).__pre_config__()
 		self.ssl.key_generator = self.key_generator
 		self.ssl.client_connection_security = PSSL_FORCE_SSL
 		self.ssl.server_connection_security = PSSL_FORCE_SSL

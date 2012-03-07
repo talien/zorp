@@ -78,12 +78,13 @@ z_policy_attach_start_method(ZPolicyAttach *self, PyObject *args G_GNUC_UNUSED)
   PyObject *res;
   ZConnection *conn;
   gboolean success;
+
   z_enter();
-      
+
   Py_BEGIN_ALLOW_THREADS
   success = z_attach_start_block(self->attach, &conn);
   Py_END_ALLOW_THREADS
-  
+
   if (success && conn)
     {
       /* NOTE: we don't assign a name to this stream now, it will be assigned later */
@@ -93,11 +94,10 @@ z_policy_attach_start_method(ZPolicyAttach *self, PyObject *args G_GNUC_UNUSED)
     }
   else
     {
-      Py_XINCREF(Py_None);
-      res = Py_None;
+      res = z_policy_none_ref();
     }
-  z_leave();
-  return res;
+
+  z_return(res);
 }
 
 static PyMethodDef z_policy_attach_methods[] =
@@ -109,7 +109,7 @@ static PyMethodDef z_policy_attach_methods[] =
 
 /**
  * z_policy_attach_getattr:
- * @o: this 
+ * @o: this
  * @name: Attribute name
  *
  * Get the value of an attribute
@@ -124,32 +124,28 @@ z_policy_attach_getattr(PyObject *o, char *name)
 {
   ZPolicyAttach *self = (ZPolicyAttach *) o;
   PyObject *back;
-  
+
   z_enter();
   if (strcmp(name, "local") == 0)
     {
       if (self->local)
         {
           back = z_policy_sockaddr_new(self->local);
-          z_leave();
-          return back;
+          z_return(back);
         }
       else
         {
-          Py_XINCREF(Py_None);
-          z_leave();
-          return Py_None;
+          z_return(z_policy_none_ref());
         }
     }
   else
     {
       back = Py_FindMethod(z_policy_attach_methods, o, name);
-      z_leave();
-      return back;
+      z_return(back);
     }
 }
 
-/** 
+/**
  * z_policy_attach_new_instance:
  * @s not used
  * @args Python args: proxy, protocol, local, remote, handler
@@ -177,23 +173,21 @@ z_policy_attach_new_instance(PyObject *s G_GNUC_UNUSED, PyObject *args, PyObject
 
   z_enter();
   /* called by python, no need to lock the interpreter */
-   
+
   if (!PyArg_ParseTuple(args, "OiOO", &proxy_instance, &protocol, &local, &remote))
-    return NULL;
+    z_return(NULL);
 
   if (!z_policy_proxy_check(proxy_instance))
     {
       PyErr_SetString(PyExc_TypeError, "First argument must be a Proxy instance");
-      z_leave();
-      return NULL;
+      z_return(NULL);
     }
 
-  if (((local != Py_None) && !z_policy_sockaddr_check(local)) ||
+  if (((local != z_policy_none) && !z_policy_sockaddr_check(local)) ||
       (!z_policy_sockaddr_check(remote)))
     {
       PyErr_SetString(PyExc_TypeError, "Local and remote arguments must be SockAddr or None");
-      z_leave();
-      return NULL;
+      z_return(NULL);
     }
 
   memset(&params, 0, sizeof(params));
@@ -207,53 +201,53 @@ z_policy_attach_new_instance(PyObject *s G_GNUC_UNUSED, PyObject *args, PyObject
       if (!PyArg_ParseTupleAndKeywords(fake_args, keywords, "|iiii", tcp_keywords, &params.timeout, &params.loose, &params.tos, &params.random))
         {
           Py_XDECREF(fake_args);
-          return NULL;
+          z_return(NULL);
         }
       break;
     case ZD_PROTO_UDP:
       if (!PyArg_ParseTupleAndKeywords(fake_args, keywords, "|iiii", udp_keywords, &params.timeout, &params.loose, &params.tos, &params.random))
         {
           Py_XDECREF(fake_args);
-          return NULL;
+          z_return(NULL);
         }
       break;
-      
+
     }
   Py_XDECREF(fake_args);
 
   self = PyObject_New(ZPolicyAttach, &z_policy_attach_type);
   if (!self)
     {
-      z_leave();
-      return NULL;
+      z_return(NULL);
     }
-  
-  local_sa = local == Py_None ? NULL : z_policy_sockaddr_get_sa(local);
+
+  local_sa = (local == z_policy_none) ? NULL : z_policy_sockaddr_get_sa(local);
   remote_sa = z_policy_sockaddr_get_sa(remote);
 
   /*LOG
     This message indicates that Zorp began establishing connection
     with the indicated remote host.
    */
-  z_log(z_policy_proxy_get_proxy(proxy_instance)->session_id, CORE_DEBUG, 7, "Connecting to remote host; protocol='%d', local='%s', remote='%s'", 
+  z_log(z_policy_proxy_get_proxy(proxy_instance)->session_id, CORE_DEBUG, 7,
+        "Connecting to remote host; protocol='%d', local='%s', remote='%s'",
         protocol,
-	local_sa ? z_sockaddr_format(local_sa, buf1, sizeof(buf1)) : "NULL",
-	z_sockaddr_format(remote_sa, buf2, sizeof(buf2)));
+        local_sa ? z_sockaddr_format(local_sa, buf1, sizeof(buf1)) : "NULL",
+        z_sockaddr_format(remote_sa, buf2, sizeof(buf2)));
 
   self->local = NULL;
   self->policy = NULL;
-        
-  self->attach = z_attach_new(z_policy_proxy_get_proxy(proxy_instance), protocol, local_sa, remote_sa, &params, NULL, NULL, NULL);
+
+  self->attach = z_attach_new(z_policy_proxy_get_proxy(proxy_instance),
+                              protocol, local_sa, remote_sa, &params, NULL, NULL, NULL);
 
   z_sockaddr_unref(remote_sa);
   z_sockaddr_unref(local_sa);
   if (!self->attach)
     {
       PyErr_SetString(PyExc_IOError, "Error during connect");
-      
+
       Py_XDECREF(self);
-      z_leave();
-      return NULL;
+      z_return(NULL);
     }
   self->policy = z_policy_ref(current_policy);
 
@@ -293,32 +287,14 @@ PyMethodDef z_policy_attach_funcs[] =
 };
 
 
-static PyTypeObject z_policy_attach_type = 
+static PyTypeObject z_policy_attach_type =
 {
-  PyObject_HEAD_INIT(&PyType_Type)
-  0,
-  "ZPolicyAttach",
-  sizeof(ZPolicyAttach),
-  0,
-  (destructor) z_policy_attach_free,
-  0,
-  (getattrfunc) z_policy_attach_getattr,
-  0,
-  0,
-  0, /*(reprfunc) z_policy_attach_repr,*/
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  "ZPolicyAttach class for Zorp",
-  0, 0, 0, 0,
-  Z_PYTYPE_TRAILER
+  PyVarObject_HEAD_INIT(&PyType_Type,0)
+  .tp_name = "ZPolicyAttach",
+  .tp_basicsize = sizeof(ZPolicyAttach),
+  .tp_dealloc = (destructor) z_policy_attach_free,
+  .tp_getattr = (getattrfunc) z_policy_attach_getattr,
+  .tp_doc = "ZPolicyAttach class for Zorp"
 };
 
 

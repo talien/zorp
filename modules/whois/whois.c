@@ -280,8 +280,8 @@ whois_query_policy(WhoisProxy *self)
   res = z_policy_event(self->super.handler, "whoisRequest", z_policy_var_build("(s)", self->request->str), self->super.session_id);
   switch (res)
     {
-    case Z_REJECT:
-    case Z_ABORT:
+    case ZV_REJECT:
+    case ZV_ABORT:
       z_stream_write(self->super.endpoints[EP_CLIENT],
                      errmsg,
                      strlen(errmsg),
@@ -289,12 +289,12 @@ whois_query_policy(WhoisProxy *self)
                      NULL);
       /* fallthrough */
       
-    case Z_DROP:
+    case ZV_DROP:
       z_policy_unlock(self->super.thread);
       z_proxy_return(self, FALSE);
 
-    case Z_UNSPEC:
-    case Z_ACCEPT:
+    case ZV_UNSPEC:
+    case ZV_ACCEPT:
     default:
       break;
     }
@@ -404,15 +404,7 @@ ZProxyFuncs whois_proxy_funcs =
   NULL
 };
 
-ZClass WhoisProxy__class = 
-{
-  Z_CLASS_HEADER,
-  &ZProxy__class,
-  "WhoisProxy",
-  sizeof(WhoisProxy),
-  &whois_proxy_funcs.super
-};
-
+Z_CLASS_DEF(WhoisProxy, ZProxy, whois_proxy_funcs);
 
 /*+
 

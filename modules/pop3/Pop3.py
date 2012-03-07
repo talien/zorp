@@ -99,8 +99,7 @@
         </para>
         <example>
           <title>POP3 protocol sample</title>
-          <literallayout>
-+OK POP3 server ready
+          <synopsis>+OK POP3 server ready
 USER account
 +OK User name is ok
 PASS password
@@ -124,8 +123,7 @@ is removed when the mail is stored by the client.
 DELE 1
 +OK Mail deleted
 QUIT
-+OK Good bye
-          </literallayout>
++OK Good bye</synopsis>
         </example>
       </section>
     </section>
@@ -154,21 +152,18 @@ QUIT
 	  <para>
 	  This sample proxy class rejects the USER authentication requests, but allows APOP requests. 
 	  </para>
-            <literallayout>
-class APop3(Pop3Proxy):
+            <synopsis>class APop3(Pop3Proxy):
 	def config(self):
 		Pop3Proxy.config(self)
 		self.request["USER"] = (POP3_REQ_REJECT)
-		self.request["APOP"] = (POP3_REQ_ACCEPT)
-            </literallayout>
+		self.request["APOP"] = (POP3_REQ_ACCEPT)</synopsis>
         </example>
         <example>
           <title>Example for converting simple USER/PASS authentication to APOP in POP3</title>
           <para>
 	  The above example simply rejected USER/PASS authentication, this one converts USER/PASS authentication to APOP authentication messages. 
 	  </para>
-	  <literallayout>
-class UToAPop3(Pop3Proxy):
+	  <synopsis>class UToAPop3(Pop3Proxy):
 	def config(self):
 		Pop3Proxy.config(self)
 		self.request["USER"] = (POP3_REQ_POLICY,self.DropUSER)
@@ -189,8 +184,7 @@ class UToAPop3(Pop3Proxy):
 		digest = calcdigest(self->timestamp+self->request_param)
 		self->request_command = "APOP"
 		self->request_param = name + " " + digest
-		return POP3_REQ_ACCEPT
-          </literallayout>
+		return POP3_REQ_ACCEPT</synopsis>
         </example>
       </section>
       <section>
@@ -213,16 +207,14 @@ class UToAPop3(Pop3Proxy):
         </para>
        <example>
           <title>Rewriting the banner in POP3</title>
-          <literallayout>
-class NeutralPop3(Pop3Proxy):
+          <synopsis>class NeutralPop3(Pop3Proxy):
 	def config(self):
 	Pop3Proxy.config(self)
 	self.request["GREETING"] = (POP3_REQ_POLICY, None, self.rewriteBanner)
 
 	def rewriteBanner(self, response)
 		self.response_param = "Pop3 server ready"
-		return POP3_RSP_ACCEPT
-          </literallayout>
+		return POP3_RSP_ACCEPT</synopsis>
         </example>
 	<note>
 	<para>

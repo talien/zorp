@@ -111,7 +111,6 @@ z_dot_transfer_src_read(ZTransfer2 *s, ZStream *stream, gchar *buf, gsize count,
       res = G_IO_STATUS_ERROR;
       break;
     case G_IO_STATUS_ERROR:
-    default:
       res = G_IO_STATUS_ERROR;
     }
 
@@ -362,11 +361,4 @@ ZTransfer2Funcs z_dot_transfer_funcs =
   NULL  /* progress */
 };
 
-ZClass ZDotTransfer__class =
-{
-  Z_CLASS_HEADER,
-  &ZTransfer2__class,
-  "ZDotTransfer",
-  sizeof(ZDotTransfer),
-  &z_dot_transfer_funcs.super
-};
+Z_CLASS_DEF(ZDotTransfer, ZTransfer2, z_dot_transfer_funcs);

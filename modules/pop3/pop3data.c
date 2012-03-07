@@ -160,15 +160,7 @@ ZTransfer2Funcs pop3_transfer_funcs =
   .progress = NULL  /* progress */
 };
 
-ZClass Pop3Transfer__class =
-{
-  Z_CLASS_HEADER,
-  &ZDotTransfer__class,
-  "Pop3Transfer",
-  sizeof(Pop3Transfer),
-  &pop3_transfer_funcs.super
-};
-
+Z_CLASS_DEF(Pop3Transfer, ZDotTransfer, pop3_transfer_funcs);
 
 gboolean
 pop3_data_transfer(Pop3Proxy *owner)
@@ -208,7 +200,7 @@ pop3_data_transfer(Pop3Proxy *owner)
       /* nothing was written to destination */
       switch (z_transfer2_get_stack_decision(&t->super.super))
         {
-        case Z_REJECT:
+        case ZV_REJECT:
 	  /*LOG
 	    This message indicates that the stacked proxy rejected the content and Zorp
 	    rejects the response.
@@ -221,7 +213,7 @@ pop3_data_transfer(Pop3Proxy *owner)
             pop3_response_reject(owner, buf);
           break;
           
-        case Z_ERROR:
+        case ZV_ERROR:
           g_snprintf(buf, sizeof(buf), "Error occurred while transferring data (%s)", z_transfer2_get_stack_info(&t->super.super));
           pop3_response_reject(owner, buf);
           owner->pop3_state = POP3_STATE_QUIT;

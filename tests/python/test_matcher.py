@@ -26,7 +26,7 @@ def test(matcher_policy, str, should_accept):
 		print "Failed"
 		raise 'test error'
 
-def init(name):
+def init(names, virtual_name, is_master):
 	try:
 		a = MatcherPolicy("a", SubstringMatcher(pattern="a"))
 		b = MatcherPolicy("b", SubstringMatcher(pattern="b"))

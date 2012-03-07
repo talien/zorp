@@ -36,12 +36,12 @@
 #endif
 
 #include <Python.h>
-#undef ENABLE_IPV6
 #include <zorp/zorplibconfig.h>
-#include <zorpconfig.h>
 #include <glib.h>
 #include <zorp/misc.h>
 #include <zorp/memtrace.h>
+
+#include "zorpconfig.h"
 
 
 #define ZORP_POLICY_FILE	ZORP_SYSCONFDIR "/policy.py"
@@ -51,6 +51,7 @@
 #define ZORP_STATE_DIR          ZORP_STATEDIR
 #define ZORP_PID_FILE_DIR       ZORP_PIDFILEDIR
 #define ZORP_SZIG_SOCKET_NAME      ZORP_PID_FILE_DIR "zorpctl"
+#define ZORP_WORKING_DIR        ZORP_STATEDIR "/cores"
 
 #define MAX_SESSION_ID		128
 #define DEADLOCK_CHECKER_DEFAULT_TIMEOUT  60
@@ -73,6 +74,8 @@ extern gboolean usr1_received;
 extern gboolean usr2_received;
 extern guint32 startup_id;
 extern const gchar *instance_name;
+extern const gchar *virtual_instance_name;
+extern gboolean zorp_process_master_mode;
 
 
 void z_main_loop_initiate_reload(gboolean called_from_sighandler);
@@ -80,7 +83,11 @@ gboolean z_main_loop_get_last_reload_result(void);
 
 void z_main_loop_initiate_termination(gboolean called_from_sighandler);
 
-void z_main_loop(const gchar *policy_file, const gchar *instance_name, gchar const **instance_policy_list);
+void z_main_loop(const gchar *policy_file,
+                 const gchar *instance_name,
+                 gchar const **instance_policy_list,
+                 gchar const *virtual_instance_name,
+                 gboolean is_master);
 void z_main_loop_quit(int exit_code);
 void z_main_loop_init(void);
 void z_main_loop_destroy(void);

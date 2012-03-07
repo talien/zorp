@@ -1,5 +1,3 @@
-SUBDIRS = tests
-
 pkgdatadir = @datadir@/zorp/pylib/Zorp
 pkglibdir = @libdir@/zorp
 LIBS = @MODULES_LIBS@

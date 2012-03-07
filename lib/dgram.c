@@ -63,7 +63,7 @@ enum
 typedef struct _ZDgramSocketFuncs
 {
   gint (*open)(guint flags, ZSockAddr *remote, ZSockAddr *local, guint32 sock_flags, gint tos, GError **error);
-  gboolean (*setup)(gint fd, guint flags, gint tos);
+  gboolean (*setup)(gint fd, guint flags, gint tos, gint family);
   GIOStatus (*recv)(gint fd, ZPktBuf **pack, ZSockAddr **from, ZSockAddr **to, gint *tos, gboolean peek, GError **error);
 } ZDgramSocketFuncs;
 
@@ -88,9 +88,9 @@ z_dgram_socket_open(guint flags, ZSockAddr *remote, ZSockAddr *local, guint32 so
  * Generic dgram_socket_setup, will use the system dependent implementation _l22_ or _nf_.
  */
 static gboolean
-z_dgram_socket_setup(gint fd, guint flags, gint tos)
+z_dgram_socket_setup(gint fd, guint flags, gint tos, gint family)
 {
-  return dgram_socket_funcs->setup(fd, flags, tos);
+  return dgram_socket_funcs->setup(fd, flags, tos, family);
 }
 
 /**
@@ -140,7 +140,7 @@ z_nf_dgram_socket_open(guint flags, ZSockAddr *remote, ZSockAddr *local, guint32
       z_return(-1);
     }
 
-  if (!z_dgram_socket_setup(fd, flags, tos))
+  if (!z_dgram_socket_setup(fd, flags, tos, local->sa.sa_family))
     {
       /* z_dgram_socket_setup() already issued a log message */
       close(fd);
@@ -197,7 +197,7 @@ z_nf_dgram_socket_open(guint flags, ZSockAddr *remote, ZSockAddr *local, guint32
  * FALSE if the setup operation failed, TRUE otherwise
  */
 gboolean
-z_nf_dgram_socket_setup(gint fd, guint flags, gint tos)
+z_nf_dgram_socket_setup(gint fd, guint flags, gint tos, gint family)
 {
   gint tmp = 1;
 
@@ -207,28 +207,64 @@ z_nf_dgram_socket_setup(gint fd, guint flags, gint tos)
   setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &tmp, sizeof(tmp));
   if (flags & ZDS_LISTEN)
     {
-      tmp = 1;
-      if (setsockopt(fd, SOL_IP, IP_RECVORIGDSTADDR, &tmp, sizeof(tmp)) < 0)
+      switch (family)
         {
-          /*LOG
-            This message indicates that the setsockopt failed.
-          */
-          z_log(NULL, CORE_ERROR, 3, "Error during setsockopt(SOL_IP, IP_RECVORIGADDRS); error='%s'", g_strerror(errno));
-          z_return(FALSE);
-        }
+        case PF_INET:
+          tmp = 1;
+          if (setsockopt(fd, SOL_IP, IP_RECVORIGDSTADDR, &tmp, sizeof(tmp)) < 0)
+            {
+              /*LOG
+                This message indicates that the setsockopt requesting
+                reception of original destination addresses of UDP
+                frames failed.
+              */
+              z_log(NULL, CORE_ERROR, 3, "Error during setsockopt(SOL_IP, IP_RECVORIGADDRS); error='%s'", g_strerror(errno));
+              z_return(FALSE);
+            }
 #if ZORPLIB_ENABLE_TOS
-      tmp = 1;
-      if (setsockopt(fd, SOL_IP, IP_RECVTOS, &tmp, sizeof(tmp)) < 0)
-        {
-          z_log(NULL, CORE_ERROR, 3, "Error during setsockopt(SOL_IP, IP_RECVTOS); error='%s'", g_strerror(errno));
-          z_return(FALSE);
-        }
+          tmp = 1;
+          if (setsockopt(fd, SOL_IP, IP_RECVTOS, &tmp, sizeof(tmp)) < 0)
+            {
+              z_log(NULL, CORE_ERROR, 3, "Error during setsockopt(SOL_IP, IP_RECVTOS); error='%s'", g_strerror(errno));
+              z_return(FALSE);
+            }
 #endif
+          break;
+        case PF_INET6:
+          tmp = 1;
+          if (setsockopt(fd, SOL_IPV6, IPV6_RECVORIGDSTADDR, &tmp, sizeof(tmp)) < 0)
+            {
+              /*LOG
+                This message indicates that the setsockopt requesting
+                reception of original destination addresses of UDP
+                frames failed.
+              */
+              z_log(NULL, CORE_ERROR, 3, "Error during setsockopt(SOL_IPV6, IPV6_RECVORIGADDRS); error='%s'", g_strerror(errno));
+              /* FIXME: we should signal failure here, however, we
+                 must not do so because IPv6 tproxy support is not
+                 widespread enough to expect that it will be
+                 available. This also makes the unit tests
+                 fail. Should be removed once IPv6 tproxy support can
+                 be truly required for Zorp to function. Until that,
+                 even thoudh we try to set this socket option failing
+                 to do so is not a fatal error.
+              */
+            }
+          break;
+        default:
+          g_assert_not_reached();
+        }
     }
   else if (flags & ZDS_ESTABLISHED)
     {
-      z_fd_set_our_tos(fd, tos);
+      switch (family)
+        {
+        case PF_INET:
+          z_fd_set_our_tos(fd, tos);
+          break;
+        }
     }
+
   z_return(TRUE);
 }
 
@@ -251,7 +287,7 @@ z_nf_dgram_socket_setup(gint fd, guint flags, gint tos)
 GIOStatus
 z_nf_dgram_socket_recv(gint fd, ZPktBuf **packet, ZSockAddr **from_addr, ZSockAddr **to_addr, gint *tos, gboolean peek, GError **error G_GNUC_UNUSED)
 {
-  struct sockaddr_in from, to;
+  struct sockaddr from;
   gchar buf[65536], ctl_buf[64];
   struct msghdr msg;
   struct cmsghdr *cmsg;
@@ -297,10 +333,26 @@ z_nf_dgram_socket_recv(gint fd, ZPktBuf **packet, ZSockAddr **from_addr, ZSockAd
 
               if (orig->sin_addr.s_addr && orig->sin_port)
                 {
+                  struct sockaddr_in to;
+
                   to.sin_family = orig->sin_family;
                   to.sin_addr = orig->sin_addr;
                   to.sin_port = orig->sin_port;
                   *to_addr = z_sockaddr_inet_new2(&to);
+                }
+            }
+          else if (to_addr && cmsg->cmsg_level == SOL_IPV6 && cmsg->cmsg_type == IPV6_ORIGDSTADDR)
+            {
+              struct sockaddr_in6 *orig = (struct sockaddr_in6 *) CMSG_DATA(cmsg);
+
+              if (!IN6_IS_ADDR_UNSPECIFIED(&orig->sin6_addr) && orig->sin6_port)
+                {
+                  struct sockaddr_in6 to;
+
+                  to.sin6_family = orig->sin6_family;
+                  to.sin6_addr = orig->sin6_addr;
+                  to.sin6_port = orig->sin6_port;
+                  *to_addr = z_sockaddr_inet6_new2(&to);
                 }
             }
           else if (tos && cmsg->cmsg_level == SOL_IP && cmsg->cmsg_type == IP_TOS)
@@ -311,15 +363,17 @@ z_nf_dgram_socket_recv(gint fd, ZPktBuf **packet, ZSockAddr **from_addr, ZSockAd
 
       if (to_addr && *to_addr == NULL)
         {
-          struct sockaddr_in to;
+          struct sockaddr to;
           socklen_t tolen = sizeof(to);
                              
-          getsockname(fd, (struct sockaddr *) &to, &tolen);
-          *to_addr = z_sockaddr_inet_new2(&to);
+          getsockname(fd, &to, &tolen);
+          *to_addr = z_sockaddr_new(&to, tolen);
         }
 
       if (from_addr)
-        *from_addr = z_sockaddr_inet_new2(&from);
+        {
+          *from_addr = z_sockaddr_new(&from, sizeof(from));
+        }
     }
   z_return(G_IO_STATUS_NORMAL);
   
@@ -424,6 +478,7 @@ z_dgram_listener_accept_connection(ZListener *self, ZStream **fdstream, ZSockAdd
             {
               cap_restore(saved_caps);
               udp_accept_available = FALSE;
+              z_log(self->session_id, CORE_INFO, 4, "UDP accept() support unavailable, falling back to legacy datagram handling");
               goto no_udp_accept;
             }
           else
@@ -439,7 +494,7 @@ z_dgram_listener_accept_connection(ZListener *self, ZStream **fdstream, ZSockAdd
 
       /* this socket behaves like a listening one when we're reading the first packet to
        * determine the original destination address */
-      if (!z_dgram_socket_setup(newfd, ZDS_LISTEN, 0))
+      if (!z_dgram_socket_setup(newfd, ZDS_LISTEN, 0, self->local->sa.sa_family))
         {
           close(newfd);
           z_return(G_IO_STATUS_ERROR);
@@ -472,7 +527,7 @@ z_dgram_listener_accept_connection(ZListener *self, ZStream **fdstream, ZSockAdd
       z_fd_set_nonblock(newfd, 0);
       /* once we have the original address we set up the socket for establised mode;
        * this includes setting the TOS to the appropriate value */
-      if (!z_dgram_socket_setup(newfd, ZDS_ESTABLISHED, tos))
+      if (!z_dgram_socket_setup(newfd, ZDS_ESTABLISHED, tos, self->local->sa.sa_family))
         {
           res = G_IO_STATUS_ERROR;
           goto error_after_recv;
@@ -561,15 +616,7 @@ ZListenerFuncs z_dgram_listener_funcs =
   z_dgram_listener_accept_connection
 };
 
-ZClass ZDGramListener__class = 
-{
-  Z_CLASS_HEADER,
-  .super_class = Z_CLASS(ZListener),
-  .name = "ZDGramListener",
-  .size = sizeof(ZDGramListener),
-  .funcs = &z_dgram_listener_funcs.super
-};
-
+Z_CLASS_DEF(ZDGramListener, ZListener, z_dgram_listener_funcs);
 
 /* datagram connector */
 
@@ -580,7 +627,7 @@ static ZConnectorFuncs z_dgram_connector_funcs =
     NULL,
   }
 };
-    
+
 ZClass ZDGramConnector__class =
 {
   Z_CLASS_HEADER,

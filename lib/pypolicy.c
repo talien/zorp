@@ -59,9 +59,6 @@ ZPolicy *current_policy;
 extern gpointer z_notification_thread_main_func(gpointer data);
 extern void _notify_event_queue_terminate_request(ZPolicy *policy);
 
-
-extern void z_py_zorp_balance_init(void);
-
 const gchar *
 z_verdict_str(ZVerdict verdict)
 {
@@ -656,7 +653,7 @@ z_policy_call(PyObject *handler, char *name, PyObject *args, gboolean *called, g
  * can't track the purpose of this functionality.
  *
  * Returns:
- * Z_UNSPEC, Z_ABORT, ???
+ * ZV_UNSPEC, ZV_ABORT, ???
  */
 gint 
 z_policy_event(PyObject *handler, char *name, PyObject *args, gchar *session_id)
@@ -673,7 +670,7 @@ z_policy_event(PyObject *handler, char *name, PyObject *args, gchar *session_id)
 	{
 	  c_res = PyInt_AsLong(res);
 	  Py_XDECREF(res);
-	  if (c_res != Z_UNSPEC)
+	  if (c_res != ZV_UNSPEC)
 	    {
 	      Py_XDECREF(args);
 	      return c_res;
@@ -688,7 +685,7 @@ z_policy_event(PyObject *handler, char *name, PyObject *args, gchar *session_id)
     }
   else
     if (called)
-      return Z_ABORT;
+      return ZV_ABORT;
   Py_XINCREF(args);
   res = z_policy_call(handler, name, args, &called, session_id);
   if (res)
@@ -697,7 +694,7 @@ z_policy_event(PyObject *handler, char *name, PyObject *args, gchar *session_id)
 	{
 	  c_res = PyInt_AsLong(res);
 	  Py_XDECREF(res);
-	  if (c_res != Z_UNSPEC)
+	  if (c_res != ZV_UNSPEC)
 	    {
 	      Py_XDECREF(args);
 	      return c_res;
@@ -712,7 +709,7 @@ z_policy_event(PyObject *handler, char *name, PyObject *args, gchar *session_id)
     }
   else
     if (called)
-      return Z_ABORT;
+      return ZV_ABORT;
   res = z_policy_call(handler, "postProcessEvent", args, &called, session_id);
   if (res)
     {
@@ -731,8 +728,8 @@ z_policy_event(PyObject *handler, char *name, PyObject *args, gchar *session_id)
     }
   else
     if (called)
-      return Z_ABORT;
-  return Z_UNSPEC;
+      return ZV_ABORT;
+  return ZV_UNSPEC;
 }
 
 
@@ -1138,6 +1135,7 @@ z_policy_load(ZPolicy *self)
  * z_policy_init:
  * @self: this
  * @instance_name: array of instance name and aliases
+ * @virtual_instance_name: virtual instance name of this process
  *
  * Initialises the current policy by calling ?Zorp.init?.
  * The function interface (not the implementation) here should be
@@ -1147,7 +1145,8 @@ z_policy_load(ZPolicy *self)
  * TRUE on success
  */
 gboolean
-z_policy_init(ZPolicy *self, gchar const **instance_name)
+z_policy_init(ZPolicy *self, gchar const **instance_name, gchar const *virtual_instance_name,
+              gboolean is_master)
 {
   PyObject *main_module, *init_func, *res;
   gboolean success = FALSE;
@@ -1161,7 +1160,9 @@ z_policy_init(ZPolicy *self, gchar const **instance_name)
   saved_caps = cap_save();
   cap_enable(CAP_NET_ADMIN);
 
-  res = PyObject_CallFunction(init_func, "(O)", z_policy_convert_strv_to_list(instance_name));
+  res = PyObject_CallFunction(init_func, "(Osi)",
+                              z_policy_convert_strv_to_list(instance_name),
+                              virtual_instance_name, is_master);
 
   cap_restore(saved_caps);
 
@@ -1184,6 +1185,7 @@ z_policy_init(ZPolicy *self, gchar const **instance_name)
  * z_policy_deinit:
  * @self: this
  * @instance_name: array of instance name and aliases
+ * @virtual_instance_name: virtual instance name of this process
  *
  * Deinitialises the current policy by calling ?Zorp.deinit?.
  *
@@ -1191,7 +1193,7 @@ z_policy_init(ZPolicy *self, gchar const **instance_name)
  * TRUE on success
  */
 gboolean
-z_policy_deinit(ZPolicy *self, gchar const **instance_name)
+z_policy_deinit(ZPolicy *self, gchar const **instance_name, gchar const *virtual_instance_name)
 {
   PyObject *main_module, *deinit_func, *res;
   
@@ -1200,7 +1202,9 @@ z_policy_deinit(ZPolicy *self, gchar const **instance_name)
   main_module = PyImport_AddModule("__main__");
   deinit_func = PyObject_GetAttrString(main_module, "deinit");
 
-  res = PyObject_CallFunction(deinit_func, "(O)", z_policy_convert_strv_to_list(instance_name));
+  res = PyObject_CallFunction(deinit_func, "(Os)",
+                              z_policy_convert_strv_to_list(instance_name),
+                              virtual_instance_name);
   Py_XDECREF(deinit_func);
   if (!res)
     {
@@ -1249,6 +1253,7 @@ z_policy_purge(ZPolicy *self)
  * z_policy_cleanup:
  * @self: this
  * @instance_name: array of instance name and aliases
+ * @virtual_instance_name: virtual instance name of this process
  *
  * Cleans up the current policy by calling ?Zorp.cleanup?.
  * Currently used by KZorp to flush kernel data structures
@@ -1258,7 +1263,7 @@ z_policy_purge(ZPolicy *self)
  * TRUE on success
  */
 gboolean
-z_policy_cleanup(ZPolicy *self, gchar const **instance_name)
+z_policy_cleanup(ZPolicy *self, gchar const **instance_name, gchar const *virtual_instance_name, gboolean is_master)
 {
   PyObject *main_module, *cleanup_func, *res;
   cap_t saved_caps;
@@ -1271,7 +1276,9 @@ z_policy_cleanup(ZPolicy *self, gchar const **instance_name)
   saved_caps = cap_save();
   cap_enable(CAP_NET_ADMIN);
 
-  res = PyObject_CallFunction(cleanup_func, "(O)", z_policy_convert_strv_to_list(instance_name));
+  res = PyObject_CallFunction(cleanup_func, "(Osi)",
+                              z_policy_convert_strv_to_list(instance_name),
+                              virtual_instance_name, is_master);
 
   cap_restore(saved_caps);
 
@@ -1365,4 +1372,3 @@ z_policy_raise_exception(gchar *exception_name, gchar *desc)
   PyErr_SetString(license_exc, desc);
   Py_XDECREF(license_exc);
 }
-

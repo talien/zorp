@@ -1,6 +1,7 @@
 from Zorp.Core import *
-from Zorp.SockAddr import inet_ntoa
+from socket import inet_ntoa, inet_aton
 from traceback import print_exc
+import struct
 
 config.options.kzorp_enabled = FALSE
 
@@ -13,12 +14,12 @@ def test(str, res, expect):
 	else:
 		print str, 'ok,', res
 		
-def init(name):
+def init(names, virtual_name, is_master):
 	try:
-		dom = InetDomain("192.168.0.1/24")
-		test("netaddr(): ", inet_ntoa(dom.netaddr()), "192.168.0.0")
-		test("broadcast(): ", inet_ntoa(dom.broadcast()), "192.168.0.255")
-		test("netmask(): ", inet_ntoa(dom.netmask()), "255.255.255.0")
+		subnet = InetSubnet("192.168.0.1/24")
+		test("netaddr(): ", subnet.addr_str(), "192.168.0.0")
+		test("broadcast(): ", subnet.broadcast(), struct.unpack("I", inet_aton("192.168.0.255"))[0])
+		test("netmask(): ", subnet.netmask_int(), struct.unpack("I", inet_aton("255.255.255.0"))[0])
 
 	except Exception, e:
 		print 'exception: fail', e

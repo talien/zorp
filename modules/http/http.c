@@ -126,7 +126,7 @@ http_config_set_defaults(HttpProxy *self)
   self->rewrite_host_header = TRUE;
   self->require_host_header = TRUE;
   self->strict_header_checking = FALSE;
-  self->strict_header_checking_action = Z_DROP;
+  self->strict_header_checking_action = ZV_DROP;
   self->permit_null_response = TRUE;
   self->max_line_length = 4096;
   self->max_url_length = 4096;
@@ -381,8 +381,7 @@ http_policy_header_manip(HttpProxy *self, ZPolicyObj *args)
         }
       else
         {
-          z_policy_var_ref(z_policy_none);
-          res = z_policy_none;
+          res = z_policy_none_ref();
         }
       break;
       
@@ -395,8 +394,7 @@ http_policy_header_manip(HttpProxy *self, ZPolicyObj *args)
         p = http_add_header(&self->headers[side], header, strlen(header), new_value, strlen(new_value));
       g_string_assign(p->value, new_value);
       p->present = TRUE;
-      z_policy_var_ref(z_policy_none);
-      res = z_policy_none;
+      res = z_policy_none_ref();
       break;
 
     default:
@@ -572,12 +570,12 @@ http_register_vars(HttpProxy *self)
                   Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET_CONFIG | Z_VAR_GET_CONFIG,
                   &self->buffer_size);
 
-  /* timeout value in milliseconds */
+  /* request timeout value in milliseconds */
   z_proxy_var_new(&self->super, "timeout_request", 
                   Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET | Z_VAR_GET_CONFIG | Z_VAR_SET_CONFIG,
                   &self->timeout_request);
 
-  /* timeout value in milliseconds */
+  /* response timeout value in milliseconds */
   z_proxy_var_new(&self->super, "timeout_response", 
 		  Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET | Z_VAR_GET_CONFIG | Z_VAR_SET_CONFIG,
                   &self->timeout_response);
@@ -586,11 +584,6 @@ http_register_vars(HttpProxy *self)
   z_proxy_var_new(&self->super, "rerequest_attempts", 
 		  Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET | Z_VAR_GET_CONFIG | Z_VAR_SET_CONFIG,
                   &self->rerequest_attempts);
-
-  /* timeout value in milliseconds */
-  z_proxy_var_new(&self->super, "timeout_response", 
-		  Z_VAR_TYPE_INT | Z_VAR_GET | Z_VAR_SET | Z_VAR_GET_CONFIG | Z_VAR_SET_CONFIG,
-                  &self->timeout_response);
 
   /* hash indexed by request method */
   z_proxy_var_new(&self->super, "request",
@@ -1108,7 +1101,7 @@ http_process_auth_info(HttpProxy *self, HttpHeader *h, ZorpAuthInfo *auth_info)
       z_policy_unlock(self->super.thread);
       if (res)
         {
-          res = z_proxy_user_authenticated(&self->super, up[0], (gchar const **) groups);
+          res = z_proxy_user_authenticated_default(&self->super, up[0], (gchar const **) groups);
           g_string_assign(self->old_auth_header, h->value->str);
           g_mutex_lock(auth_mutex);
           if (self->auth_cache_time > 0)
@@ -3095,14 +3088,7 @@ ZProxyFuncs http_proxy_funcs =
   NULL
 };
 
-ZClass HttpProxy__class = 
-{
-  Z_CLASS_HEADER,
-  &ZProxy__class,
-  "HttpProxy",
-  sizeof(HttpProxy),
-  &http_proxy_funcs.super
-};
+Z_CLASS_DEF(HttpProxy, ZProxy, http_proxy_funcs);
 
 gint
 zorp_module_init(void)

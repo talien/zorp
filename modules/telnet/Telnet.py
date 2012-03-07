@@ -211,12 +211,10 @@
 
         <example>
           <title>Example for disabling the Telnet X Display Location option</title>
-          <literallayout>
-class MyTelnetProxy(TelnetProxy):
+          <synopsis>class MyTelnetProxy(TelnetProxy):
 	def config(self):
 		TelnetProxy.config(self)
-		self.option[TELNET_X_DISPLAY_LOCATION] = (TELNET_OPT_REJECT)
-          </literallayout>
+		self.option[TELNET_X_DISPLAY_LOCATION] = (TELNET_OPT_REJECT)</synopsis>
         </example>
 	
 	<para>
@@ -236,8 +234,7 @@ class MyTelnetProxy(TelnetProxy):
         </para>
         <example>
           <title>Rewriting the DISPLAY environment variable</title>
-          <literallayout>
-class MyRewritingTelnetProxy(TelnetProxy):
+          <synopsis>class MyRewritingTelnetProxy(TelnetProxy):
 	def config(self):
 		TelnetProxy.config()
 		self.option[TELNET_ENVIRONMENT, TELNET_SB_IS] = (TELNET_OPTION_POLICY, self.rewriteVar)
@@ -245,8 +242,7 @@ class MyRewritingTelnetProxy(TelnetProxy):
 	def rewriteVar(self, option, name, value):
 		if name == "DISPLAY":
 			self.current_var_value = "rewritten_value:0"
-		return TELNET_OPTION_ACCEPT
-          </literallayout>
+		return TELNET_OPTION_ACCEPT</synopsis>
         </example>
       </section>
       <section>
@@ -255,7 +251,7 @@ class MyRewritingTelnetProxy(TelnetProxy):
       </title>
       <para>
       In the Telnet protocol, options and the actual commands are represented on one byte. In order to be able to use a command in a session, the option (and its suboptions if there are any) corresponding to the command has to be negotiated between the client and the server. Usually the command and the option is represented by the same value, e.g.: the <parameter>TELNET_STATUS</parameter> command and option are both represented by the value "5". However, this is not always the case. The <parameter>negotiation</parameter> hash is indexed by the code of the command, and contains the code of the option to be negotiated for the given command (or the <parameter>TELNET_NEG_NONE</parameter> when no negotation is needed). </para>
-      <para>Currently the only command where the code of the command differs from the related option is <literallayout>self.negotiation["239"] = int(TELNET_EOR)</literallayout>.
+      <para>Currently the only command where the code of the command differs from the related option is <parameter>self.negotiation["239"] = int(TELNET_EOR)</parameter>.
       </para>
       </section>
      </section>

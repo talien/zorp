@@ -590,7 +590,7 @@ telnet_opt_naws(TelnetProxy *self, guint ep)
   g_string_sprintf(self->policy_value, "%hd,%hd", width, height);
   snprintf(value, sizeof(value), "%hd,%hd", width, height);
   res = telnet_policy_suboption(self, 0, TELNET_POLICY_NAWS_NAME, value);
-  if (res == Z_ACCEPT)
+  if (res == ZV_ACCEPT)
     {
       g_snprintf(width_cols, sizeof(width_cols), "%hd", width);
       g_snprintf(height_rows, sizeof(height_rows), "%hd", height);

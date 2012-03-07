@@ -134,7 +134,7 @@ ftp_do_inband_auth(FtpProxy *self)
                                          self->proxy_username->str, self->proxy_password->str, &groups, &self->super);
       z_policy_unlock(self->super.thread);
       if (res)
-        res = z_proxy_user_authenticated(&self->super, self->proxy_username->str, (gchar const **) groups);
+        res = z_proxy_user_authenticated_default(&self->super, self->proxy_username->str, (gchar const **) groups);
 
       g_strfreev(groups);
 
@@ -1481,7 +1481,7 @@ ftp_command_parse_PASV(FtpProxy *self)
       SET_ANSWER(MSG_COMMAND_NOT_ALLOWED_HERE);
       z_proxy_return(self, FTP_REQ_REJECT);
     }
-  z_proxy_return(self, FTP_REQ_ACCEPT);
+  z_proxy_return(self, res);
 }
 
 guint
@@ -1872,7 +1872,7 @@ ftp_command_parse_EPSV(FtpProxy *self)
       SET_ANSWER(MSG_COMMAND_NOT_ALLOWED_HERE);
       z_proxy_return(self, FTP_REQ_REJECT);
     }
-  z_proxy_return(self, FTP_REQ_ACCEPT);
+  z_proxy_return(self, res);
 }
 
 guint

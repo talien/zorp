@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datadir=@datadir@
+datarootdir=@datarootdir@
+
+Name: ZorpLib
+Description: Zorp Core Library
+Requires: zorplibll
+Version: @VERSION@
+Libs: -lzorp -L@libdir@
+Cflags: -I@includedir@

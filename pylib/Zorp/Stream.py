@@ -39,7 +39,7 @@ G_IO_STATUS_NORMAL = 1
 G_IO_STATUS_EOF = 2
 G_IO_STATUS_AGAIN = 3
 
-class Stream:
+class Stream(object):
 	"""
         <class maturity="stable">
           <summary>

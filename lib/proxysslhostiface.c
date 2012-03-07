@@ -134,7 +134,7 @@ z_proxy_ssl_host_iface_check_name_method(ZProxyHostIface *s,
                   break;
                 }
             }
-          sk_GENERAL_NAME_free(alt_names);
+            sk_GENERAL_NAME_pop_free(alt_names, GENERAL_NAME_free);
         }
     }
 
@@ -180,7 +180,7 @@ z_proxy_ssl_host_iface_free_method(ZObject *s)
   ZProxySslHostIface *self = Z_CAST(s, ZProxySslHostIface);
 
   X509_free(self->server_cert);
-  z_object_free_method(s);
+  z_proxy_iface_free_method(s);
 }
 
 ZProxyHostIfaceFuncs z_proxy_ssl_host_iface_funcs =
@@ -192,11 +192,4 @@ ZProxyHostIfaceFuncs z_proxy_ssl_host_iface_funcs =
   .check_name = z_proxy_ssl_host_iface_check_name_method,
 };
 
-ZClass ZProxySslHostIface__class =
-{
-  Z_CLASS_HEADER,
-  Z_CLASS(ZProxyHostIface),
-  "ZProxySslHostIface",
-  sizeof(ZProxySslHostIface),
-  &z_proxy_ssl_host_iface_funcs.super,
-};
+Z_CLASS_DEF(ZProxySslHostIface, ZProxyHostIface, z_proxy_ssl_host_iface_funcs);

@@ -189,7 +189,7 @@ z_setup_signals(void)
 void
 z_version(void)
 {
-  printf("Zorp %s\n"
+  printf("Zorp %s (%s)\n"
          "Revision: %s\n"
          "Compile-Date: %s %s\n"
          "Config-Date: %s\n"
@@ -198,7 +198,7 @@ z_version(void)
          "IPOptions: %s\n"
          "%s\n"
          , 
-         VERSION, 
+         BROCHURE_VERSION, VERSION,
          ZORP_SOURCE_REVISION,
          __DATE__, __TIME__,
          ZORP_CONFIG_DATE,
@@ -212,7 +212,6 @@ z_version(void)
 /* arguments */
 
 #define MAX_SOFT_INSTANCES 128
-
 
 static const gchar *instance_policy_list[MAX_SOFT_INSTANCES + 1];
 static gint instance_count = 1;
@@ -232,10 +231,25 @@ z_set_instance_name(const gchar *option_name G_GNUC_UNUSED, const gchar *value, 
 }
 
 
+static gboolean
+z_set_virtual_instance_name(const char *option_name, const gchar *value,
+                            gpointer user_data G_GNUC_UNUSED,
+                            GError **error G_GNUC_UNUSED)
+{
+  if (strcmp(option_name, "--slave") == 0)
+    zorp_process_master_mode = FALSE;
+
+  virtual_instance_name = g_strdup(value);
+
+  return TRUE;
+}
+
 static gint deadlock_checker_timeout = DEADLOCK_CHECKER_DEFAULT_TIMEOUT;
 static GOptionEntry zorp_options[] = 
 {
   { "as",           'a',                     0, G_OPTION_ARG_CALLBACK, z_set_instance_name, "Set instance name", "<instance>" },
+  { "master",       0,                       0, G_OPTION_ARG_CALLBACK, z_set_virtual_instance_name, "Run in master mode with the virtual instance name specified", "<virtual-instance>"},
+  { "slave",        0,                       0, G_OPTION_ARG_CALLBACK, z_set_virtual_instance_name, "Run in slave mode with the virtual instance name specified", "<virtual-instance>"},
   { "policy",       'p',                     0, G_OPTION_ARG_STRING, &policy_file,          "Set policy file", "<policy>" },
   { "version",      'V',                     0, G_OPTION_ARG_NONE,   &display_version,      "Display version number", NULL },
   { "log-escape",     0,                     0, G_OPTION_ARG_NONE,   &log_escape,           "Escape log messages to avoid non-printable characters", NULL },
@@ -262,7 +276,7 @@ zorp_deadlock_checker(void)
     }
 
   unaddr.sun_family = AF_UNIX;
-  snprintf(unaddr.sun_path, sizeof(unaddr.sun_path), "%s.%s", ZORP_SZIG_SOCKET_NAME, instance_name);
+  snprintf(unaddr.sun_path, sizeof(unaddr.sun_path), "%s.%s", ZORP_SZIG_SOCKET_NAME, virtual_instance_name);
   if (connect(fd, (struct sockaddr *) &unaddr, sizeof(unaddr)) < 0)
     {
       z_process_message("Cannot connect to SZIG socket; socket='%s', reason='%s'\n", unaddr.sun_path, strerror(errno));
@@ -330,6 +344,7 @@ main(int argc, char *argv[])
   z_mem_trace_init("zorp-memtrace.txt");
   instance_name = "zorp";
   instance_policy_list[0] = "zorp";
+  virtual_instance_name = NULL;
   z_log_set_defaults(3, TRUE, TRUE, "");
 
   z_thread_set_max_threads(1000);       /* set our own default value for max_threads in ZThread */
@@ -353,6 +368,9 @@ main(int argc, char *argv[])
       return 1;
     }
   instance_policy_list[instance_count] = NULL;
+
+  if (!virtual_instance_name)
+    virtual_instance_name = g_strdup(instance_name);
   
   if (display_version)
     {
@@ -365,15 +383,15 @@ main(int argc, char *argv[])
 
   if (pid_file == NULL)
     {
-      g_snprintf(pid_file_buf, sizeof(pid_file_buf), "zorp-%s.pid", instance_name);
+      g_snprintf(pid_file_buf, sizeof(pid_file_buf), "zorp-%s.pid", virtual_instance_name);
       pid_file = pid_file_buf;
     }
     
   /* NOTE: these do not override the values set by the user using command line arguments */
   z_process_set_pidfile_dir(ZORP_PID_FILE_DIR);
-  z_process_set_working_dir(ZORP_PID_FILE_DIR);
+  z_process_set_working_dir(ZORP_WORKING_DIR);
   z_process_set_pidfile(pid_file);
-  z_process_set_name(instance_name);
+  z_process_set_name(virtual_instance_name);
   z_process_set_use_fdlimit(TRUE);
   z_process_set_check(deadlock_checker_timeout, zorp_deadlock_checker);
 
@@ -417,12 +435,13 @@ main(int argc, char *argv[])
   /*LOG
     This message reports the current verbosity level of Zorp.
    */
-  z_log(NULL, CORE_DEBUG, 0, "Starting up; verbose_level='%d', version='%s', startup_id='%d'", z_log_get_verbose_level(), VERSION, startup_id);
+  z_log(NULL, CORE_DEBUG, 0, "Starting up; verbose_level='%d', version='%s (%s)', startup_id='%d'",
+        z_log_get_verbose_level(), BROCHURE_VERSION, VERSION, startup_id);
 
   z_dgram_init();
   z_tp_socket_init();
   z_ssl_init();
-  z_szig_init(instance_name);
+  z_szig_init(virtual_instance_name);
 
   z_main_loop_init();
   z_ifmon_init();
@@ -450,12 +469,13 @@ main(int argc, char *argv[])
   z_setup_signals();
 
   /*NOLOG*/
-  z_main_loop(policy_file, instance_name, instance_policy_list);
+  z_main_loop(policy_file, instance_name, instance_policy_list, virtual_instance_name, zorp_process_master_mode);
 
  deinit_exit:
  
   /*NOLOG*/ 
-  z_llog(CORE_INFO, 3, "Shutting down; version='%s'", VERSION);
+  z_llog(CORE_INFO, 3, "Shutting down; version='%s (%s)'",
+         BROCHURE_VERSION, VERSION);
 
   z_thread_destroy();
   z_python_destroy();

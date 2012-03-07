@@ -880,18 +880,22 @@ z_szig_tree_lookup(const gchar *node_name, gboolean create, ZSzigNode **parent, 
   ZSzigNode *root, *node = NULL;
   gint i;
   
-  z_enter();  
+  z_enter();
+
+  if (strlen(node_name) == 0)
+    {
+      /* root node */
+      *parent = NULL;
+      *parent_ndx = -1;
+      z_return(result_tree_root);
+    }
+
   split = g_strsplit(node_name, ".", 0);
   if (!split)
     z_return(NULL);
-  if (strcmp(split[0], "zorp") != 0)
-    {
-      g_strfreev(split);
-      z_return(NULL);
-    }
-  
+
   node = root = result_tree_root;
-  for (i = 1; node && split[i]; i++)
+  for (i = 0; node && split[i]; i++)
     {
       gint insert_point = -1;
       gchar *unescaped_name;
@@ -1592,8 +1596,8 @@ z_szig_agr_service_maximum_diff(ZSzigNode *target_node, ZSzigEvent ev, ZSzigValu
       gchar *src_nodename;
 
       escaped_name = z_szig_escape_name(current_node->name, &escaped_name);
-      max_nodename = g_strconcat("zorp.service.", escaped_name, ".", (gchar *)user_data, NULL);
-      src_nodename = g_strconcat("zorp.service.", escaped_name, ".session_number", NULL);
+      max_nodename = g_strconcat("service.", escaped_name, ".", (gchar *)user_data, NULL);
+      src_nodename = g_strconcat("service.", escaped_name, ".session_number", NULL);
       g_free(escaped_name);
 
       max_node = z_szig_tree_lookup(max_nodename, TRUE, NULL, NULL);
@@ -1620,8 +1624,8 @@ z_szig_agr_service_average_rate(ZSzigNode *target_node, ZSzigEvent ev, ZSzigValu
       gchar *escaped_name = NULL;
 
       escaped_name = z_szig_escape_name(current_node->name, &escaped_name);
-      avg_nodename = g_strconcat("zorp.service.", escaped_name, ".", (gchar *)user_data, NULL);
-      src_nodename = g_strconcat("zorp.service.", escaped_name, ".session_number", NULL);
+      avg_nodename = g_strconcat("service.", escaped_name, ".", (gchar *)user_data, NULL);
+      src_nodename = g_strconcat("service.", escaped_name, ".session_number", NULL);
       g_free(escaped_name);
 
       avg_node = z_szig_tree_lookup(avg_nodename, TRUE, NULL, NULL);
@@ -1649,8 +1653,8 @@ z_szig_agr_service_maximum(ZSzigNode *target_node, ZSzigEvent ev, ZSzigValue *p,
       gchar *escaped_name = NULL;
 
       escaped_name = z_szig_escape_name(current_node->name, &escaped_name);
-      avg_nodename = g_strconcat("zorp.service.", escaped_name, ".sessions_max", NULL);
-      src_nodename = g_strconcat("zorp.service.", escaped_name, ".sessions_running", NULL);
+      avg_nodename = g_strconcat("service.", escaped_name, ".sessions_max", NULL);
+      src_nodename = g_strconcat("service.", escaped_name, ".sessions_running", NULL);
       g_free(escaped_name);
 
       avg_node = z_szig_tree_lookup(avg_nodename, TRUE, NULL, NULL);
@@ -1745,7 +1749,7 @@ z_szig_process_event(ZSzigEvent ev, ZSzigValue *param)
  * This function registers an aggregator for the specified event using the
  * specified target node.
  **/
-void
+static void
 z_szig_register_handler(ZSzigEvent ev, ZSzigEventHandler func, const gchar *node_name, gpointer user_data)
 {
   ZSzigEventCallback *cb;
@@ -1834,20 +1838,6 @@ z_szig_thread(gpointer st G_GNUC_UNUSED)
 /* SZIG I/O */
 
 /**
- * z_szig_connection_ref:
- * @self: ZSzigConnection instance
- *
- * This function increments the reference count for @self.
- **/
-#if 0
-static void
-z_szig_connection_ref(ZSzigConnection *self)
-{
-  z_incref(&self->ref_cnt);
-}
-#endif
-
-/**
  * z_szig_connection_unref:
  * @self: ZSzigConnection instance
  *
@@ -1861,6 +1851,20 @@ z_szig_connection_unref(ZSzigConnection *self)
     {
       g_free(self);
     }
+}
+
+static void
+z_szig_node_print_full_name(gchar *buf, size_t buflen, gchar *prefix, ZSzigNode *node)
+{
+  gchar *escaped_name = NULL;
+
+  if (prefix && strlen(prefix) > 0)
+    g_snprintf(buf, buflen, "%s.%s\n", prefix, z_szig_escape_name(node->name, &escaped_name));
+  else
+    g_snprintf(buf, buflen, "%s\n", z_szig_escape_name(node->name, &escaped_name));
+
+  if (escaped_name != NULL)
+    g_free(escaped_name);
 }
 
 /**
@@ -1898,8 +1902,6 @@ z_szig_handle_command(ZSzigConnection *conn, gchar *cmd_line)
       strcmp(cmd, "GETCHILD") == 0 ||
       strcmp(cmd, "GETSBLNG") == 0)
     {
-      gchar *escaped_name;
-      
       name = argv[1];
       g_static_mutex_lock(&result_tree_structure_lock);
       node = z_szig_tree_lookup(name, FALSE, &node_parent, &node_ndx);
@@ -1917,8 +1919,7 @@ z_szig_handle_command(ZSzigConnection *conn, gchar *cmd_line)
             {
               node = (ZSzigNode *) node->children->pdata[0];
               
-              g_snprintf(response, sizeof(response), "%s.%s\n", name, z_szig_escape_name(node->name, &escaped_name));
-              g_free(escaped_name);
+              z_szig_node_print_full_name(response, sizeof(response), name, node);
             }
         }
       else if (strcmp(cmd, "GETSBLNG") == 0)
@@ -1931,8 +1932,8 @@ z_szig_handle_command(ZSzigConnection *conn, gchar *cmd_line)
               while (e > name && *e != '.')
                 e--;
               *e = 0;
-              g_snprintf(response, sizeof(response), "%s.%s\n", name, z_szig_escape_name(node->name, &escaped_name));
-              g_free(escaped_name);
+
+              z_szig_node_print_full_name(response, sizeof(response), name, node);
             }
         }
       g_static_mutex_unlock(&result_tree_structure_lock);
@@ -2138,7 +2139,7 @@ z_szig_accept_callback(ZStream *fdstream,
 
 /**
  * z_szig_init:
- * @instance_name: the name of this Zorp instance
+ * @instance_name: the virtual name of this Zorp instance
  *
  * This function initializes the SZIG subsystem, creates the UNIX domain
  * socket and initializes basic aggregations.
@@ -2151,37 +2152,37 @@ z_szig_init(const gchar *instance_name)
   gchar buf[256];
   GSource *tick_source;
   
-  result_tree_root = z_szig_node_new("zorp");
+  result_tree_root = z_szig_node_new(instance_name);
   memset(event_desc, 0, sizeof(event_desc));
   szig_queue = g_async_queue_new();
   
-  z_szig_register_handler(Z_SZIG_CONNECTION_START, z_szig_agr_count_inc, "zorp.stats.sessions_running", NULL);
-  z_szig_register_handler(Z_SZIG_CONNECTION_STOP, z_szig_agr_count_dec, "zorp.stats.sessions_running", NULL);
+  z_szig_register_handler(Z_SZIG_CONNECTION_START, z_szig_agr_count_inc, "stats.sessions_running", NULL);
+  z_szig_register_handler(Z_SZIG_CONNECTION_STOP, z_szig_agr_count_dec, "stats.sessions_running", NULL);
 
-  z_szig_register_handler(Z_SZIG_THREAD_START, z_szig_agr_count_inc, "zorp.stats.threads_running", NULL);
-  z_szig_register_handler(Z_SZIG_THREAD_STOP,  z_szig_agr_count_dec, "zorp.stats.threads_running", NULL);
-  z_szig_register_handler(Z_SZIG_THREAD_START, z_szig_agr_count_inc, "zorp.stats.thread_number", NULL);
-  z_szig_register_handler(Z_SZIG_THREAD_START, z_szig_agr_maximum, "zorp.stats.threads_max", "zorp.stats.threads_running");
+  z_szig_register_handler(Z_SZIG_THREAD_START, z_szig_agr_count_inc, "stats.threads_running", NULL);
+  z_szig_register_handler(Z_SZIG_THREAD_STOP,  z_szig_agr_count_dec, "stats.threads_running", NULL);
+  z_szig_register_handler(Z_SZIG_THREAD_START, z_szig_agr_count_inc, "stats.thread_number", NULL);
+  z_szig_register_handler(Z_SZIG_THREAD_START, z_szig_agr_maximum, "stats.threads_max", "stats.threads_running");
 
-  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_average_rate, "zorp.stats.thread_rate_avg1", "zorp.stats.thread_number");
-  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_average_rate, "zorp.stats.thread_rate_avg5", "zorp.stats.thread_number");
-  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_average_rate, "zorp.stats.thread_rate_avg15", "zorp.stats.thread_number");
-  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_maximum_diff, "zorp.stats.thread_rate_max", "zorp.stats.thread_number");
-  z_szig_register_handler(Z_SZIG_CONNECTION_PROPS, z_szig_agr_flat_connection_props, "zorp.conns", NULL);
-  z_szig_register_handler(Z_SZIG_CONNECTION_STOP, z_szig_agr_del_connection_props, "zorp.conns", NULL);
+  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_average_rate, "stats.thread_rate_avg1", "stats.thread_number");
+  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_average_rate, "stats.thread_rate_avg5", "stats.thread_number");
+  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_average_rate, "stats.thread_rate_avg15", "stats.thread_number");
+  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_maximum_diff, "stats.thread_rate_max", "stats.thread_number");
+  z_szig_register_handler(Z_SZIG_CONNECTION_PROPS, z_szig_agr_flat_connection_props, "conns", NULL);
+  z_szig_register_handler(Z_SZIG_CONNECTION_STOP, z_szig_agr_del_connection_props, "conns", NULL);
 
-  z_szig_register_handler(Z_SZIG_SERVICE_COUNT, z_szig_agr_flat_props, "zorp.service", NULL);
-  z_szig_register_handler(Z_SZIG_SERVICE_COUNT, z_szig_agr_service_maximum, "zorp.service", NULL);
-  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_service_average_rate, "zorp.service", "rate_avg1");
-  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_service_average_rate, "zorp.service", "rate_avg5");
-  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_service_average_rate, "zorp.service", "rate_avg15");
-  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_service_maximum_diff, "zorp.service", "rate_max");
+  z_szig_register_handler(Z_SZIG_SERVICE_COUNT, z_szig_agr_flat_props, "service", NULL);
+  z_szig_register_handler(Z_SZIG_SERVICE_COUNT, z_szig_agr_service_maximum, "service", NULL);
+  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_service_average_rate, "service", "rate_avg1");
+  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_service_average_rate, "service", "rate_avg5");
+  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_service_average_rate, "service", "rate_avg15");
+  z_szig_register_handler(Z_SZIG_TICK, z_szig_agr_service_maximum_diff, "service", "rate_max");
 
-  z_szig_register_handler(Z_SZIG_AUDIT_START, z_szig_agr_count_inc, "zorp.stats.audit_running", NULL);
-  z_szig_register_handler(Z_SZIG_AUDIT_STOP,  z_szig_agr_count_dec, "zorp.stats.audit_running", NULL);
-  z_szig_register_handler(Z_SZIG_AUDIT_START, z_szig_agr_count_inc, "zorp.stats.audit_number", NULL);
+  z_szig_register_handler(Z_SZIG_AUDIT_START, z_szig_agr_count_inc, "stats.audit_running", NULL);
+  z_szig_register_handler(Z_SZIG_AUDIT_STOP,  z_szig_agr_count_dec, "stats.audit_running", NULL);
+  z_szig_register_handler(Z_SZIG_AUDIT_START, z_szig_agr_count_inc, "stats.audit_number", NULL);
 
-  z_szig_register_handler(Z_SZIG_RELOAD, z_szig_agr_flat_props, "zorp.info", NULL);
+  z_szig_register_handler(Z_SZIG_RELOAD, z_szig_agr_flat_props, "info", NULL);
 
 
   /* we need an offset of 2 to count the number of threads that were started before SZIG init */
@@ -2222,4 +2223,3 @@ z_szig_destroy(void)
 {
   /* FIXME: free result tree */
 }
-

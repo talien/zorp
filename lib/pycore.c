@@ -86,10 +86,16 @@ z_py_log(PyObject *self G_GNUC_UNUSED, PyObject *args)
     }
   else
     {  
-      log_args = Py_None;
+      log_args = NULL;
       if (!PyArg_ParseTuple(args, "OsiO|O", &py_session_id, &class, &verbosity, &log_fmt, &log_args))
         return NULL;
         
+      if (!z_log_enabled(class, verbosity))
+        {
+          return z_policy_none_ref();
+        }
+
+      /* convert session ID */
       if (py_session_id == Py_None)
         {
           session_id = NULL;
@@ -103,18 +109,14 @@ z_py_log(PyObject *self G_GNUC_UNUSED, PyObject *args)
           PyErr_SetString(PyExc_TypeError, "Session ID must be string or None");          
           return NULL;
         }
-      
+
       if (!PyString_Check(log_fmt))
         {
           PyErr_SetString(PyExc_TypeError, "Format must be string");
           return NULL;
         }
-      if (!z_log_enabled(class, verbosity))
-        {
-          Py_XINCREF(Py_None);
-          return Py_None;
-        }
-      if (log_args != Py_None)
+
+      if (log_args != NULL)
         {
           log_msg = PyString_Format(log_fmt, log_args);
           if (!log_msg)
@@ -127,14 +129,13 @@ z_py_log(PyObject *self G_GNUC_UNUSED, PyObject *args)
         {
           msg = PyString_AsString(log_fmt);
         }
-        
     }
     
   /*NOLOG*/
   z_log(session_id, class, verbosity, "%s", msg);
   Py_XDECREF(log_msg);
-  Py_XINCREF(Py_None);
-  return Py_None;
+
+  return z_policy_none_ref();
 }
  
 /*+
@@ -145,11 +146,12 @@ z_py_quit(PyObject *self G_GNUC_UNUSED, PyObject *args)
   int exit_code;
   
   z_enter();
+
   if (!PyArg_ParseTuple(args, "i", &exit_code))
     z_return(NULL);
   z_main_loop_quit(exit_code);
-  Py_XINCREF(Py_None);
-  z_return(Py_None);
+
+  z_return(z_policy_none_ref());
 }
 
 
@@ -223,6 +225,7 @@ z_py_szig_event(PyObject *self G_GNUC_UNUSED, PyObject *args)
   GTimeVal tv;
   
   z_enter();
+
   if (!PyArg_Parse(args, "(iO)", &event, &value) ||
       !PyArg_Parse(value, "(iO)", &type, &value_repr))
     z_return(NULL);
@@ -335,8 +338,8 @@ z_py_szig_event(PyObject *self G_GNUC_UNUSED, PyObject *args)
       z_return(NULL);
     }
   z_szig_event(event, sv);
-  Py_XINCREF(Py_None);
-  z_return(Py_None);
+
+  z_return(z_policy_none_ref());
 }
 
 
@@ -347,8 +350,7 @@ z_policy_notify_event(PyObject *self G_GNUC_UNUSED,
                       PyObject *args G_GNUC_UNUSED
                      )
 {
-  Py_XINCREF(Py_None);
-  return Py_None;
+  return z_policy_none_ref();
 }
 
 static PyMethodDef zorp_funcs[] = 

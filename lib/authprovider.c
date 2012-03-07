@@ -40,13 +40,46 @@
  **/
 gboolean
 z_auth_provider_check_passwd(
-                             ZAuthProvider *self G_GNUC_UNUSED,
-                             gchar *session_id G_GNUC_UNUSED,
-                             gchar *username G_GNUC_UNUSED,
-                             gchar *passwd G_GNUC_UNUSED,
+                             ZAuthProvider *self,
+                             gchar *session_id,
+                             gchar *username,
+                             gchar *passwd,
                              gchar ***groups G_GNUC_UNUSED,
-                             ZProxy *proxy G_GNUC_UNUSED
+                             ZProxy *proxy
                             )
 {
-  return FALSE;
+  gboolean called;
+  ZPolicyObj *res;
+  gboolean ret = FALSE;
+  ZPolicyObj *session;
+
+  z_session_enter(session_id);
+
+  session = z_policy_getattr(proxy->handler, "session");
+  res = z_policy_call(self, "performAuthentication",
+                      z_policy_var_build("(sOss)", session_id, session, username, passwd),
+                      &called, session_id);
+  z_policy_var_unref(session);
+
+  if (res != NULL)
+    {
+      gboolean retval;
+
+      if (z_policy_var_parse_boolean(res, &retval))
+        {
+          z_log(session_id, CORE_INFO, 6, "Authentication backend called; username='%s', result='%d'",
+                username, retval);
+          ret = retval;
+        }
+      else
+        {
+          z_log(session_id, CORE_POLICY, 1, "Authentication backend returned a non-int type;");
+        }
+
+      z_policy_var_unref(res);
+    }
+
+  z_session_leave(session_id);
+
+  return ret;
 }

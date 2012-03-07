@@ -423,7 +423,7 @@ typedef struct _TelnetOptions
 
 typedef struct _ZIOBuffer
 {
-    guchar                  buf[TELNET_BUFFER_SIZE];
+    guchar                  buf[TELNET_BUFFER_SIZE+1];
     gsize                   ofs, end;
 } ZIOBuffer;
 

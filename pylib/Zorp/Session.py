@@ -53,13 +53,13 @@
 
 import Zorp
 from Zorp import *
-from Zone import root_zone
+from Zone import Zone
 from Cache import ShiftCache
 
 inbound_cache = ShiftCache('inbound_cache', config.options.inbound_service_cache_threshold)
 outbound_cache = ShiftCache('outbound_cache', config.options.outbound_service_cache_threshold)
 
-class AbstractSession:
+class AbstractSession(object):
         """
         <class maturity="stable" abstract="yes" internal="yes">
           <summary>
@@ -124,17 +124,15 @@ class MasterSession(AbstractSession):
               </para>                
                 <example>
                   <title>Referencing parent proxy attributes by type</title>
-                  <programlisting><literallayout>
-class MyPsslProxy(PsslProxy):
+                  <synopsis>class MyPsslProxy(PsslProxy):
         class EmbeddedHttpProxy(HttpProxy):
                 def config(self):
-                        HttpProxy.config(self)                                
+                        super(MyPsslProxy, self).config()
                         peer = self.session.pssl.server_peer_certificate.subject
                         
         def config(self):
-                PsslProxy.config(self)
-                self.stack_proxy = self.EmbeddedHttpProxy
-                  </literallayout></programlisting>
+                super(MyPsslProxy, self).config()
+                self.stack_proxy = self.EmbeddedHttpProxy</synopsis>
                 </example>
             </section>
           </description>
@@ -418,11 +416,11 @@ class MyPsslProxy(PsslProxy):
 
 	def setClientAddress(self, addr):
 		self.client_address = addr
-		self.client_zone = root_zone.findZone(addr)
+		self.client_zone = Zone.lookup(addr)
 	
 	def setServerAddress(self, addr):
 		self.server_address = addr
-		self.server_zone = root_zone.findZone(addr)
+		self.server_zone = Zone.lookup(addr)
 		
 	def setTargetAddress(self, addr):
 		"""
@@ -457,7 +455,7 @@ class MyPsslProxy(PsslProxy):
 			self.target_address = addr
 		self.target_zone = []
 		for a in self.target_address:
-			self.target_zone.append(root_zone.findZone(a))		
+			self.target_zone.append(Zone.lookup(a))
 
 	setServer = setTargetAddress
 
@@ -473,7 +471,7 @@ class MyPsslProxy(PsslProxy):
                       perform access control checks whether the client is
                       permitted to use the requested service. Its return value
                       specifies the result of the check.
-                      Returns Z_ACCEPT for success, and Z_REJECT for failure.
+                      Returns ZV_ACCEPT for success, and ZV_REJECT for failure.
                     </para>
                   </description>
                   <metainfo>
@@ -485,7 +483,7 @@ class MyPsslProxy(PsslProxy):
 
                 zone_name = self.client_zone.getName()
                 cached = outbound_cache.lookup((zone_name, self.service.name))
-                if cached == Z_REJECT:
+                if cached == ZV_REJECT:
                         ## LOG ##
                         # This message indicates that because of a cached decision this service is not permitted as an outbound service from that zone.
                         # It means that the client from that zone tried to use this service and it is not permitted to do so.
@@ -496,17 +494,17 @@ class MyPsslProxy(PsslProxy):
                 elif cached:
                         return cached
 
-		if self.client_zone.isOutboundServicePermitted(self) != Z_ACCEPT:
-			outbound_cache.store((zone_name, self.service.name), Z_REJECT)
+		if self.client_zone.isOutboundServicePermitted(self.service) != ZV_ACCEPT:
+			outbound_cache.store((zone_name, self.service.name), ZV_REJECT)
 			## LOG ##
 			# This message indicates that a service going out from the given
 			# zone was denied by the policy. Check that the service is included in
 			# the outbound_services set of the Zone.
 			##
 			log(self.session_id, CORE_POLICY, 1, "Outbound service not permitted; service='%s', client_zone='%s', client='%s', server_zone='%s', server='%s'", (self.service, self.client_zone, self.client_address, self.server_zone, self.server_address))
-			return Z_REJECT
-		outbound_cache.store((zone_name, self.service.name), Z_ACCEPT)
-		return Z_ACCEPT
+			return ZV_REJECT
+		outbound_cache.store((zone_name, self.service.name), ZV_ACCEPT)
+		return ZV_ACCEPT
 
 		
 	def isServerPermitted(self):
@@ -522,7 +520,7 @@ class MyPsslProxy(PsslProxy):
                       checks whether the connection to the server is permitted by
                       the policy.  Its return value specifies the result of the
                       check.
-                      Returns Z_ACCEPT for success, and Z_REJECT for failure.
+                      Returns ZV_ACCEPT for success, and ZV_REJECT for failure.
                     </para>
                   </description>
                   <metainfo>
@@ -534,7 +532,7 @@ class MyPsslProxy(PsslProxy):
                 
                 zone_name = self.server_zone.getName()
                 cached = inbound_cache.lookup((zone_name, self.service.name))
-                if cached == Z_REJECT:
+                if cached == ZV_REJECT:
                         ## LOG ##
                         # This message indicates that because of a cached decision this service is not permitted as an inbound service to that zone.
                         # It means that this service tried to connect to a  server in that zone and it is not permitted to do so.
@@ -545,17 +543,17 @@ class MyPsslProxy(PsslProxy):
                 elif cached:
                         return cached
 
-                if self.server_zone.isInboundServicePermitted(self) != Z_ACCEPT:
-                        inbound_cache.store((zone_name, self.service.name), Z_REJECT)
+                if self.server_zone.isInboundServicePermitted(self.service) != ZV_ACCEPT:
+                        inbound_cache.store((zone_name, self.service.name), ZV_REJECT)
                         ## LOG ##
                         # This message indicates that a service trying to enter to the given
                         # zone was denied by the policy. Check that the service is included in
                         # the inbound_services set of the Zone.
                         ##
                         log(self.session_id, CORE_POLICY, 1, "Inbound service not permitted; service='%s', client_zone='%s', client='%s', server_zone='%s', server='%s'", (self.service, self.client_zone, self.client_address, self.server_zone, self.server_address))
-                        return Z_REJECT
-                inbound_cache.store((zone_name, self.service.name), Z_ACCEPT)
-                return Z_ACCEPT
+                        return ZV_REJECT
+                inbound_cache.store((zone_name, self.service.name), ZV_ACCEPT)
+                return ZV_ACCEPT
         
         def setServiceInstance(self, instance_id):
                 """

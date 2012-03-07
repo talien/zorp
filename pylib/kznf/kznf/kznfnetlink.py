@@ -1,4 +1,5 @@
 import struct
+import socket
 from nfnetlink import *
 import pprint
 
@@ -23,7 +24,10 @@ KZNL_MSG_COPY_ZONE_DAC = 16
 KZNL_MSG_QUERY = 17
 KZNL_MSG_ADD_RULE = 18
 KZNL_MSG_ADD_RULE_ENTRY = 19
-KZNL_MSG_MAX = 19
+KZNL_MSG_ADD_BIND = 20
+KZNL_MSG_GET_BIND = 21
+KZNL_MSG_FLUSH_BIND = 22
+KZNL_MSG_MAX = 22
 
 # attribute types
 KZA_INVALID = 0
@@ -36,7 +40,7 @@ KZA_ZONE_PNAME = 6
 KZA_ZONE_RANGE = 7
 KZA_SVC_PARAMS = 8
 KZA_SVC_NAME = 9
-KZA_SVC_ROUTER_DST = 10
+KZA_SVC_ROUTER_DST_ADDR = 10
 KZA_SVC_NAT_SRC = 11
 KZA_SVC_NAT_DST = 12
 KZA_SVC_NAT_MAP = 13
@@ -65,9 +69,36 @@ KZA_N_DIMENSION_SRC_ZONE = 35
 KZA_N_DIMENSION_DST_IP = 36
 KZA_N_DIMENSION_DST_ZONE = 37
 KZA_N_DIMENSION_IFGROUP = 38
-KZA_N_DIMENSION_MAX = KZA_N_DIMENSION_IFGROUP
 KZA_CONFIG_COOKIE = 39
-KZA_MAX = 39
+KZA_INET4_ADDR= 40
+KZA_INET4_SUBNET = 41
+KZA_INET6_ADDR= 42
+KZA_INET6_SUBNET = 43
+KZA_N_DIMENSION_SRC_IP6 = 44
+KZA_N_DIMENSION_DST_IP6 = 45
+KZA_QUERY_PARAMS_SRC_IP = 46
+KZA_QUERY_PARAMS_DST_IP = 47
+KZA_SVC_ROUTER_DST_PORT = 48
+KZA_BIND_ADDR = 49
+KZA_BIND_PORT = 50
+KZA_BIND_PROTO = 51
+KZA_MAX = 51
+
+# list of attributes in an N dimension rule
+N_DIMENSION_ATTRS = [
+  KZA_N_DIMENSION_AUTH,
+  KZA_N_DIMENSION_IFACE,
+  KZA_N_DIMENSION_PROTO,
+  KZA_N_DIMENSION_SRC_PORT,
+  KZA_N_DIMENSION_DST_PORT,
+  KZA_N_DIMENSION_SRC_IP,
+  KZA_N_DIMENSION_SRC_ZONE,
+  KZA_N_DIMENSION_DST_IP,
+  KZA_N_DIMENSION_DST_ZONE,
+  KZA_N_DIMENSION_IFGROUP,
+  KZA_N_DIMENSION_SRC_IP6,
+  KZA_N_DIMENSION_DST_IP6,
+]
 
 # name of global instance
 KZ_INSTANCE_GLOBAL = ".global"
@@ -108,6 +139,18 @@ KZF_DPT_FOLLOW_PARENT = 2
 # dispatcher bind address port ranges
 KZF_DPT_PORT_RANGE_SIZE = 8
 
+def get_family_from_attr(attr):
+        if attr.type == KZA_INET4_ADDR or attr.type == KZA_INET4_SUBNET or \
+           attr.type == KZA_N_DIMENSION_SRC_IP or attr.type == KZA_N_DIMENSION_DST_IP:
+          family = socket.AF_INET
+        elif attr.type == KZA_INET6_ADDR or attr.type == KZA_INET6_SUBNET or \
+             attr.type == KZA_N_DIMENSION_SRC_IP6 or attr.type == KZA_N_DIMENSION_DST_IP6:
+          family = socket.AF_INET6
+        else:
+          raise ValueError, "attribute not supported; type='%d'" % attr.type
+
+        return family
+
 ###########################################################################
 # helper functions to create/parse kzorp attributes
 ###########################################################################
@@ -131,7 +174,7 @@ def create_int16_attr(type, value):
         return NfnetlinkAttribute(type, struct.pack('>H', value))
 
 def parse_int16_attr(attr):
-        (value,) = struct.unpack('>H', attr.get_data()[0])
+        (value,) = struct.unpack('>H', attr.get_data()[:2])
         return value
 
 def create_int32_attr(type, value):
@@ -148,11 +191,49 @@ def parse_int64_attr(attr):
         (value,) = struct.unpack('>Q', attr.get_data()[:8])
         return value
 
-def create_inet_range_attr(type, address, mask):
-        return NfnetlinkAttribute(type, struct.pack('>II', address, mask))
+def create_inet_range_attr(type, family, address, mask):
+        if family == socket.AF_INET:
+                attr = NfnetlinkAttribute.create_inet_subnet_attr(KZA_INET4_SUBNET, family, address, mask)
+                return NfnetlinkAttribute(type, attrs=[attr])
+        elif family == socket.AF_INET6:
+                attr = NfnetlinkAttribute.create_inet_subnet_attr(KZA_INET6_SUBNET, family, address, mask)
+                return NfnetlinkAttribute(type, attrs=[attr])
+        else:
+                raise ValueError, "address family not supported; family='%d'" % family
 
 def parse_inet_range_attr(attr):
-        return struct.unpack('>II', attr.get_data()[:8])
+        attrs = attr.get_attributes()
+        if len(attrs) == 0:
+          raise ValueError, "zone range attribute does not contain a nested attribute"
+        elif len(attrs) > 1:
+          raise ValueError, "zone range attribute contains more than one nested attribute"
+
+        attr = attrs[0]
+        family = get_family_from_attr(attr)
+        (addr, mask) = attr.parse_inet_subnet_attr(family)
+        return (family, addr, mask)
+
+def create_inet_addr_attr(type, family, address):
+        if family == socket.AF_INET:
+                attr = NfnetlinkAttribute.create_inet_addr_attr(KZA_INET4_ADDR, family, address)
+                return NfnetlinkAttribute(type, attrs=[attr])
+        elif family == socket.AF_INET6:
+                attr = NfnetlinkAttribute.create_inet_addr_attr(KZA_INET6_ADDR, family, address)
+                return NfnetlinkAttribute(type, attrs=[attr])
+        else:
+                raise ValueError, "address family not supported; family='%d'" % family
+
+def parse_inet_addr_attr(attr):
+        attrs = attr.get_attributes()
+        if len(attrs) == 0:
+          raise ValueError, "inet addr attribute does not contain a nested attribute"
+        elif len(attrs) > 1:
+          raise ValueError, "inet addr attribute contains more than one nested attribute"
+
+        attr = attrs[0]
+        family = get_family_from_attr(attr)
+        addr = attr.parse_inet_addr_attr(family)
+        return addr
 
 def create_port_range_attr(type, range_from, range_to):
         return NfnetlinkAttribute(type, struct.pack('>HH', range_from, range_to))
@@ -245,7 +326,7 @@ def parse_rule_attrs(attr):
         service = parse_name_attr(attr[KZA_N_DIMENSION_RULE_SERVICE])
         rules = {}
 
-        for dim_type in xrange(KZA_N_DIMENSION_AUTH, KZA_N_DIMENSION_MAX + 1):
+        for dim_type in N_DIMENSION_ATTRS:
           if attr and attr.has_key(dim_type):
             data = attr[dim_type].get_data()
 	    value = struct.unpack('>I', data[:4])
@@ -257,7 +338,7 @@ def parse_rule_entry_attrs(attr):
         (rule_id, ) = struct.unpack('>I', attr[KZA_N_DIMENSION_RULE_ID].get_data()[:4])
         rule_entries = {}
 
-        for dim_type in xrange(KZA_N_DIMENSION_AUTH, KZA_N_DIMENSION_MAX + 1):
+        for dim_type in N_DIMENSION_ATTRS:
           if attr and attr.has_key(dim_type):
             data = attr[dim_type].get_data()
 
@@ -267,9 +348,14 @@ def parse_rule_entry_attrs(attr):
             elif dim_type == KZA_N_DIMENSION_DST_PORT or \
                  dim_type == KZA_N_DIMENSION_SRC_PORT:
               value = parse_port_range_attr(attr[dim_type])
-            elif dim_type == KZA_N_DIMENSION_DST_IP or \
+            elif dim_type == KZA_N_DIMENSION_DST_IP  or \
                  dim_type == KZA_N_DIMENSION_SRC_IP:
-              value = parse_inet_range_attr(attr[dim_type])
+              (addr, mask) = attr[dim_type].parse_inet_subnet_attr(get_family_from_attr(attr[dim_type]))
+              value = (socket.AF_INET, addr, mask)
+            elif dim_type == KZA_N_DIMENSION_DST_IP6 or \
+                 dim_type == KZA_N_DIMENSION_SRC_IP6:
+              (addr, mask) = attr[dim_type].parse_inet_subnet_attr(get_family_from_attr(attr[dim_type]))
+              value = (socket.AF_INET6, addr, mask)
             elif dim_type == KZA_N_DIMENSION_IFGROUP:
               value =struct.unpack('>I',  data[:4])
             elif dim_type == KZA_N_DIMENSION_IFACE    or \
@@ -294,8 +380,8 @@ def create_service_params_attr(type, svc_type, svc_flags):
 def parse_service_params_attr(attr):
         return struct.unpack('>IB', attr.get_data()[:5])
 
-def create_query_params_attr(type, proto, saddr, sport, daddr, dport, iface):
-        data = struct.pack('>IIHH', saddr, daddr, sport, dport)
+def create_query_params_attr(type, proto, sport, dport, iface):
+        data = struct.pack('>HH', sport, dport)
         data = "".join((data, iface, "\0" * (16 - len(iface)), struct.pack('>B', proto)))
         return NfnetlinkAttribute(type, data)
 
@@ -325,12 +411,13 @@ def create_add_proxyservice_msg(name):
         m.append_attribute(create_name_attr(KZA_SVC_NAME, name))
         return m
 
-def create_add_pfservice_msg(name, flags, dst_ip = None, dst_port = None):
+def create_add_pfservice_msg(name, flags, dst_family = None, dst_ip = None, dst_port = None):
         m = NfnetlinkMessage(socket.AF_NETLINK, 0, 0)
         m.append_attribute(create_service_params_attr(KZA_SVC_PARAMS, KZ_SVC_FORWARD, flags))
         m.append_attribute(create_name_attr(KZA_SVC_NAME, name))
-        if dst_ip and dst_port:
-                m.append_attribute(create_address_attr(KZA_SVC_ROUTER_DST, 0, dst_ip, dst_port))
+        if dst_family and dst_ip and dst_port:
+                m.append_attribute(create_inet_addr_attr(KZA_SVC_ROUTER_DST_ADDR, dst_family, dst_ip))
+                m.append_attribute(NfnetlinkAttributePort(KZA_SVC_ROUTER_DST_PORT, dst_port))
         return m
 
 def create_add_service_nat_msg(name, mapping):
@@ -353,7 +440,7 @@ def create_get_service_msg(name):
 
 
 # zone
-def create_add_zone_msg(name, flags, address = None, mask = None, uname = None, pname = None):
+def create_add_zone_msg(name, flags, family=socket.AF_INET, address = None, mask = None, uname = None, pname = None):
         m = NfnetlinkMessage(socket.AF_NETLINK, 0, 0)
         m.append_attribute(create_int32_attr(KZA_ZONE_PARAMS, flags))
         m.append_attribute(create_name_attr(KZA_ZONE_NAME, name))
@@ -362,7 +449,7 @@ def create_add_zone_msg(name, flags, address = None, mask = None, uname = None, 
         if pname != None:
                 m.append_attribute(create_name_attr(KZA_ZONE_PNAME, pname))
         if address != None and mask != None:
-                m.append_attribute(create_inet_range_attr(KZA_ZONE_RANGE, address, mask))
+                m.append_attribute(create_inet_range_attr(KZA_ZONE_RANGE, family, address, mask))
         return m
 
 def create_add_zone_svc_msg(name, service):
@@ -416,7 +503,7 @@ def create_add_n_dimension_rule_msg(dpt_name, rule_id, service, entry_nums):
         m.append_attribute(create_int32_attr(KZA_N_DIMENSION_RULE_ID, rule_id))
         m.append_attribute(create_name_attr(KZA_N_DIMENSION_RULE_SERVICE, service))
 
-        for dim_type in xrange(KZA_N_DIMENSION_AUTH, KZA_N_DIMENSION_MAX + 1):
+        for dim_type in N_DIMENSION_ATTRS:
           if entry_nums and entry_nums.has_key(dim_type):
             dim_size = entry_nums[dim_type]
 	    m.append_attribute(create_int32_attr(dim_type, dim_size))
@@ -437,7 +524,10 @@ def create_add_n_dimension_rule_entry_msg(dpt_name, rule_id, entry_values):
             m.append_attribute(create_port_range_attr(dim_type, value[0], value[1]))
           elif dim_type == KZA_N_DIMENSION_DST_IP or \
                dim_type == KZA_N_DIMENSION_SRC_IP:
-            m.append_attribute(create_inet_range_attr(dim_type, value[0], value[1]))
+            m.append_attribute(NfnetlinkAttribute.create_inet_subnet_attr(dim_type, socket.AF_INET, value[0], value[1]))
+          elif dim_type == KZA_N_DIMENSION_DST_IP6 or \
+               dim_type == KZA_N_DIMENSION_SRC_IP6:
+            m.append_attribute(NfnetlinkAttribute.create_inet_subnet_attr(dim_type, socket.AF_INET6, value[0], value[1]))
           elif dim_type == KZA_N_DIMENSION_IFGROUP:
             m.append_attribute(create_int32_attr(dim_type, value))
           elif dim_type == KZA_N_DIMENSION_IFACE    or \
@@ -465,7 +555,66 @@ def create_get_dispatcher_msg(name):
                 m.append_attribute(create_name_attr(KZA_DPT_NAME, name))
         return m
 
-def create_query_msg(proto, saddr, sport, daddr, dport, iface):
+def create_query_msg(proto, family, saddr, sport, daddr, dport, iface):
         m = NfnetlinkMessage(socket.AF_NETLINK, 0, 0)
-        m.append_attribute(create_query_params_attr(KZA_QUERY_PARAMS, proto, saddr, sport, daddr, dport, iface))
+        m.append_attribute(create_inet_addr_attr(KZA_QUERY_PARAMS_SRC_IP, family, saddr))
+        m.append_attribute(create_inet_addr_attr(KZA_QUERY_PARAMS_DST_IP, family, daddr))
+        m.append_attribute(create_query_params_attr(KZA_QUERY_PARAMS, proto, sport, dport, iface))
         return m
+
+class NfnetlinkAttributePort(NfnetlinkAttribute):
+        def __init__(self, type, port):
+                NfnetlinkAttribute.__init__(self, type, struct.pack('>H', port))
+
+def create_port_attr(type, port):
+        return NfnetlinkAttributePort(type, port)
+
+def parse_port_attr(attr):
+        return parse_int16_attr(attr)
+
+class NfnetlinkAttributeProto(NfnetlinkAttribute):
+        def __init__(self, type, proto):
+                if proto != socket.IPPROTO_TCP and proto != socket.IPPROTO_UDP:
+                        raise NfnetlinkAttributeException, "not supported protocol; proto='%d'" % proto
+
+                NfnetlinkAttribute.__init__(self, type, struct.pack('>B', proto))
+
+class NfnetlinkMessageAddBind(NfnetlinkMessage):
+        def __init__(self, family, instance, addr, port, proto):
+                NfnetlinkMessage.__init__(self, socket.AF_NETLINK, 0, 0)
+
+                self.append_attribute(create_name_attr(KZA_INSTANCE_NAME, instance))
+                self.append_attribute(create_inet_addr_attr(KZA_BIND_ADDR, family, addr))
+                self.append_attribute(NfnetlinkAttributePort(KZA_BIND_PORT, port))
+                self.append_attribute(NfnetlinkAttributeProto(KZA_BIND_PROTO, proto))
+
+class NfnetlinkMessageGetBind(NfnetlinkMessage):
+        def __init__(self, instance = None):
+                NfnetlinkMessage.__init__(self, socket.AF_NETLINK, 0, 0)
+
+                if instance:
+                        self.append_attribute(create_name_attr(KZA_INSTANCE_NAME, instance))
+
+        @staticmethod
+        def parse(msg):
+                attrs = msg.get_nfmessage().get_attributes()
+                for attr_type, attr in attrs.iteritems():
+                        if attr_type == KZA_BIND_PROTO:
+                                proto = parse_int8_attr(attr)
+                        elif attr_type == KZA_BIND_PORT:
+                                port = parse_int16_attr(attr)
+                        elif attr_type == KZA_BIND_ADDR:
+                                addr_family = get_family_from_attr(attr.get_attributes()[0])
+                                addr = parse_inet_addr_attr(attr)
+                        elif attr_type == KZA_INSTANCE_NAME:
+                                instance = parse_name_attr(attr)
+                        else:
+                                raise NfnetlinkAttributeException, "invalid attribute type in message, type='%d'" % attr_type
+
+                if proto != socket.IPPROTO_TCP and proto != socket.IPPROTO_UDP:
+                        raise NfnetlinkAttributeException, "invalid attribute value of protocol, protocol='%d'" % proto
+
+                return (instance, proto, addr_family, addr, port)
+
+def create_get_bind_msg(instance = None):
+        return NfnetlinkMessageGetBind(instance)

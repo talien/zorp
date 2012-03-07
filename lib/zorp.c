@@ -48,6 +48,8 @@ GMainLoop *main_loop;
 gint exit_code = 0;
 guint32 startup_id;
 const gchar *instance_name;
+const gchar *virtual_instance_name;
+gboolean zorp_process_master_mode = TRUE;
 
 /* FIXME: the code in this module was straightly copied from main.c and as
  * such does not really fit into a library. Some generalization would be
@@ -105,7 +107,10 @@ z_read_global_params(ZPolicy *policy)
 }
 
 gboolean
-z_load_policy(const gchar *policy_file, gchar const **instance_policy_list)
+z_load_policy(const gchar *policy_file,
+              gchar const **instance_policy_list,
+              gchar const *virtual_instance_name,
+              gint is_master)
 {
   ZPolicy *policy;
   ZPolicy *old_policy;
@@ -119,17 +124,17 @@ z_load_policy(const gchar *policy_file, gchar const **instance_policy_list)
 	Check the traceback in the log to find out where the problem occurs.
        */
       z_log(NULL, CORE_ERROR, 0, "Error booting & parsing policy;");
-      z_policy_deinit(policy, instance_policy_list);
+      z_policy_deinit(policy, instance_policy_list, virtual_instance_name);
       z_policy_unref(policy);
       return FALSE;
     }
   old_policy = current_policy;
   current_policy = policy;
-  if (!z_policy_init(policy, instance_policy_list))
+  if (!z_policy_init(policy, instance_policy_list, virtual_instance_name, is_master))
     {
       /* FIXME: deinit bad new configuration */
       current_policy = old_policy;
-      z_policy_deinit(policy, instance_policy_list);
+      z_policy_deinit(policy, instance_policy_list, virtual_instance_name);
       z_policy_unref(policy);
       /*LOG
 	This message indicates that Zorp was unable to initialize the policy.
@@ -140,7 +145,7 @@ z_load_policy(const gchar *policy_file, gchar const **instance_policy_list)
   else if (old_policy != NULL)
     {
       /* FIXME: deinit old configuration */
-      z_policy_deinit(old_policy, instance_policy_list);
+      z_policy_deinit(old_policy, instance_policy_list, virtual_instance_name);
       z_policy_unref(old_policy);
     }
   return TRUE;
@@ -169,11 +174,14 @@ z_generate_policy_load_event(const gchar *policy_file, gboolean reload_result)
 }
 
 void
-z_main_loop(const gchar *policy_file, const gchar *instance_name, gchar const **instance_policy_list)
+z_main_loop(const gchar *policy_file, const gchar *instance_name,
+            gchar const **instance_policy_list,
+            gchar const *virtual_instance_name,
+            gboolean is_master)
 {
   gint new_verbosity;
   
-  if (!z_load_policy(policy_file, instance_policy_list))
+  if (!z_load_policy(policy_file, instance_policy_list, virtual_instance_name, is_master))
     {
       /*LOG
 	This message indicates that the loading of the initial policy failed, because of some policy problem.
@@ -223,7 +231,7 @@ z_main_loop(const gchar *policy_file, const gchar *instance_name, gchar const **
 	    This message reports that Zorp caught a HUP signal and tries to reload its policy.
 	   */
 	  z_log(NULL, CORE_INFO, 0, "Reloading policy; policy_file='%s', instance_name='%s'", policy_file, instance_name);
-	  if (!z_load_policy(policy_file, instance_policy_list))
+          if (!z_load_policy(policy_file, instance_policy_list, virtual_instance_name, is_master))
 	    {
 	      /*LOG
 		This message indicates that Zorp was unable to load the new policy, and reverts to the old one.
@@ -247,7 +255,7 @@ z_main_loop(const gchar *policy_file, const gchar *instance_name, gchar const **
     }
 
 
-  z_policy_cleanup(current_policy, instance_policy_list);
+  z_policy_cleanup(current_policy, instance_policy_list, virtual_instance_name, is_master);
 
   z_blob_system_default_destroy();
 }

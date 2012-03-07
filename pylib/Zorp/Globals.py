@@ -44,6 +44,7 @@ stacking_providers = {}
 zones = {}
 nat_policies = {}
 dispatches = []
+rules = None
 auth_caches = {}
 matchers = {}
 notification_policy = None
@@ -51,5 +52,6 @@ instance_name = ''
 external_authorization_waiting_lock = threading.Lock()
 external_authorization_waiting = {}
 kzorp_responds_to_ping = False
+encryption_policies = {}
 
 deinit_callbacks = []

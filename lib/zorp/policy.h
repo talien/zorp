@@ -63,15 +63,23 @@ void z_policy_unref(ZPolicy *self);
 gboolean z_policy_boot(ZPolicy *self);
 gboolean z_policy_load(ZPolicy *self);
 
-gboolean z_policy_init(ZPolicy *self, gchar const **instance_name);
+gboolean z_policy_init(ZPolicy *self,
+                       gchar const **instance_name,
+                       gchar const *virtual_instance_name,
+                       gboolean is_master);
 
 ZPolicy *z_policy_new(const gchar *filename);
 void z_policy_acquire_main(ZPolicy *self);
 void z_policy_release_main(ZPolicy *self);
 
-gboolean z_policy_deinit(ZPolicy *self, gchar const **instance_name);
+gboolean z_policy_deinit(ZPolicy *self,
+                         gchar const **instance_name,
+                         gchar const *virtual_instance_name);
 
-gboolean z_policy_cleanup(ZPolicy *self, gchar const **instance_name);
+gboolean z_policy_cleanup(ZPolicy *self,
+                          gchar const **instance_name,
+                          gchar const *virtual_instance_name,
+                          gboolean is_master);
 
 #define z_policy_exc_value_error PyExc_ValueError
 #define z_policy_exc_attribute_error PyExc_AttributeError
@@ -102,23 +110,20 @@ typedef enum
 
 const gchar *z_verdict_str(ZVerdict verdict);
 
-/* deprecated aliases for ZV_* above */
-#define Z_UNSPEC   ZV_UNSPEC
-#define Z_ACCEPT   ZV_ACCEPT
-#define Z_DENY     ZV_DENY  
-#define Z_REJECT   ZV_REJECT
-#define Z_ABORT    ZV_ABORT 
-#define Z_DROP     ZV_DROP  
-#define Z_POLICY   ZV_POLICY
-#define Z_ERROR    ZV_ERROR
-
-#define z_policy_none Py_None
-
 #define z_policy_var_build(format, args...) Py_BuildValue(format, ##args)
 #define z_policy_var_str(v) PyObject_Str(v)
 #define z_policy_var_ref(v)   do { Py_XINCREF(v); } while (0)
+#define z_policy_var_ref_nonnull(v)   do { Py_INCREF(v); } while (0)
 #define z_policy_var_unref(v) do { Py_XDECREF(v); } while (0)
 #define z_policy_var_repr(v)  PyObject_Repr(v)
+
+#define z_policy_none Py_None
+static inline PyObject *
+z_policy_none_ref(void)
+{
+  z_policy_var_ref_nonnull(z_policy_none);
+  return z_policy_none;
+}
 
 gboolean z_policy_var_parse_str(PyObject *val, gchar **result);
 gboolean z_policy_var_parse_boolean(PyObject *val, gboolean *result);

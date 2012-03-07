@@ -120,7 +120,7 @@ class Receiver(Dispatcher):
                   </metainfo>
                 </method>
 		"""
-		Dispatcher.__init__(self, convertSockAddrToDB(bindto, ZD_PROTO_UDP), service, **kw)
+		super(Receiver, self).__init__(convertSockAddrToDB(bindto, ZD_PROTO_UDP), service, **kw)
 
 class ZoneReceiver(ZoneDispatcher):
         """<class maturity="stable">
@@ -212,7 +212,7 @@ class ZoneReceiver(ZoneDispatcher):
                   </metainfo>
                 </method>
 		"""
-		ZoneDispatcher.__init__(self, convertSockAddrToDB(bindto, ZD_PROTO_UDP), services, **kw)
+		super(ZoneReceiver, self).__init__(convertSockAddrToDB(bindto, ZD_PROTO_UDP), services, **kw)
 
 class CSZoneReceiver(CSZoneDispatcher):
 	"""
@@ -323,4 +323,4 @@ class CSZoneReceiver(CSZoneDispatcher):
                   </metainfo>
                 </method>
 		"""
-		CSZoneDispatcher.__init__(self,  convertSockAddrToDB(bindto, ZD_PROTO_UDP), services, **kw)
+		super(CSZoneReceiver, self).__init__(convertSockAddrToDB(bindto, ZD_PROTO_UDP), services, **kw)

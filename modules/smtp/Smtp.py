@@ -61,8 +61,7 @@
         </para>
         <example>
           <title>SMTP protocol sample</title>
-	  <literallayout>
-220 mail.example.com ESMTP Postfix (Debian/GNU)
+	  <synopsis>220 mail.example.com ESMTP Postfix (Debian/GNU)
 EHLO client.host.name
 250-mail.example.com
 250-PIPELINING
@@ -89,8 +88,7 @@ is removed when the mail is stored by the client.
 .
 250 Ok: queued as BF47618170
 QUIT
-221 Farewell
-	  </literallayout>
+221 Farewell</synopsis>
         </example>
       </section>
       <section>
@@ -190,9 +188,11 @@ QUIT
         </description>
         <item>
           <name>SMTP_GETDOMAIN_MAILNAME</name>
+          <description>Read from /etc/mailname</description>
         </item>
         <item>
           <name>SMTP_GETDOMAIN_FQDN</name>
+          <description>Get firewall's FQDN</description>
         </item>
       </enum>
       <enum maturity="stable" id="enum.smtp.req">
@@ -235,9 +235,11 @@ QUIT
         </description>
         <item>
           <name>SMTP_EXT_ACCEPT</name>
+          <description>Accept</description>
         </item>
         <item>
           <name>SMTP_EXT_DROP</name>
+          <description>Drop</description>
         </item>
       </enum>
       <enum maturity="stable" id="enum.smtp.stk">
@@ -280,28 +282,30 @@ QUIT
 	<description>
 	  Action codes for SMTP requests
 	</description>
-	<tuple action="SMTP_REQ_ACCEPT">
+	<tuple action="SMTP_REQ_ACCEPT" display_name="Accept the request">
 	  <args></args>
 	  <description>
 	    Accept the request without any modification.
 	  </description>
 	</tuple>
-	<tuple action="SMTP_REQ_REJECT">
+	<tuple action="SMTP_REQ_REJECT" display_name="Reject the request">
 	  <args>
-	    <string/>
-	    <string/>
+	    <string display_name="Error code"/>
+	    <string display_name="Error message"/>
 	  </args>
 	  <description>
 	    Reject the request. The second parameter contains an SMTP status code, the third one an associated parameter which will be sent back to the client.
 	  </description>
 	</tuple>
-	<tuple action="SMTP_REQ_POLICY">
+	<!-- FIXME: METHOD currently unsupported by the GUI
+	<tuple action="SMTP_REQ_POLICY" display_name="">
 	  <args>METHOD</args>
 	  <description>
 	    Call the function specified to make a decision about the event. The function receives three parameters: self, command, and the parameters of the command. See <xref linkend="proxy_policies"/> for details.
 	  </description>
 	</tuple>
-	<tuple action="SMTP_REQ_ABORT">
+	-->
+	<tuple action="SMTP_REQ_ABORT" display_name="Terminate the connection">
 	  <args></args>
 	  <description>
 	    Reject the request and terminate the connection.
@@ -312,28 +316,30 @@ QUIT
 	<description>
 	  Action codes for SMTP responses
 	</description>
-	<tuple action="SMTP_RSP_ACCEPT">
+	<tuple action="SMTP_RSP_ACCEPT" display_name="Accept the response">
 	  <args></args>
 	  <description>
 	    Accept the response without any modification.
 	  </description>
 	</tuple>
-	<tuple action="SMTP_RSP_REJECT">
+	<tuple action="SMTP_RSP_REJECT" display_name="Reject the response">
 	  <args>
-	    <string/>
-	    <string/>
+	    <string display_name="Error code"/>
+	    <string display_name="Error message"/>
 	  </args>
 	  <description>
 	    Reject the response. The second parameter contains an SMTP status code, the third one an associated parameter which will be sent back to the client.
 	  </description>
 	</tuple>
-	<tuple action="SMTP_RSP_POLICY">
+	<!-- FIXME: METHOD currently unsupported by the GUI
+	<tuple action="SMTP_RSP_POLICY" display_name="">
 	  <args>METHOD</args>
 	  <description>
 	    Call the function specified to make a decision about the event. The function receives three parameters: self, command, and the parameters of the command. See <xref linkend="proxy_policies"/> for details.
 	  </description>
 	</tuple>
-	<tuple action="SMTP_RSP_ABORT">
+	-->
+	<tuple action="SMTP_RSP_ABORT" display_name="Terminate the connection">
 	  <args></args>
 	  <description>
 	    Reject the response and terminate the connection.
@@ -478,7 +484,7 @@ class AbstractSmtpProxy(Proxy):
                 </runtime>
                 <description>
                   Resolve the client host from the IP address and add it to the Received line.
-                  Only takes effect if prepend_receive_line is TRUE.
+                  Only takes effect if add_received_header is TRUE.
                 </description>
               </attribute>
               <attribute maturity="stable">
@@ -497,7 +503,7 @@ class AbstractSmtpProxy(Proxy):
                 </runtime>
                 <description>
                   If you want to set a fix domain name into the added Receive line, set this.
-                  Only takes effect if prepend_receive_line is TRUE.
+                  Only takes effect if add_received_header is TRUE.
                 </description>
               </attribute>
               <attribute maturity="stable">
@@ -518,7 +524,7 @@ class AbstractSmtpProxy(Proxy):
                   If you want Zorp to autodetect the domain name of the firewall and
                   write it to the Received line, then set this. This attribute either set
                   the method how the Zorp detect the mailname.
-                  Only takes effect if prepend_receive_line is TRUE.
+                  Only takes effect if add_received_header is TRUE.
                 </description>
               </attribute>
               <attribute maturity="stable">
@@ -692,7 +698,7 @@ class AbstractSmtpProxy(Proxy):
                 <type>
                   <hash>
                     <key>
-                      <string/>
+                      <string display_name="Command name"/>
                     </key>
                     <value>
                       <link id="action.smtp.req"/>
@@ -719,12 +725,12 @@ class AbstractSmtpProxy(Proxy):
                   <hash>
                     <key>
                       <tuple>
-                        <string/>
-                        <string/>
+                        <string display_name="Command name"/>
+                        <string display_name="Response code"/>
                       </tuple>
                     </key>
                     <value>
-                      <link id="enum.smtp.rsp"/>
+                      <link id="action.smtp.rsp"/>
                     </value>
                   </hash>
                 </type>
@@ -747,7 +753,7 @@ class AbstractSmtpProxy(Proxy):
                 <type>
                   <hash>
                     <key>
-                      <string/>
+                      <string display_name="Extension name"/>
                     </key>
                     <value>
                       <link id="enum.smtp.ext"/>
@@ -849,7 +855,7 @@ class AbstractSmtpProxy(Proxy):
               <attribute maturity="stable">
                 <name>append_domain</name>
                 <type>
-            	  <string/>
+		  <string/>
                 </type>
                 <default/>
                 <conftime>
@@ -1272,7 +1278,7 @@ class SmtpProxy(AbstractSmtpProxy):
                 </runtime>
                 <type>BOOLEAN:FALSE:RW:RW</type>
                 <description>
-                  Return a soft error condition when recipient filter does not match. If enabled, the proxy will try to re-valdate the recipient and send the mail again. This option is useful when the server used for the recipient matching is down.
+                  Return a soft error condition when recipient filter does not match. If enabled, the proxy will try to re-validate the recipient and send the mail again. This option is useful when the server used for the recipient matching is down.
                 </description>
               </attribute>
             </attributes>
@@ -1343,7 +1349,7 @@ class SmtpProxy(AbstractSmtpProxy):
 		"""<method internal="yes">
                 </method>
                 """
-		email = param[6:-1]
+		email = self.sanitizeAddress(param[5:])
 		try:
 			if self.sender_matcher and self.sender_matcher.checkMatch(email):
 				## LOG ##
@@ -1373,7 +1379,7 @@ class SmtpProxy(AbstractSmtpProxy):
 		"""<method internal="yes">
                 </method>
                 """
-		email = param[4:-1]
+		email = self.sanitizeAddress(param[3:])
 		try:
 			(local, domain) = split(email, '@', 2)
 		except ValueError:

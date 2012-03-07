@@ -1,6 +1,5 @@
 #include <zorp/zorp.h>
 #include <zorp/thread.h>
-#include <zorp/license/license.h>
 #include <zorp/szig.h>
 #include <time.h>
 
@@ -22,15 +21,6 @@
 static gint
 init_szig(void)
 {
-  GError *error = NULL;
-
-  z_license_set_params("/nonexistent/license.txt", ZORP_PRODUCT_NAME, ZORP_LICENSE_VERSION, "core, basic-proxies", 3);
-  z_license_add_product("VirusBuster Antivirus Gateway", ZORP_LICENSE_VERSION);
-  if (!z_license_init(&error))
-    {
-      g_error_free(error);
-      return 1;
-    }
 
   z_thread_init();
   z_szig_init("test_szig");
@@ -59,24 +49,6 @@ check_szig_long(const char * const node_name, glong expected)
   return 0;
 }
 
-static void
-generate_reload(void)
-{
-  fprintf(stdout, "generating reload event\n");
-
-  z_szig_event(Z_SZIG_RELOAD,
-               z_szig_value_new_props("policy",
-                                      "file", z_szig_value_new_string("/etc/zorp/policy.py"),
-                                      "file_stamp", z_szig_value_new_long(time(NULL)),
-                                      "reload_stamp", z_szig_value_new_long(time(NULL)),
-                                      NULL));
-}
-
-static gint
-check_reload(void)
-{
-  return check_szig_long("zorp.license.address_limit", 3);
-}
 
 static void
 generate_tick(guint tick)
@@ -139,19 +111,19 @@ check_connection_rates(glong avg1, glong avg5, glong avg15)
   fprintf(stdout, "checking connection rate averages; avg1='%ld', avg5='%ld', avg15='%ld'\n",
           avg1, avg5, avg15);
 
-  failed = check_szig_long("zorp.service.test_service.session_number", NUM_CONNS);
+  failed = check_szig_long("service.test_service.session_number", NUM_CONNS);
   if (!failed)
-    failed = check_szig_long("zorp.service.test_service.sessions_running", 1);
+    failed = check_szig_long("service.test_service.sessions_running", 1);
   if (!failed)
-    failed = check_szig_long("zorp.service.test_service.sessions_max", NUM_CONNS);
+    failed = check_szig_long("service.test_service.sessions_max", NUM_CONNS);
   if (!failed)
-    failed = check_szig_long("zorp.service.test_service.rate_max", NUM_CONNS / TICK_TIME);
+    failed = check_szig_long("service.test_service.rate_max", NUM_CONNS / TICK_TIME);
   if (!failed)
-    failed = check_szig_long("zorp.service.test_service.rate_avg1", avg1);
+    failed = check_szig_long("service.test_service.rate_avg1", avg1);
   if (!failed)
-    failed = check_szig_long("zorp.service.test_service.rate_avg5", avg5);
+    failed = check_szig_long("service.test_service.rate_avg5", avg5);
   if (!failed)
-    failed = check_szig_long("zorp.service.test_service.rate_avg15", avg15);
+    failed = check_szig_long("service.test_service.rate_avg15", avg15);
 
   return failed;
 }
@@ -162,51 +134,51 @@ check_thread_counters(void)
   fprintf(stdout, "testing thread counters\n");
 
   /* preconditions */
-  if (check_szig_long("zorp.stats.thread_number", NUM_THREADS + 3))
+  if (check_szig_long("stats.thread_number", NUM_THREADS + 3))
     return 1;
-  if (check_szig_long("zorp.stats.threads_running", 1))
+  if (check_szig_long("stats.threads_running", 1))
     return 1;
-  if (check_szig_long("zorp.stats.threads_max", 2))
-    return 1;
-
-  z_szig_event(Z_SZIG_THREAD_START, NULL);
-  sleep(1);
-
-  if (check_szig_long("zorp.stats.thread_number", NUM_THREADS + 4))
-    return 1;
-  if (check_szig_long("zorp.stats.threads_running", 2))
-    return 1;
-  if (check_szig_long("zorp.stats.threads_max", 2))
+  if (check_szig_long("stats.threads_max", 2))
     return 1;
 
   z_szig_event(Z_SZIG_THREAD_START, NULL);
   sleep(1);
 
-  if (check_szig_long("zorp.stats.thread_number", NUM_THREADS + 5))
+  if (check_szig_long("stats.thread_number", NUM_THREADS + 4))
     return 1;
-  if (check_szig_long("zorp.stats.threads_running", 3))
+  if (check_szig_long("stats.threads_running", 2))
     return 1;
-  if (check_szig_long("zorp.stats.threads_max", 3))
+  if (check_szig_long("stats.threads_max", 2))
+    return 1;
+
+  z_szig_event(Z_SZIG_THREAD_START, NULL);
+  sleep(1);
+
+  if (check_szig_long("stats.thread_number", NUM_THREADS + 5))
+    return 1;
+  if (check_szig_long("stats.threads_running", 3))
+    return 1;
+  if (check_szig_long("stats.threads_max", 3))
     return 1;
 
   z_szig_event(Z_SZIG_THREAD_STOP, NULL);
   sleep(1);
 
-  if (check_szig_long("zorp.stats.thread_number", NUM_THREADS + 5))
+  if (check_szig_long("stats.thread_number", NUM_THREADS + 5))
     return 1;
-  if (check_szig_long("zorp.stats.threads_running", 2))
+  if (check_szig_long("stats.threads_running", 2))
     return 1;
-  if (check_szig_long("zorp.stats.threads_max", 3))
+  if (check_szig_long("stats.threads_max", 3))
     return 1;
 
   z_szig_event(Z_SZIG_THREAD_STOP, NULL);
   sleep(1);
 
-  if (check_szig_long("zorp.stats.thread_number", NUM_THREADS + 5))
+  if (check_szig_long("stats.thread_number", NUM_THREADS + 5))
     return 1;
-  if (check_szig_long("zorp.stats.threads_running", 1))
+  if (check_szig_long("stats.threads_running", 1))
     return 1;
-  if (check_szig_long("zorp.stats.threads_max", 3))
+  if (check_szig_long("stats.threads_max", 3))
     return 1;
 
   return 0;
@@ -236,19 +208,19 @@ check_thread_rates(glong avg1, glong avg5, glong avg15)
   fprintf(stdout, "checking thread rate averages; avg1='%ld', avg5='%ld', avg15='%ld'\n",
           avg1, avg5, avg15);
 
-  failed = check_szig_long("zorp.stats.thread_number", NUM_THREADS + 3);
+  failed = check_szig_long("stats.thread_number", NUM_THREADS + 3);
   if (!failed)
-    failed = check_szig_long("zorp.stats.threads_running", 1);
+    failed = check_szig_long("stats.threads_running", 1);
   if (!failed)
-    failed = check_szig_long("zorp.stats.threads_max", 2);
+    failed = check_szig_long("stats.threads_max", 2);
   if (!failed)
-    failed = check_szig_long("zorp.stats.thread_rate_max", NUM_THREADS / TICK_TIME);
+    failed = check_szig_long("stats.thread_rate_max", NUM_THREADS / TICK_TIME);
   if (!failed)
-    failed = check_szig_long("zorp.stats.thread_rate_avg1", avg1);
+    failed = check_szig_long("stats.thread_rate_avg1", avg1);
   if (!failed)
-    failed = check_szig_long("zorp.stats.thread_rate_avg5", avg5);
+    failed = check_szig_long("stats.thread_rate_avg5", avg5);
   if (!failed)
-    failed = check_szig_long("zorp.stats.thread_rate_avg15", avg15);
+    failed = check_szig_long("stats.thread_rate_avg15", avg15);
 
   return failed;
 }
@@ -265,11 +237,6 @@ main(void)
   z_szig_event(Z_SZIG_THREAD_STOP, NULL);
   z_szig_event(Z_SZIG_THREAD_STOP, NULL);
 
-  fprintf(stdout, "checking license address limit\n");
-  generate_reload();
-  sleep(1);
-  if (check_reload())
-    return 1;
 
   fprintf(stdout, "checking connection rate statistics\n");
   /* generate NUM_CONNS connections right now */

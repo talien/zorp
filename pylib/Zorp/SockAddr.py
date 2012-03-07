@@ -36,73 +36,7 @@
 </module>
 """
 
-from string import split, atoi
-from socket import htonl, ntohl
-
-def inet_aton(ip):
-	"""
-        <function maturity="stable">
-          <summary>
-            Function to convert an internet address to a 32-bit integer.
-          </summary>
-          <description>
-            <para>
-            This function converts the string representation of an IPv4 address
-            to an integer in network byte order.
-            Returns unsigned long in network byte order.
-            </para>
-          </description>
-          <metainfo>
-            <arguments>
-              <argument maturity="stable">
-                <name>ip</name>
-                <type><string/></type>
-                <description>A dotted-quad string</description>
-              </argument>
-            </arguments>
-          </metainfo>
-        </function>
-	"""
-	# FIXME: there is no parameter check
-	parts = split(ip, '.', 4);
-	return htonl(atoi(parts[0]) << 24 | \
-		     atoi(parts[1]) << 16 | \
-		     atoi(parts[2]) << 8  | \
-		     atoi(parts[3]))
-
-def inet_ntoa(ip):
-	"""
-        <function maturity="stable">
-          <summary>
-            Function to convert a 32-bit integer into an IPv4 address.
-          </summary>
-          <description>
-          <para>
-            This function converts an IP address from network byte order
-            into its string representation (dotted quad).
-            Returns string representation of the IP address.
-            </para>
-          </description>
-          <metainfo>
-            <arguments>
-              <argument maturity="stable">
-                <name>ip</name>
-                <type></type>
-                <description>The IP address as a 32-bit integer (network byte order).</description>
-              </argument>
-            </arguments>
-          </metainfo>
-        </function>
-	"""
-	ip = ntohl(ip)
-	
-	parts = (((ip & 0xff000000) >> 24) & 0xff,
-		 (ip & 0x00ff0000) >> 16,
-		 (ip & 0x0000ff00) >> 8,
-		 (ip & 0x000000ff))
-	return "%u.%u.%u.%u" % parts
-
-class SockAddrInet:
+class SockAddrInet(object):
 	"""
         <class maturity="stable">
           <summary>
@@ -157,9 +91,66 @@ Dispatcher(transparent=TRUE, bindto=DBSockAddr(protocol=ZD_PROTO_TCP, sa=SockAdd
           </metainfo>
         </class>
 	"""
-	pass
-	
-class SockAddrInetRange:
+        pass
+
+class SockAddrInet6(object):
+        """
+        <class maturity="stable">
+          <summary>
+            Class encapsulating an IPv6 address:port pair.
+          </summary>
+          <description>
+            <para>
+              This class encapsulates an IPv6 address:port pair, similarly to
+              the <parameter>sockaddr_in</parameter> struct in C. The class is implemented and exported by
+              the Zorp core. The <parameter>SockAddrInet</parameter> Python class serves only
+              documentation purposes, and has no real connection to the
+              behavior implemented in C.
+            </para>
+            <example>
+                <title>SockAddrInet example</title>
+                <para>
+                The following example defines an IPv6 address:port pair.</para>
+                <synopsis>
+SockAddrInet('fec0::1', 80)
+                </synopsis>
+                <para>
+                The following example uses SockAddrInet in a dispatcher. See <xref linkend="python.Dispatch.Dispatcher"/> for details on Dispatchers.
+                </para>
+                <synopsis>
+Dispatcher(transparent=TRUE, bindto=DBSockAddr(protocol=ZD_PROTO_TCP, sa=SockAddrInet('fec0::1', 50080)), service="intra_HTTP_inter", backlog=255, rule_port="50080")
+                </synopsis>
+            </example>
+          </description>
+          <metainfo>
+            <attributes>
+              <attribute maturity="stable">
+                <name>type</name>
+                <type><string/></type>
+                <description>The <parameter>inet</parameter> value that indicates an address in the AF_INET domain.</description>
+              </attribute>
+              <attribute maturity="stable">
+                <name>ip</name>
+                <type></type>
+                <description>IP address (network byte order).</description>
+              </attribute>
+              <attribute maturity="stable">
+                <name>ip_s</name>
+                <type></type>
+                <description>IP address in string representation.</description>
+              </attribute>
+              <attribute maturity="stable">
+                <name>port</name>
+                <type></type>
+                <description>Port number (network byte order).</description>
+              </attribute>
+            </attributes>
+          </metainfo>
+        </class>
+        """
+        pass
+
+class SockAddrInetRange(object):
 	"""
         <class maturity="stable">
           <summary>
@@ -204,7 +195,7 @@ class SockAddrInetRange:
 	"""
 	pass
 
-class SockAddrUnix:
+class SockAddrUnix(object):
 	"""
         <class maturity="stable">
           <summary>
@@ -246,8 +237,3 @@ Service(name="demo_service", proxy_class=HttpProxy, router=DirectedRouter(dest_a
 
 	"""
 
-#class SockAddrInet6(SockAddr):
-#	def __init__(self, ip, port):
-#		SockAddr.__init__(self, 'inet6')
-#		self.ip = ip
-#		self.port = port

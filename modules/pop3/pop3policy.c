@@ -177,8 +177,8 @@ pop3_policy_command_hash_do(Pop3Proxy *self)
                       rc = POP3_REQ_ACCEPT;
                       break;
                       
-                    case Z_UNSPEC:
-                    case Z_DROP:
+                    case ZV_UNSPEC:
+                    case ZV_DROP:
                     case POP3_REQ_REJECT:
                       rc = POP3_REQ_REJECT;
                       break;
@@ -297,7 +297,7 @@ pop3_policy_response_hash_do(Pop3Proxy *self)
                         case POP3_RSP_ACCEPT:
                           break;
                           
-                        case Z_UNSPEC:
+                        case ZV_UNSPEC:
                         case POP3_RSP_REJECT:
                           rc = POP3_RSP_REJECT;
                           break;

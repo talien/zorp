@@ -132,8 +132,7 @@
         </orderedlist>
       <example>
         <title>Example HTTP transaction</title>
-        <literallayout>
-GET /index.html HTTP/1.1
+        <synopsis>GET /index.html HTTP/1.1
 Host: www.example.com
 Connection: keep-alive
 User-Agent: My-Browser-Type 6.0
@@ -143,8 +142,7 @@ Connection: close
 Content-Length: 14
 
 &lt;html&gt;
-&lt;/html&gt;
-        </literallayout>
+&lt;/html&gt;</synopsis>
       </example>
     </section>
   </section>
@@ -170,8 +168,7 @@ Content-Length: 14
           </para>
           <example>
             <title>Proxy style HTTP query</title>
-            <literallayout>
-GET http://www.example.com/index.html HTTP/1.1
+            <synopsis>GET http://www.example.com/index.html HTTP/1.1
 Host: www.example.com
 Connection: keep-alive
 User-Agent: My-Browser-Type 6.0
@@ -181,23 +178,19 @@ Connection: close
 Content-Length: 14
 
 &lt;html&gt;
-&lt;/html&gt;
-
-            </literallayout>
+&lt;/html&gt;</synopsis>
           </example>
         <para>
           In non-transparent mode it is possible to request the use of the SSL protocol through the proxy, which means the client communicates with the proxy using the HTTP protocol, but the proxy uses HTTPS to communicate with the server. This technique is called data tunneling.
         </para>
         <example>
           <title>Data tunneling with connect method</title>
-          <literallayout>
-CONNECT www.example.com:443 HTTP/1.1
+          <synopsis>CONNECT www.example.com:443 HTTP/1.1
 Host: www.example.com
 User-agent: My-Browser-Type 6.0
 
 HTTP/1.0 200 Connection established
-Proxy-agent: My-Proxy/1.1
-          </literallayout>
+Proxy-agent: My-Proxy/1.1</synopsis>
         </example>
       </section>
       <section id="http_policies">
@@ -215,8 +208,7 @@ Proxy-agent: My-Proxy/1.1
           <para>
           This example calls the filterURL function (defined in the example) whenever a HTTP GET request is received. If the requested URL is 'http://www.disallowedsite.com', the request is rejected and an error message is sent to the client.
           </para>
-          <literallayout>
-class DmzHTTP(HttpProxy):
+          <synopsis>class DmzHTTP(HttpProxy):
         def config(self):
                 HttpProxy.config(self)
                 self.request["GET"] = (HTTP_REQ_POLICY, self.filterURL)
@@ -225,16 +217,14 @@ class DmzHTTP(HttpProxy):
                 if (url == "http://www.disallowedsite.com"):
                         self.error_info = 'Access of this content is denied by the local policy.'
                         return HTTP_REQ_REJECT
-                return HTTP_REQ_ACCECT
-          </literallayout>
+                return HTTP_REQ_ACCECT</synopsis>
         </example>
         <example>
           <title>404 response filtering in HTTP</title>
           <para>
           In this example the 404 response code to GET requests is rejected, and a custom error message is returned to the clients instead.
           </para>
-          <literallayout>
-class DmzHTTP(HttpProxy):
+          <synopsis>class DmzHTTP(HttpProxy):
         def config(self):
                 HttpProxy.config(self)
                 self.response["GET", "404"] = (HTTP_RSP_POLICY, self.filter404)
@@ -242,8 +232,7 @@ class DmzHTTP(HttpProxy):
         def filter404(self, method, url, version, response):
                 self.error_status = 404
                 self.error_info = "Requested page was not accessible."
-                return HTTP_RSP_REJECT
-          </literallayout>
+                return HTTP_RSP_REJECT</synopsis>
         </example>
 
       </section>
@@ -272,8 +261,7 @@ class DmzHTTP(HttpProxy):
           <para>
           The following example hides the browser used by the client by replacing the value of the User-Agent header to Lynx in all requests. The use of cookies is disabled as well.
           </para>
-          <literallayout>
-class MyHttp(HttpProxy):
+          <synopsis>class MyHttp(HttpProxy):
         def config(self):
                 HttpProxy.config(self)
                 self.request_header["User-Agent"] = (HTTP_HDR_CHANGE_VALUE, "Lynx 2.4.1")
@@ -284,8 +272,7 @@ class MyHttp(HttpProxy):
                 # You could change the current header in self.current_header_name
                 # or self.current_header_value, the current request url is
                 # in self.request_url
-                return HTTP_HDR_DROP
-          </literallayout>
+                return HTTP_HDR_DROP</synopsis>
         </example>
       </section>
       <section>
@@ -305,23 +292,21 @@ class MyHttp(HttpProxy):
           <para>
           This example redirects all HTTP GET requests to the 'http://www.balabit.com/' URL by modifying the value of the requested URL.
           </para>
-          <literallayout>
-class MyHttp(HttpProxy):
+          <synopsis>class MyHttp(HttpProxy):
         def config(self):
                 HttpProxy.config(self)
                 self.request["GET"] = (HTTP_REQ_POLICY, self.filterURL)
 
         def filterURL(self, method, url, version):
                 self.request_url = "http://www.balabit.com/"
-                return HTTP_REQ_ACCEPT</literallayout>
+                return HTTP_REQ_ACCEPT</synopsis>
         </example>
         <example>
           <title>Redirecting HTTP to HTTPS</title>
           <para>
           This example redirects all incoming HTTP connections to an HTTPS URL.
           </para>
-          <literallayout>
-class HttpProxyHttpsredirect(HttpProxy):
+          <synopsis>class HttpProxyHttpsredirect(HttpProxy):
         def config(self):
                 HttpProxy.config(self)
                 self.error_silent = TRUE
@@ -331,7 +316,7 @@ class HttpProxyHttpsredirect(HttpProxy):
                 self.error_status = 301
                 #self.error_info = 'HTTP/1.0 301 Moved Permanently'
                 self.error_headers="Location: https://%s/" % self.request_url_host
-                return HTTP_REQ_REJECT</literallayout>
+                return HTTP_REQ_REJECT</synopsis>
         </example>
       </section>
       <section>
@@ -392,8 +377,7 @@ class HttpProxyHttpsredirect(HttpProxy):
         <example>
           <title>Using parent proxies in HTTP</title>
           <para>In this example the MyHttp proxy class uses a parent proxy. For this the domain name and address of the parent proxy is specified, and a service using an InbandRouter is created.</para>
-          <literallayout>
-class MyHttp(HttpProxy):
+          <synopsis>class MyHttp(HttpProxy):
         def config(self):
                 HttpProxy.config(self)
                 self.parent_proxy = "proxy.example.com"
@@ -401,8 +385,7 @@ class MyHttp(HttpProxy):
 
 def instance():
         Service("http", MyHttp, router=InbandRouter())
-        Listener(SockAddrInet('10.0.0.1', 80), "http")
-          </literallayout>
+        Listener(SockAddrInet('10.0.0.1', 80), "http")</synopsis>
         </example>
       </section>
       <section>
@@ -472,12 +455,10 @@ def instance():
           <para>
           In this example all responses received are passed to VBusterProxy to for virus checking. 
           </para>
-          <literallayout>
-class MyHttp(HttpProxy):
+          <synopsis>class MyHttp(HttpProxy):
         def config(self):
                 HttpProxy.config(self)
-                self.response_stack["GET"] = (HTTP_STK_DATA, (Z_STACK_PROXY, VBusterProxy))
-          </literallayout>
+                self.response_stack["GET"] = (HTTP_STK_DATA, (Z_STACK_PROXY, VBusterProxy))</synopsis>
         </example>-->
         <para>
           Please note that stacking is skipped altogether if there is no
@@ -877,17 +858,17 @@ class MyHttp(HttpProxy):
       <description>
         Action codes for HTTP requests
       </description>
-      <tuple action="HTTP_REQ_ACCEPT">
+      <tuple action="HTTP_REQ_ACCEPT" display_name="Accept the request">
         <args/>
         <description>
           <para>
-             Allow the request to pass. 
+             Allow the request to pass.
           </para>
         </description>
       </tuple>
-      <tuple action="HTTP_REQ_REJECT">
+      <tuple action="HTTP_REQ_REJECT" display_name="Reject the request">
         <args>
-          <string/>
+          <string display_name="Reason for the rejection"/>
         </args>
         <description>
           <para>
@@ -895,7 +876,7 @@ class MyHttp(HttpProxy):
           </para>
         </description>
       </tuple>
-      <tuple action="HTTP_REQ_ABORT">
+      <tuple action="HTTP_REQ_ABORT" display_name="Terminate the connection">
         <args/>
         <description>
           <para>
@@ -903,15 +884,7 @@ class MyHttp(HttpProxy):
           </para>
         </description>
       </tuple>
-      <tuple action="HTTP_REQ_DENY">
-        <args/>
-        <description>
-          <para>
-            Same as HTTP_REQ_ABORT.
-          </para>
-        </description>
-      </tuple>
-      <tuple action="HTTP_REQ_POLICY">
+      <tuple action="HTTP_REQ_POLICY" display_name="Call a user defined decision function">
         <args>
           <METHOD/>
         </args>
@@ -926,27 +899,21 @@ class MyHttp(HttpProxy):
       <description>
         Action codes for HTTP responses
       </description>
-      <tuple action="HTTP_RSP_ACCEPT">
+      <tuple action="HTTP_RSP_ACCEPT" display_name="Allow the response">
         <args/>
         <description>
           Allow the response to pass.
         </description>
       </tuple>
-      <tuple action="HTTP_RSP_DENY">
+      <tuple action="HTTP_RSP_DENY" display_name="Redirect to a policy violation page">
         <args/>
         <description>
           Reject the response and return a policy violation page to the client.
         </description>
       </tuple>
-      <tuple action="HTTP_RSP_ABORT">
-        <args/>
-        <description>
-          Same as HTTP_RSP_DENY.
-        </description>
-      </tuple>
-      <tuple action="HTTP_RSP_REJECT">
+      <tuple action="HTTP_RSP_REJECT" display_name="Redirect to a custom policy violation page">
         <args>
-          <string/>
+          <string display_name="Error information to display to the client"/>
         </args>
         <description>
            Reject the response and return a policy violation page to the
@@ -954,7 +921,7 @@ class MyHttp(HttpProxy):
            second argument.
         </description>
       </tuple>
-      <tuple action="HTTP_RSP_POLICY">
+      <tuple action="HTTP_RSP_POLICY" display_name="Call a user defined decision function">
         <args>
           <METHOD/>
         </args>
@@ -968,69 +935,69 @@ class MyHttp(HttpProxy):
       <description>
         Action codes for HTTP headers
       </description>
-      <tuple action="HTTP_HDR_ABORT">
+      <tuple action="HTTP_HDR_ABORT" display_name="Terminate the connection">
         <args/>
         <description>
           Terminate the connection.
         </description>
       </tuple>
-      <tuple action="HTTP_HDR_ACCEPT">
+      <tuple action="HTTP_HDR_ACCEPT" display_name="Accept the header">
         <args/>
         <description>
           Accept the header.
         </description>
       </tuple>
-      <tuple action="HTTP_HDR_DROP">
+      <tuple action="HTTP_HDR_DROP" display_name="Remove the header">
         <args/>
         <description>
           Remove the header.
         </description>
       </tuple>
-      <tuple action="HTTP_HDR_POLICY">
+      <tuple action="HTTP_HDR_POLICY" display_name="Call a user defined decision function">
         <args>
           <METHOD/>
         </args>
         <description>
           Call the function specified to make a decision about the event. The function receives three parameters:
-          self, hdr_name, and hdr_value. See <xref linkend="http_header_policies"/> for details.
+          self, hdr_name, and hdr_value.
         </description>
       </tuple>
-      <tuple action="HTTP_HDR_CHANGE_NAME">
+      <tuple action="HTTP_HDR_CHANGE_NAME" display_name="Rename the header">
         <args>
-          <string/>
+          <string display_name="New name"/>
         </args>
         <description>
           Rename the header to the name specified in the second argument.
         </description>
       </tuple>
-      <tuple action="HTTP_HDR_CHANGE_VALUE">
+      <tuple action="HTTP_HDR_CHANGE_VALUE" display_name="Overwrite the value of the header">
         <args>
-          <string/>
+          <string display_name="New value"/>
         </args>
         <description>
           Change the value of the header to the value specified in the second argument.
         </description>
       </tuple>
-      <tuple action="HTTP_HDR_CHANGE_BOTH">
+      <tuple action="HTTP_HDR_CHANGE_BOTH" display_name="Change both name and value">
         <args>
-            <string/>
-            <string/>
+            <string display_name="New name"/>
+            <string display_name="New value"/>
         </args>
         <description>
           Change both the name and value of the header to the values specified in the second and third arguments, respectively.
         </description>
       </tuple>
-      <tuple action="HTTP_HDR_INSERT">
+      <tuple action="HTTP_HDR_INSERT" display_name="Insert a new header line">
         <args>
-          <string/>
+          <string display_name="New header line content"/>
         </args>
         <description>
           Insert a new header defined in the second argument.
         </description>
       </tuple>
-      <tuple action="HTTP_HDR_REPLACE">
+      <tuple action="HTTP_HDR_REPLACE" display_name="Replace the header">
         <args>
-          <string/>
+          <string display_name="New header line content"/>
         </args>
         <description>
           Remove all existing occurrences of a header and replace them with the one specified in the second argument.
@@ -1068,7 +1035,7 @@ class MyHttp(HttpProxy):
       <description>
         Action codes for URL filtering
       </description>
-      <tuple action="HTTP_URL_ACCEPT">
+      <tuple action="HTTP_URL_ACCEPT" display_name="Permit access">
         <args/>
         <description>
           <para>
@@ -1076,11 +1043,11 @@ class MyHttp(HttpProxy):
           </para>
         </description>
       </tuple>
-      <tuple action="HTTP_URL_REJECT">
+      <tuple action="HTTP_URL_REJECT" display_name="Reject the request">
         <args>
           <tuple>
-            <int/>
-            <string/>
+            <int display_name="Error code"/>
+            <string display_name="Reason for the rejection"/>
           </tuple>
         </args>
         <description>
@@ -1089,9 +1056,9 @@ class MyHttp(HttpProxy):
           </para>
         </description>
       </tuple>
-      <tuple action="HTTP_URL_REDIRECT">
+      <tuple action="HTTP_URL_REDIRECT" display_name="Redirect the connection">
         <args>
-            <string/>
+            <string display_name="Redirect to this URL"/>
         </args>
         <description>
           <para>
@@ -1301,7 +1268,7 @@ class AbstractHttpProxy(Proxy):
                 As these responses carry no control information, verifying
                 the validity of the protocol stream is impossible. This does not
                 pose a threat to web clients, but exploits might pass undetected
-                if this option is enabled for servers.  It is recommended to turn this
+                if this option is enabled for servers. It is recommended to turn this
                 option off for protecting servers and only enable it when
                 Zorp is used in front of users.
               </description>
@@ -1554,7 +1521,7 @@ class AbstractHttpProxy(Proxy):
                 <read/>
               </runtime>
               <description>
-                This attribute control what will the Zorp do if a non-rfc comform
+                This attribute control what will the Zorp do if a non-rfc conform
                 or unknown header found in the communication. Only the HTTP_HDR_ACCEPT,
                 HTTP_HDR_DROP and HTTP_HDR_ABORT can be used.
               </description>
@@ -1818,7 +1785,7 @@ class AbstractHttpProxy(Proxy):
               <type>
                 <hash>
                   <key>
-                    <string/>
+                    <string display_name="HTTP request type"/>
                   </key>
                   <value>
                     <link id="action.http.req"/>
@@ -1845,7 +1812,7 @@ class AbstractHttpProxy(Proxy):
               <type>
                 <hash>
                   <key>
-                    <string/>
+                    <string display_name="HTTP header name"/>
                   </key>
                   <value>
                     <link id="action.http.hdr"/>
@@ -1873,8 +1840,8 @@ class AbstractHttpProxy(Proxy):
                 <hash>
                   <key>
                     <tuple>
-                      <string/>
-                      <string/>
+                      <string display_name="HTTP method"/>
+                      <string display_name="HTTP response code"/>
                     </tuple>
                   </key>
                   <value>
@@ -1894,7 +1861,7 @@ class AbstractHttpProxy(Proxy):
               <description>
                 Normative policy hash for HTTP responses 
                 indexed by the HTTP method and the response code 
-                (e.g.: "PWD", "209" etc.).  See also <xref linkend="http_policies"/>.
+                (e.g.: "PWD", "209" etc.). See also <xref linkend="http_policies"/>.
               </description>
             </attribute>
             <attribute>
@@ -1902,7 +1869,7 @@ class AbstractHttpProxy(Proxy):
               <type>
                 <hash>
                   <key>
-                    <string/>
+                    <string display_name="HTTP response header name"/>
                   </key>
                   <value>
                     <link id="action.http.hdr"/>
@@ -2493,7 +2460,7 @@ class AbstractHttpProxy(Proxy):
               <type>
                 <hash>
                   <key>
-                    <string/>
+                    <string display_name="Category identifier"/>
                   </key>
                   <value>
                     <link id="action.http.url"/>
@@ -2513,23 +2480,6 @@ class AbstractHttpProxy(Proxy):
                 Normative policy hash for category-based URL-filtering.
                 The hash is indexed by the name of the category.
                 See also <xref linkend="zorp_http_urlfiltering_categories"/>.
-              </description>
-            </attribute>
-            <attribute>
-              <name>language</name>
-              <type>
-                <string/>
-              </type>
-              <default>en</default>
-              <conftime>
-                <read/>
-                <write/>
-              </conftime>
-              <runtime>
-                <read/>
-              </runtime>
-              <description>
-                Specifies the language of the HTTP error pages displayed to the client. English (<parameter>en</parameter>) is the default. Other supported languages: <parameter>de</parameter> (German); <parameter>hu</parameter> (Hungarian).
               </description>
             </attribute>
             <attribute maturity="obsolete">
@@ -2860,11 +2810,9 @@ class HttpProxyURIFilter(HttpProxy):
             </para>
             <example>
               <title>URL filtering HTTP proxy</title>
-              <literallayout>
-class MyHttp(HttpProxyURIFilter):
+              <synopsis>class MyHttp(HttpProxyURIFilter):
         matcher = RegexpFileMatcher('/etc/zorp/blacklist.txt', \ 
-                                        '/etc/zorp/whitelist.txt')
-              </literallayout>
+                                        '/etc/zorp/whitelist.txt')</synopsis>
             </example>
           </description>
           <metainfo>

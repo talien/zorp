@@ -73,6 +73,8 @@ def zorp():
 	        CSZoneReceiver(DBIface('eth0', 1999), {('all', 'all'): 'test'})
 	        CSZoneDispatcher(DBSockAddr(SockAddrInet('0.0.0.0', 1999), protocol=ZD_PROTO_TCP), {('all', 'all'): 'test'})
 	        CSZoneDispatcher(DBIface('eth0', 1999, protocol=ZD_PROTO_TCP), {('all', 'all'): 'test'})
+
+                Rule(service='test')
 	except Exception, e:
 		print_exc()
 		quit(1)

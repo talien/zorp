@@ -372,7 +372,7 @@ http_ftp_complete_data(HttpProxy *self, ZStream **data_stream)
   success = z_attach_start_block(self->ftp_data_attach, &conn);
   http_ftp_cleanup_data(self);
   
-  if (!success)
+  if (!success || !conn)
     {
       *data_stream = NULL;
       return FALSE;

@@ -130,6 +130,9 @@ struct
   /* invalid escaping, invalid_escape, enabled */
   { "http://user:pass@test.host/f%2gile",      TRUE,  FALSE, TRUE, "http", "user", "pass", "test.host", 0,    "/f%2gile",        NULL, NULL },
   { "http://user:pass@test.host/f%u123gile",   TRUE,  TRUE,  TRUE, "http", "user", "pass", "test.host", 0,    "/f%u123gile",        NULL, NULL },
+  /* IPv4 and IPv6 addresses */
+  { "http://127.0.0.1/file",                   FALSE, FALSE, TRUE, "http", NULL,   NULL,   "127.0.0.1", 0,    "/file",        NULL, NULL },
+  { "http://[1234::1]/file",                   FALSE, FALSE, TRUE, "http", NULL,   NULL,   "1234::1", 0,    "/file",        NULL, NULL },
   
   { NULL, 0, 0, 0, NA }
 };

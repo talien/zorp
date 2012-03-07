@@ -36,211 +36,6 @@
 #include <arpa/inet.h>
 
 /**
- * z_py_ntohl:
- * @self not used
- * @args Python args: integer to convert
- *
- * SockAddr.ntohl(int), Python wrapper around ntohl.
- *
- * Returns:
- * PyInt containing the converted value
- */
-static PyObject *
-z_py_ntohl(PyObject *self G_GNUC_UNUSED, PyObject *args)
-{
-  unsigned int i;
-  
-  if (!PyArg_ParseTuple(args, "I", &i))
-    return NULL;
-    
-  return PyInt_FromLong(ntohl(i));
-}
-
-
-/**
- * z_py_htonl:
- * @self not used
- * @args Python args: integer to convert
- *
- * SockAddr.htonl(int), Python wrapper around htonl.
- *
- * Returns:
- * PyInt containing the converted value
- */
-static PyObject *
-z_py_htonl(PyObject *self G_GNUC_UNUSED, PyObject *args)
-{
-  unsigned int i;
-  
-  if (!PyArg_ParseTuple(args, "I", &i))
-    return NULL;
-  return PyInt_FromLong(htonl(i));
-}
-
-/**
- * z_py_ntop:
- * @self not used
- * @args Python args: address family, address to convert
- *
- * SockAddr.ntop(af, addr), Python wrapper around ntop (network-byte-ordered to
- * ascii). Only for IPv6!
- *
- * Returns:
- * PyString containing the converted value
- */
-static PyObject *
-z_py_inet_ntop(PyObject *self G_GNUC_UNUSED, PyObject *args)
-{
-  long i;
-  PyObject *x, *res = NULL;
-  char buf[128];
-  
-  z_enter();
-  if (!PyArg_ParseTuple(args, "iO", &i, &x))
-    z_return(NULL);
-  switch (i)
-    {
-    case AF_INET:
-      break;
-      
-    case AF_INET6:
-      {
-        struct in6_addr in6;
-        
-        if (!PyArg_Parse(x, "(iiiiiiii)", 
-                         &in6.s6_addr16[0],
-                         &in6.s6_addr16[1],
-                         &in6.s6_addr16[2],
-                         &in6.s6_addr16[3],
-                         &in6.s6_addr16[4],
-                         &in6.s6_addr16[5],
-                         &in6.s6_addr16[6],
-                         &in6.s6_addr16[7]))
-          {
-            PyErr_SetString(PyExc_ValueError, "Bad IPv6 address network representation.");
-            break;
-          }
-        inet_ntop(AF_INET6, &in6, buf, sizeof(buf));
-        res = PyString_FromString(buf);
-        break;
-      }
-    }
-  z_return(res);
-}
-
-/**
- * z_py_pton:
- * @self not used
- * @args Python args: address family, string to convert
- *
- * SockAddr.pton(af), Python wrapper around pton (ascii to network-byte-ordered).
- * Only for IPv6!
- *
- * Returns:
- * Python array containing the converted value
- */
-static PyObject *
-z_py_inet_pton(PyObject *self G_GNUC_UNUSED, PyObject *args)
-{
-  long i;
-  char *addr;
-  PyObject *res = NULL;
-  
-  z_enter();
-  if (!PyArg_ParseTuple(args, "is", &i, &addr))
-    z_return(NULL);
-  switch (i)
-    {
-    case AF_INET:
-      break;
-
-    case AF_INET6:
-      {
-        struct in6_addr in6;
-        
-        if (!inet_pton(AF_INET6, addr, &in6))
-          {
-            PyErr_SetString(PyExc_ValueError, "Error parsing IPv6 address.");
-            break;
-          }
-        res = Py_BuildValue("(iiiiiiii)", 
-			    in6.s6_addr16[0],
-			    in6.s6_addr16[1],
-			    in6.s6_addr16[2],
-			    in6.s6_addr16[3],
-			    in6.s6_addr16[4],
-			    in6.s6_addr16[5],
-			    in6.s6_addr16[6],
-			    in6.s6_addr16[7]);
-        break;
-      }
-    }
-  z_return(res);
-}
-
-/**
- *  z_py_gethostbyname:
- *  @self not used
- *  @args Python args: hostname to look up
- *
- *  SockAddr.getHostByName(hostname), Python wrapper around gethostbyname.
- *
- *  Returns:
- *  Python string containing the dotted-quad address.
- */
-static PyObject *
-z_py_gethostbyname(PyObject *self G_GNUC_UNUSED, PyObject *args)
-{
-  char *hostname;
-  struct hostent hes, *he;
-  char hostbuf[1024];
-  char buf[32];
-  int err = 0;
-  int rc;
-  
-  if (!PyArg_ParseTuple(args, "s", &hostname))
-    return NULL;
-  
-  Py_BEGIN_ALLOW_THREADS
-#if HAVE_SUN_GETHOSTBYNAME_R
-  he = gethostbyname_r(hostname, &hes, hostbuf, sizeof(hostbuf), &rc);
-  err = rc;
-#else
-  rc = gethostbyname_r(hostname, &hes, hostbuf, sizeof(hostbuf), &he, &err);
-#endif
-  Py_END_ALLOW_THREADS
-  if (rc == 0 && he)
-    {
-      PyObject *result;
-      gint i;
-      gint count = 0;
-      
-      /* INFO
-       * h_addr_list is a NULL terminated list of
-       * addresses. After this count will conatin the
-       * number of addresses.
-       */
-      while(he->h_addr_list[count++])
-        ;
-      count--;
-      
-      result = PyList_New(count);
-      
-      for (i = 0; i < count; i++)
-        {
-          z_inet_ntoa(buf, sizeof(buf), *((struct in_addr *) he->h_addr_list[i]));
-          PyList_SetItem(result, i, PyString_FromString(buf));
-        }
-      return result;
-    }
-  else
-    {
-      PyErr_SetString(PyExc_IOError, "Error resolving hostname.");
-      return NULL;
-    }
-}
-
-/**
  * z_policy_sockaddr_inet_new_instance:
  * @s not used
  * @args Python args: ip, port
@@ -440,11 +235,6 @@ PyMethodDef z_policy_sockaddr_funcs[] =
   { "SockAddrInetHostname", z_policy_sockaddr_inet_new_hostname, METH_VARARGS, NULL },
   { "SockAddrInet6", z_policy_sockaddr_inet6_new_instance, METH_VARARGS, NULL },
   { "SockAddrUnix",  z_policy_sockaddr_unix_new_instance, METH_VARARGS, NULL },
-  { "ntohl", z_py_ntohl, METH_VARARGS, NULL },
-  { "htonl", z_py_htonl, METH_VARARGS, NULL },
-  { "inet_ntop", z_py_inet_ntop, METH_VARARGS, NULL },
-  { "inet_pton", z_py_inet_pton, METH_VARARGS, NULL },
-  { "getHostByName", z_py_gethostbyname, METH_VARARGS, NULL },
   { NULL,            NULL, 0, NULL }   /* sentinel*/
 };
 
@@ -550,6 +340,39 @@ z_policy_sockaddr_str(ZPolicyObj *s)
   return res;
 }
 
+/**
+ * z_policy_sockaddr_pack:
+ * @self this
+ *
+ * SockAddr.pack, get a packed string representation of the address
+ *
+ * Returns:
+ * A string representation of the address in network byte order packed format.
+ * Returns None if the address family is not INET or INET6.
+ */
+static ZPolicyObj *
+z_policy_sockaddr_pack(gpointer user_data, ZPolicyObj *args G_GNUC_UNUSED, ZPolicyObj *kw G_GNUC_UNUSED)
+{
+  ZSockAddr *sa = (ZSockAddr *) user_data;
+
+  switch (sa->sa.sa_family)
+  {
+    case AF_INET:
+      {
+        struct sockaddr_in *sa_in = (struct sockaddr_in *) &sa->sa;
+        return PyString_FromStringAndSize((gchar*)&sa_in->sin_addr, 4);
+        break;
+      }
+    case AF_INET6:
+      {
+        struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *) &sa->sa;
+        return PyString_FromStringAndSize((gchar*)&sa_in6->sin6_addr, 16);
+        break;
+      }
+    default:
+      return z_policy_none_ref();
+  }
+}
 
 /**
  * z_policy_sockaddr_new:
@@ -585,6 +408,7 @@ z_policy_sockaddr_new(ZSockAddr *sa)
         z_policy_dict_register(dict, Z_VT_IP,      "ip",   Z_VF_RW, &sa_in->sin_addr);
         z_policy_dict_register(dict, Z_VT_IP,      "ip_s", Z_VF_RW | Z_VF_IP_STR, &sa_in->sin_addr);
         z_policy_dict_register(dict, Z_VT_INT16,   "port", Z_VF_RW | Z_VF_INT_NET, &sa_in->sin_port);
+        z_policy_dict_register(dict, Z_VT_METHOD,  "pack", Z_VF_READ, z_policy_sockaddr_pack, z_sockaddr_ref(sa), z_sockaddr_unref);
         struct_type = Z_PST_SOCKADDR_INET;
         break;
       }
@@ -596,6 +420,7 @@ z_policy_sockaddr_new(ZSockAddr *sa)
         z_policy_dict_register(dict, Z_VT_IP6,     "ip",   Z_VF_RW, &sa_in6->sin6_addr);
         z_policy_dict_register(dict, Z_VT_IP6,     "ip_s", Z_VF_RW | Z_VF_IP_STR, &sa_in6->sin6_addr);
         z_policy_dict_register(dict, Z_VT_INT16,   "port", Z_VF_RW | Z_VF_INT_NET, &sa_in6->sin6_port);
+        z_policy_dict_register(dict, Z_VT_METHOD,  "pack", Z_VF_READ, z_policy_sockaddr_pack, z_sockaddr_ref(sa), z_sockaddr_unref);
         struct_type = Z_PST_SOCKADDR_INET6;
         break;
       }

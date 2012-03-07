@@ -216,6 +216,7 @@ struct _HttpURL
   GString *file;
   GString *query;
   GString *fragment;
+  gboolean need_brackets; /* IPv6 addresses are surrounded by brackets, this information needs to be preserved for formatting */
 };
 
 typedef struct _HttpElementInfo

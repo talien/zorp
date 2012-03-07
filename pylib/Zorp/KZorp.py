@@ -1,22 +1,5 @@
 ############################################################################
 ##
-## Copyright (c) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-## 2010, 2011 BalaBit IT Ltd, Budapest, Hungary
-##
-## This program is free software; you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 2 of the License, or
-## (at your option) any later version.
-##
-## This program is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with this program; if not, write to the Free Software
-## Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-##
 ##
 ############################################################################
 
@@ -24,6 +7,7 @@ import Globals
 import random, time, socket, errno
 import kznf.kznfnetlink
 from Zorp import *
+from Zone import Zone
 
 def netlinkmsg_handler(msg):
         pass
@@ -69,11 +53,61 @@ def commitTransaction(h):
         exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_COMMIT, \
                         kznf.kznfnetlink.create_commit_msg())
 
-def downloadKZorpConfig(instance_name):
+def downloadServices(h):
+        # download services
+        exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_SERVICE, \
+                        kznf.kznfnetlink.create_flush_msg())
 
-        def walkZones(messages, parent, child):
-                messages.extend(child.buildKZorpMessage())
-                child.iterAdminChildren(walkZones, messages)
+        for service in Globals.services.values():
+                messages = service.buildKZorpMessage()
+                exchangeMessages(h, messages)
+
+def downloadZones(h):
+        def walkZones(messages, zone, children):
+                messages.extend(zone.buildKZorpMessage())
+                for child in children.get(zone.name, []):
+                        walkZones(messages, child, children)
+
+        # download zones
+        exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_ZONE, \
+                        kznf.kznfnetlink.create_flush_msg())
+
+        # build children hash
+        children = {}
+        for zone in Zone.zones.values():
+                if zone.admin_parent:
+                        children.setdefault(zone.admin_parent.name, []).append(zone)
+
+        for zone in Zone.zones.values():
+                if not zone.admin_parent:
+                        # tree root
+                        messages = []
+                        walkZones(messages, zone, children)
+                        exchangeMessages(h, messages)
+
+def downloadDispatchers(h):
+        exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_DISPATCHER, \
+                        kznf.kznfnetlink.create_flush_msg())
+
+        for dispatch in Globals.dispatches:
+                try:
+                        messages = dispatch.buildKZorpMessage()
+                        exchangeMessages(h, messages)
+                except:
+                        log(None, CORE_ERROR, 0, "Error occured during Dispatcher upload to KZorp; dispatcher='%s', error='%s'" % (dispatch.bindto[0].format(), sys.exc_value))
+                        raise
+
+
+def downloadBindAddresses(h):
+        for dispatch in Globals.dispatches:
+                try:
+                        messages = dispatch.buildKZorpBindMessage()
+                        exchangeMessages(h, messages)
+                except:
+                        log(None, CORE_ERROR, 0, "Error occured during bind address upload to KZorp; dispatcher='%s', error='%s'" % (dispatch.bindto[0].format(), sys.exc_value))
+                        raise
+
+def downloadKZorpConfig(instance_name, is_master):
 
         random.seed()
         h = openHandle()
@@ -82,49 +116,25 @@ def downloadKZorpConfig(instance_name):
         startTransaction(h, instance_name)
 
         try:
-                # download services
-                exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_SERVICE, \
-                                kznf.kznfnetlink.create_flush_msg())
-
-                for service in Globals.services.values():
-                        messages = service.buildKZorpMessage()
-                        exchangeMessages(h, messages)
-
-                # download zones
-                exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_ZONE, \
-                                kznf.kznfnetlink.create_flush_msg())
-
-                for zone in Globals.zones.values():
-                        if not zone.admin_parent:
-                                messages = zone.buildKZorpMessage()
-                                if not messages:
-                                        messages = []
-
-                                zone.iterAdminChildren(walkZones, messages)
-                                exchangeMessages(h, messages)
-
-                exchangeMessage(h, kznf.kznfnetlink.KZNL_MSG_FLUSH_DISPATCHER, \
-                                kznf.kznfnetlink.create_flush_msg())
-
-                for dispatch in Globals.dispatches:
-                        try:
-                                messages = dispatch.buildKZorpMessage()
-                                exchangeMessages(h, messages)
-                        except:
-                                log(None, CORE_ERROR, 0, "Error occured during Dispatcher upload to KZorp; dispatcher='%s', error='%s'" % (dispatch.bindto.format(), sys.exc_value))
-                                raise
-
+                if is_master:
+                        downloadServices(h)
+                        downloadZones(h)
+                        downloadDispatchers(h)
+                downloadBindAddresses(h)
                 commitTransaction(h)
         except:
                 h.close()
                 raise
 
-        h.close()
+        Globals.kzorp_netlink_handle = h
 
 def flushKZorpConfig(instance_name):
 
         random.seed()
-        h = openHandle()
+
+        h = getattr(Globals, "kzorp_netlink_handle", None)
+        if not h:
+                h = openHandle()
 
         # flush dispatchers and services
         startTransaction(h, instance_name)

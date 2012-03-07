@@ -1,4 +1,7 @@
-/* zorpconfig.h.in.  Generated from configure.in by autoheader.  */
+/* lib/zorp/zorpconfig.h.in.  Generated from configure.in by autoheader.  */
+
+/* Zorp brochure version */
+#undef BROCHURE_VERSION
 
 /* Enable debugging */
 #undef ENABLE_DEBUG

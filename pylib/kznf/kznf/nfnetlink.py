@@ -1,6 +1,6 @@
 import socket
 import struct
-import binascii
+import ctypes
 
 class NfRootException(Exception):
     def __init__(self, detail):
@@ -12,49 +12,58 @@ class NfRootException(Exception):
 
 class NfnetlinkException(NfRootException):
     def __init__(self, detail):
-        super(NfRootException, self).__init__(detail)
+        super(NfnetlinkException, self).__init__(detail)
         self.what = 'nfnetlink error'
+
+class NfnetlinkAttributeException(NfRootException):
+    def __init__(self, detail):
+        super(NfnetlinkAttributeException, self).__init__(detail)
+        self.what = 'nfnetlink attribute error'
         self.detail = detail
 
 class PacketException(NfRootException):
     def __init__(self, detail):
-        super(NfRootException, self).__init__(detail)
+        super(PacketException, self).__init__(detail)
         self.what = 'packet parsing error'
 
 # netlink message type values
 NLM_F_REQUEST = 1
-NLM_F_MULTI = 2
-NLM_F_ACK = 4
-NLM_F_ECHO = 8
+NLM_F_MULTI   = 2
+NLM_F_ACK     = 4
+NLM_F_ECHO    = 8
 
 # modifiers to GET request
-NLM_F_ROOT = 0x100
-NLM_F_MATCH = 0x200
+NLM_F_ROOT   = 0x100
+NLM_F_MATCH  = 0x200
 NLM_F_ATOMIC = 0x400
-NLM_F_DUMP = NLM_F_ROOT | NLM_F_MATCH
+NLM_F_DUMP   = NLM_F_ROOT | NLM_F_MATCH
 
 # modifiers to NEW request
 NLM_F_REPLACE = 0x100
-NLM_F_EXCL = 0x200
-NLM_F_CREATE = 0x400
-NLM_F_APPEND = 0x800
+NLM_F_EXCL    = 0x200
+NLM_F_CREATE  = 0x400
+NLM_F_APPEND  = 0x800
 
 # netlink generic message types
-NLMSG_NOOP = 1
-NLMSG_ERROR = 2
-NLMSG_DONE = 3
+NLMSG_NOOP    = 1
+NLMSG_ERROR   = 2
+NLMSG_DONE    = 3
 NLMSG_OVERRUN = 4
 
 # nfnetlink subsystems
-NFNL_SUBSYS_NONE = 0
-NFNL_SUBSYS_CTNETLINK = 1
+NFNL_SUBSYS_NONE          = 0
+NFNL_SUBSYS_CTNETLINK     = 1
 NFNL_SUBSYS_CTNETLINK_EXP = 2
-NFNL_SUBSYS_QUEUE = 3
-NFNL_SUBSYS_ULOG = 4
-NFNL_SUBSYS_CTHELPER = 5
-NFNL_SUBSYS_KZORP = 6
+NFNL_SUBSYS_QUEUE         = 3
+NFNL_SUBSYS_ULOG          = 4
+NFNL_SUBSYS_CTHELPER      = 5
+NFNL_SUBSYS_KZORP         = 6
 
-NETLINK_NETFILTER = 12
+NETLINK_NETFILTER         = 12
+
+NLA_F_NESTED          = (1 << 15)
+NLA_F_NET_BYTEORDER   = (1 << 14)
+NLA_TYPE_MASK         = ctypes.c_uint(~(NLA_F_NESTED | NLA_F_NET_BYTEORDER)).value
 
 # attribute alignment
 NFA_ALIGNTO = 4
@@ -65,19 +74,159 @@ def nfa_align(len):
         return (len + NFA_ALIGNTO - 1) & ~(NFA_ALIGNTO - 1)
 
 class NfnetlinkAttribute(object):
-
-        def __init__(self, type, data):
+        def __init__(self, type, data = None, attrs = None):
+                if data == None and attrs == None:
+                        raise NfnetlinkAttributeException, "either data or attr must be set"
+                if data != None and attrs != None:
+                        raise NfnetlinkAttributeException, "only data or attr should be set"
                 self.type = type
+                self.nested = attrs != None
+		if self.nested:
+			self.type |= NLA_F_NESTED
                 self.__buf = data
+                self.__attrs = attrs
+
+	def __eq__(self, other):
+		if self.type != other.type:
+			return False
+		if self.nested != other.nested:
+			return False
+
+		if self.nested:
+			res = self.__attrs == other.__attrs
+		else:
+			res = str(self.__buf) == str(other.__buf)
+		return res
 
         def get_data(self):
+                if self.nested == True:
+                        raise NfnetlinkAttributeException, "get data of nested attribute"
+
                 return self.__buf
 
+        def get_attributes(self):
+                if self.nested == False:
+                        raise NfnetlinkAttributeException, "get nested attribute of normal attribute"
+
+                return self.__attrs
+
         def dump(self):
-                alen = nfa_align(len(self.__buf))
-                flen = alen - len(self.__buf)
+                if self.nested == True:
+                        data = ""
+                        for attr in self.__attrs:
+                                data += attr.dump()
+                else:
+                        data = self.__buf
+
+                alen = nfa_align(len(data))
+                flen = alen - len(data)
                 header = struct.pack('HH', alen + 4, self.type)
-                return "".join((header, self.__buf, '\0' * flen))
+                data = "".join((header, data, '\0' * flen))
+
+                return data
+
+        @staticmethod
+        def __parse_impl(buf, index):
+                attrs = {}
+                while index < len(buf):
+                        header = buf[index:index + 4]
+                        if len(header) < 4:
+                                raise PacketException, "message too short to contain an attribute header"
+                        (length, type) = struct.unpack('HH', header)
+                        if length < 4:
+                                raise PacketException, "invalid attribute length specified in attribute header: too short to contain the header itself"
+                        data = buf[index + 4:index + length]
+                        if len(data) + 4 != length:
+                                raise PacketException, "message too short to contain an attribute of the specified size"
+                        nla_type = type & ctypes.c_uint(~NLA_TYPE_MASK).value
+                        type = type & NLA_TYPE_MASK
+                        if nla_type & NLA_F_NESTED:
+                                #pdb.set_trace()
+                                nested_attrs = NfnetlinkAttribute.__parse_impl(data, 0)
+                                attr = NfnetlinkAttribute(type, attrs=nested_attrs.values())
+                                index = index + nfa_align(length)
+                        else:
+                                data = data.ljust(nfa_align(length), chr(0))
+                                attr = NfnetlinkAttribute(type, data=data)
+                                index = index + nfa_align(length)
+                        if attrs.has_key(type):
+                                raise PacketException, "message contains multiple attributes of the same type"
+                        attrs[type] = attr
+                return attrs
+
+        @staticmethod
+        def parse(buf):
+                return NfnetlinkAttribute.__parse_impl(buf, 0)
+
+        @staticmethod
+        def create_inet_addr_attr(type, family, address):
+                """Create an nfnetlink attribute which stores an IP address.
+
+                Keyword arguments:
+                addr -- an IP address in binary format (returned by inet_pton)
+
+                """
+                if family != socket.AF_INET and family != socket.AF_INET6:
+                        raise NfnetlinkException, "protocol family not supported"
+
+                if (family == socket.AF_INET):
+                        data = struct.pack('4s',  address)
+                else:
+                        data = struct.pack('16s',  address)
+
+                return NfnetlinkAttribute(type, data)
+
+        def parse_inet_addr_attr(self, family):
+               """Parse an nfnetlink attribute which stores an IP address.
+
+               Return list of protocol family and address
+
+               """
+               if (family != socket.AF_INET and family != socket.AF_INET6):
+                       raise NfnetlinkException, "protocol family not supported"
+
+               if family == socket.AF_INET:
+                       data = struct.unpack('4s', self.__buf[0:4])
+               else:
+                       data = struct.unpack('16s', self.__buf[0:16])
+
+               return data[0]
+
+        @staticmethod
+        def create_inet_subnet_attr(type, family, address, mask):
+                """Create an nfnetlink attribute which stores an IP subnet.
+
+                Keyword arguments:
+                addr -- an IP address in binary format (returned by inet_pton)
+                mask -- an IP netmask in binary format (returned by inet_pton)
+
+                """
+                if family != socket.AF_INET and family != socket.AF_INET6:
+                        raise NfnetlinkException, "protocol family not supported"
+
+                #pdb.set_trace()
+                if (family == socket.AF_INET):
+                        data = struct.pack('4s',  address) + struct.pack('4s',  mask)
+                else:
+                        data = struct.pack('16s',  address) + struct.pack('16s',  mask)
+
+                return NfnetlinkAttribute(type, data)
+
+        def parse_inet_subnet_attr(self, family):
+                """Parse an nfnetlink attribute which stores an IP subnet.
+ 
+                Return list of protocol family, address and netmask
+ 
+                """
+                if family != socket.AF_INET and family != socket.AF_INET6:
+                        raise NfnetlinkException, "protocol family not supported"
+
+                if family == socket.AF_INET:
+                        data = struct.unpack('4s', self.__buf[0:4]) + struct.unpack('4s', self.__buf[4:8])
+                else:
+                        data = struct.unpack('16s', self.__buf[0:16]) + struct.unpack('16s', self.__buf[16:32])
+
+                return data
 
 class NfnetlinkMessage(object):
 
@@ -86,25 +235,13 @@ class NfnetlinkMessage(object):
                 self.version = version
                 self.res_id = res_id
                 self.__buf = data
+                self.__attrs = None
+
+        def __eq__(self, other):
+                return self.get_attributes() == other.get_attributes()
 
         def get_attributes(self):
-                i = 0
-                attributes = {}
-                while i < len(self.__buf):
-                        header = self.__buf[i:i + 4]
-                        if len(header) < 4:
-                                raise PacketException, "message too short to contain an attribute header"
-                        (length, type) = struct.unpack('HH', header)
-                        if length < 4:
-                                raise PacketException, "invalid attribute length specified in attribute header: too short to contain the header itself"
-                        data = self.__buf[i + 4:i + length]
-                        if len(data) + 4!= length:
-                                raise PacketException, "message too short to contain an attribute of the specified size"
-                        i = i + nfa_align(length)
-                        if attributes.has_key(type):
-                                raise PacketException, "message contains multiple attributes of the same type"
-                        attributes[type] = NfnetlinkAttribute(type, data)
-                return attributes
+                return NfnetlinkAttribute.parse(self.__buf)
 
         def append_attribute(self, attribute):
                 self.__buf = "".join((self.__buf, attribute.dump()))
@@ -181,7 +318,6 @@ class PacketIn(object):
                         messages.append(NetlinkMessage(type, flags, seq, pid, data))
                 return messages
 
-
 class Subsystem(object):
 
         def __init__(self, id):
@@ -210,7 +346,6 @@ class Subsystem(object):
                         self.__callbacks[m_type](message)
 
 class Handle(object):
-
         def __init__(self):
                 # subsystems
                 self.__subsystems = {}
