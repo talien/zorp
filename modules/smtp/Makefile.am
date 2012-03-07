@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . debian tests
 
 pkgdatadir = @datadir@/zorp/pylib/Zorp
 pkglibdir = @libdir@/zorp
