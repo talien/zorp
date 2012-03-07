@@ -69,14 +69,30 @@ static PyMethodDef py_zorp_stream_methods[] =
 
 PyTypeObject z_policy_stream_type = 
 {
-  PyVarObject_HEAD_INIT(&PyType_Type, 0)
-  .tp_name = "ZPolicyStream",
-  .tp_basicsize = sizeof(ZPolicyStream),
-  .tp_dealloc = (destructor) z_policy_stream_destroy,
-  .tp_getattr = (getattrfunc) z_policy_stream_getattr,
-  .tp_setattr = (setattrfunc) z_policy_stream_setattr,
-  .tp_repr = (reprfunc) z_policy_stream_repr,
-  .tp_doc = "ZPolicyStream class for Zorp",
+  PyObject_HEAD_INIT(&PyType_Type)
+  0,
+  "ZPolicyStream",
+  sizeof(ZPolicyStream),
+  0,
+  (destructor) z_policy_stream_destroy,
+  0,
+  (getattrfunc) z_policy_stream_getattr,
+  (setattrfunc) z_policy_stream_setattr,
+  0,
+  (reprfunc) z_policy_stream_repr,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  "ZPolicyStream class for Zorp",
+  0, 0, 0, 0,
+  Z_PYTYPE_TRAILER
 };
 
 /**

@@ -614,12 +614,30 @@ static PyMethodDef z_policy_dispatch_methods[] =
 
 static PyTypeObject z_policy_dispatch_type = 
 {
-  PyVarObject_HEAD_INIT(&PyType_Type, 0)
-  .tp_name = "ZPolicyDispatch",
-  .tp_basicsize = sizeof(ZPolicyDispatch),
-  .tp_dealloc = (destructor) z_policy_dispatch_free,
-  .tp_getattr =(getattrfunc) z_policy_dispatch_getattr,
-  .tp_doc = "ZPolicyDispatch class for Zorp",
+  PyObject_HEAD_INIT(&PyType_Type)
+  0,
+  "ZPolicyDispatch",
+  sizeof(ZPolicyDispatch),
+  0,
+  (destructor) z_policy_dispatch_free,
+  0,
+  (getattrfunc) z_policy_dispatch_getattr,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  "ZPolicyDispatch class for Zorp",
+  0, 0, 0, 0,
+  Z_PYTYPE_TRAILER
 };
 
 /**
