@@ -116,7 +116,7 @@ z_py_log(PyObject *self G_GNUC_UNUSED, PyObject *args)
           return NULL;
         }
 
-      if (log_args != NULL)
+      if (log_args != NULL && log_args != z_policy_none)
         {
           log_msg = PyString_Format(log_fmt, log_args);
           if (!log_msg)
