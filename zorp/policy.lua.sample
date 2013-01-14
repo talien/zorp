@@ -1,0 +1,11 @@
+
+function accept(stream)
+    local fd1 = stream:get_fd()
+    res = stream:read(fd,1024)
+end
+
+function zorp_plug()
+    Dispatcher(DBSockAddr("0.0.0.0",4000));
+    log("nosession", "core.error", 1, "Test log")
+end
+

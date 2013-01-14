@@ -30,4 +30,5 @@ libzorp_la_SOURCES = \
 	proxyssl.c pyx509.c proxysslhostiface.c \
 	bllookup.c \
 	kzorp.c \
-	credentials.c
+	credentials.c \
+    luapolicy.c

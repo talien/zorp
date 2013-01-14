@@ -274,6 +274,8 @@ PKG_CHECK_MODULES(ZORPLL, zorplibll >= $ZORPLL_MIN_VERSION,,
 
 PKG_CHECK_MODULES(OPENSSL, openssl >= $OPENSSL_MIN_VERSION,,
         AC_MSG_ERROR(Cannot find OpenSSL library version >= $OPENSSL_MIN_VERSION: is pkg-config in path?))
+PKG_CHECK_MODULES(LUA, lua5.1 >= 5.1.4,,
+        AC_MSG_ERROR(Cannot find Lua library version >= 5.1.4: is pkg-config in path?))
 
 if test "$ZORP_PACKAGE_LICENSE" = "pro"; then
 
@@ -445,7 +447,7 @@ AC_DEFINE_UNQUOTED(ENABLE_PREFORK, `enable_value $enable_prefork`, [Enable prefo
 # CPPFLAGS as supplied by dependencies
 DEPS_CPPFLAGS="$CPPFLAGS $ZORPLL_CFLAGS $ZORPLIC_CFLAGS $ZORPMISC_CFLAGS $PYTHON_CFLAGS $OPENSSL_CFLAGS"
 # CPPFLAGS defined to access local header files in addition to dependencies
-CPPFLAGS="-I$top_srcdir/lib -I$top_srcdir $DEPS_CPPFLAGS"
+CPPFLAGS="-I$top_srcdir/lib -I$top_srcdir $DEPS_CPPFLAGS $LUA_CFLAGS"
 # common libraries (dependencies)
 LIBPROXY_CPPFLAGS="-I$top_srcdir/libproxy/ $CPPFLAGS"
 MODULES_CPPFLAGS="$LIBPROXY_CPPFLAGS"
@@ -453,7 +455,7 @@ MODULES_CPPFLAGS="$LIBPROXY_CPPFLAGS"
 # Dependencies outside the source tree
 DEPS_LIBS="$SOCK_LIBS $ZORPLL_LIBS $ZORPLIC_LIBS $ZORPMISC_LIBS $PYTHON_LIBS $COREDUMP_LIBS $OPENSSL_LIBS"
 # zorp library libs
-LIBZORP_LIBS="$DEPS_LIBS $GLIB_LIBS $GMODULE_LIBS $GTHREAD_LIBS $PYTHON_LIBS $OPENSSL_LIBS $PCAP_LIBS"
+LIBZORP_LIBS="$DEPS_LIBS $GLIB_LIBS $GMODULE_LIBS $GTHREAD_LIBS $PYTHON_LIBS $OPENSSL_LIBS $PCAP_LIBS $LUA_LIBS"
 # Zorp main program
 ZORP_LIBS="-L\$(top_builddir)/lib/ -lzorp $ZORPLL_LIBS"
 # libraries to link the zorp modules against (implicitly linked 

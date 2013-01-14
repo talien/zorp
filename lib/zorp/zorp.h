@@ -77,7 +77,6 @@ extern const gchar *instance_name;
 extern const gchar *virtual_instance_name;
 extern gboolean zorp_process_master_mode;
 
-
 void z_main_loop_initiate_reload(gboolean called_from_sighandler);
 gboolean z_main_loop_get_last_reload_result(void);
 
@@ -87,7 +86,7 @@ void z_main_loop(const gchar *policy_file,
                  const gchar *instance_name,
                  gchar const **instance_policy_list,
                  gchar const *virtual_instance_name,
-                 gboolean is_master);
+                 gboolean is_master, const char* policy_type);
 void z_main_loop_quit(int exit_code);
 void z_main_loop_init(void);
 void z_main_loop_destroy(void);

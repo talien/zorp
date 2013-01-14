@@ -41,7 +41,7 @@
 
 #include <zorp/blob.h>
 #include <zorp/process.h>
-
+#include <zorp/luapolicy.h>
 
 
 GMainLoop *main_loop;
@@ -50,6 +50,7 @@ guint32 startup_id;
 const gchar *instance_name;
 const gchar *virtual_instance_name;
 gboolean zorp_process_master_mode = TRUE;
+ZPolicyFuncs pfuncs;
 
 /* FIXME: the code in this module was straightly copied from main.c and as
  * such does not really fit into a library. Some generalization would be
@@ -115,8 +116,8 @@ z_load_policy(const gchar *policy_file,
   ZPolicy *policy;
   ZPolicy *old_policy;
 
-  policy = z_policy_new(policy_file);
-  if (!z_policy_boot(policy) || !z_policy_load(policy))
+  policy = pfuncs.new(policy_file);
+  if (!pfuncs.boot(policy) || !pfuncs.load(policy))
     {
       /*LOG
 	This message indicates that Zorp was unable to load the policy.
@@ -124,17 +125,17 @@ z_load_policy(const gchar *policy_file,
 	Check the traceback in the log to find out where the problem occurs.
        */
       z_log(NULL, CORE_ERROR, 0, "Error booting & parsing policy;");
-      z_policy_deinit(policy, instance_policy_list, virtual_instance_name);
+      pfuncs.deinit(policy, instance_policy_list, virtual_instance_name);
       z_policy_unref(policy);
       return FALSE;
     }
   old_policy = current_policy;
   current_policy = policy;
-  if (!z_policy_init(policy, instance_policy_list, virtual_instance_name, is_master))
+  if (!pfuncs.init(policy, instance_policy_list, virtual_instance_name, is_master))
     {
       /* FIXME: deinit bad new configuration */
       current_policy = old_policy;
-      z_policy_deinit(policy, instance_policy_list, virtual_instance_name);
+      pfuncs.deinit(policy, instance_policy_list, virtual_instance_name);
       z_policy_unref(policy);
       /*LOG
 	This message indicates that Zorp was unable to initialize the policy.
@@ -145,7 +146,7 @@ z_load_policy(const gchar *policy_file,
   else if (old_policy != NULL)
     {
       /* FIXME: deinit old configuration */
-      z_policy_deinit(old_policy, instance_policy_list, virtual_instance_name);
+      pfuncs.deinit(old_policy, instance_policy_list, virtual_instance_name);
       z_policy_unref(old_policy);
     }
   return TRUE;
@@ -173,13 +174,25 @@ z_generate_policy_load_event(const gchar *policy_file, gboolean reload_result)
     }
 }
 
+
+// FIXME: THIS IS HELL OF A SHIT, rethink it with some declarative mechanism (AND use min(sizeof(one_string), sizeof(other_string)))
+ZPolicyFuncs z_get_policy_funcs_from_policy_type(const char* policy_type)
+{
+   if (!strncmp("lua",policy_type, 3))
+      return z_lua_policy_funcs;
+   if (!strncmp("python",policy_type, 6))
+      return z_python_policy_funcs;
+   return z_python_policy_funcs;
+}
+
 void
 z_main_loop(const gchar *policy_file, const gchar *instance_name,
             gchar const **instance_policy_list,
             gchar const *virtual_instance_name,
-            gboolean is_master)
+            gboolean is_master, const char* policy_type)
 {
   gint new_verbosity;
+  pfuncs = z_get_policy_funcs_from_policy_type(policy_type);
   
   if (!z_load_policy(policy_file, instance_policy_list, virtual_instance_name, is_master))
     {
@@ -205,7 +218,7 @@ z_main_loop(const gchar *policy_file, const gchar *instance_name,
   if (term_received)
     z_main_loop_quit(0);
     
-  z_read_global_params(current_policy);
+  //z_read_global_params(current_policy);
   z_blob_system_default_init();
 
   z_generate_policy_load_event(policy_file, TRUE);
@@ -255,7 +268,7 @@ z_main_loop(const gchar *policy_file, const gchar *instance_name,
     }
 
 
-  z_policy_cleanup(current_policy, instance_policy_list, virtual_instance_name, is_master);
+  pfuncs.cleanup(current_policy, instance_policy_list, virtual_instance_name, is_master);
 
   z_blob_system_default_destroy();
 }

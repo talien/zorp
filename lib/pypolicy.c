@@ -1372,3 +1372,15 @@ z_policy_raise_exception(gchar *exception_name, gchar *desc)
   PyErr_SetString(license_exc, desc);
   Py_XDECREF(license_exc);
 }
+
+ZPolicyFuncs z_python_policy_funcs = 
+{
+   .new = z_policy_new,
+   .load = z_policy_load,
+   .boot = z_policy_boot,
+   .init = z_policy_init,
+   .deinit = z_policy_deinit,
+   .cleanup = z_policy_cleanup
+};
+
+

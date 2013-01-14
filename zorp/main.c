@@ -216,6 +216,7 @@ z_version(void)
 static const gchar *instance_policy_list[MAX_SOFT_INSTANCES + 1];
 static gint instance_count = 1;
 static const gchar *policy_file = ZORP_POLICY_FILE;
+static const gchar *policy_type = "python";
 static gboolean log_escape = FALSE;
 static gboolean display_version = FALSE;
 
@@ -254,6 +255,7 @@ static GOptionEntry zorp_options[] =
   { "version",      'V',                     0, G_OPTION_ARG_NONE,   &display_version,      "Display version number", NULL },
   { "log-escape",     0,                     0, G_OPTION_ARG_NONE,   &log_escape,           "Escape log messages to avoid non-printable characters", NULL },
   { "deadlock-check-timeout", 0,             0, G_OPTION_ARG_INT,    &deadlock_checker_timeout, "Timeout for deadlock detection queries in seconds", NULL },
+  { "policy-type",   'T',                    0, G_OPTION_ARG_STRING, &policy_type,          "Policy file type: python, or lua", "<type>"},
   { NULL,             0,                     0,                   0, NULL,                  NULL, NULL }
 };
 
@@ -469,7 +471,8 @@ main(int argc, char *argv[])
   z_setup_signals();
 
   /*NOLOG*/
-  z_main_loop(policy_file, instance_name, instance_policy_list, virtual_instance_name, zorp_process_master_mode);
+  
+  z_main_loop(policy_file, instance_name, instance_policy_list, virtual_instance_name, zorp_process_master_mode, policy_type);
 
  deinit_exit:
  

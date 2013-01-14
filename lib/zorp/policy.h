@@ -60,6 +60,24 @@ ZPolicy *z_policy_ref(ZPolicy *self);
 
 void z_policy_unref(ZPolicy *self);
 
+typedef struct _policy_funcs
+{
+   ZPolicy* (*new)(const gchar *filename);
+   gboolean (*load)(ZPolicy* self);
+   gboolean (*boot)(ZPolicy* self);
+   gboolean (*init)(ZPolicy *self,
+                       gchar const **instance_name,
+                       gchar const *virtual_instance_name,
+                       gboolean is_master);
+   gboolean (*deinit)(ZPolicy *self,
+                         gchar const **instance_name,
+                         gchar const *virtual_instance_name);
+   gboolean (*cleanup)(ZPolicy *self,
+                          gchar const **instance_name,
+                          gchar const *virtual_instance_name,
+                          gboolean is_master);
+} ZPolicyFuncs;
+
 gboolean z_policy_boot(ZPolicy *self);
 gboolean z_policy_load(ZPolicy *self);
 
@@ -80,6 +98,8 @@ gboolean z_policy_cleanup(ZPolicy *self,
                           gchar const **instance_name,
                           gchar const *virtual_instance_name,
                           gboolean is_master);
+
+extern ZPolicyFuncs z_python_policy_funcs;
 
 #define z_policy_exc_value_error PyExc_ValueError
 #define z_policy_exc_attribute_error PyExc_AttributeError
