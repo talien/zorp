@@ -1,7 +1,8 @@
 
 function accept(stream)
-    local fd1 = stream:get_fd()
-    res = stream:read(fd,1024)
+    local fd = stream:get_fd()
+    local res = stream:read(fd,1024)
+    print res
 end
 
 function zorp_plug()
