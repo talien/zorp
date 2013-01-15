@@ -66,6 +66,14 @@ static const struct luaL_reg z_lua_stream_methods [] = {
       {NULL, NULL}
   };
 
+static int z_lua_stream_destroy(lua_State* state)
+{
+   ZStream* stream = *(ZStream**)lua_touserdata(state, 1);
+   z_stream_unref(stream);
+   z_log("nosession", CORE_INFO, 3, "Unrefing stream from policy");
+   return 0;
+}
+
 void z_lua_stream_register(lua_State* state)
 {
   luaL_newmetatable(state, "Zorp.Stream");
@@ -73,6 +81,9 @@ void z_lua_stream_register(lua_State* state)
   lua_pushstring(state, "__index");
   lua_pushvalue(state, -2);  /* pushes the metatable */
   lua_settable(state, -3);  /* metatable.__index = metatable */
+  lua_pushstring(state, "__gc");
+  lua_pushcfunction(state, z_lua_stream_destroy);
+  lua_settable(state, -3);
   
   luaL_openlib(state, NULL, z_lua_stream_methods, 0);
     
