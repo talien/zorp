@@ -9,6 +9,11 @@ typedef struct _ZLuaPolicy
    lua_State* policy_state;
 } ZLuaPolicy;
 
+typedef struct _LuaObject {
+   int reg_key;
+   int value;
+} LuaObject;
+
 ZPolicy* z_lua_policy_new(const char* policy_name);
 gboolean z_lua_policy_boot(ZPolicy* self);
 gboolean z_lua_policy_load(ZPolicy* self);

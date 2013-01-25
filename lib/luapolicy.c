@@ -8,6 +8,91 @@
 
 lua_State* master_state;
 
+static int lua_create_udata(lua_State* state)
+{
+    LuaObject* udata = (LuaObject*)lua_newuserdata(state, sizeof(LuaObject));
+    luaL_getmetatable(state, "test.mydata");
+    lua_setmetatable(state, -2);
+    lua_newtable(state);
+    luaL_getmetatable(state, "test.udata");
+    lua_setmetatable(state, -2);
+    udata->reg_key = luaL_ref(state, LUA_REGISTRYINDEX);
+    return 1;
+}
+
+static int lua_get_udata(lua_State* state)
+{
+    LuaObject* udata = (LuaObject*)lua_touserdata(state,1);
+    lua_pushinteger(state, udata->value);
+    return 1;
+}
+
+static int lua_set_udata(lua_State* state)
+{
+    LuaObject* udata = (LuaObject*)lua_touserdata(state,1);
+    int value = lua_tointeger(state, 2); 
+    udata->value = value;
+    return 0;
+}
+
+static int lua_get_udata_index_table(lua_State* state)
+{
+    LuaObject* udata = (LuaObject*)lua_touserdata(state,1);
+    lua_rawgeti(state, LUA_REGISTRYINDEX, udata->reg_key);
+    return 1;
+}
+
+static int lua_get_udata_index(lua_State* state)
+{
+    LuaObject* udata = (LuaObject*)lua_touserdata(state,1);
+    lua_rawgeti(state, LUA_REGISTRYINDEX, udata->reg_key);
+    lua_insert(state,2);
+    lua_gettable(state, 2);
+    printf("__get called\n");
+    return 1;
+}
+
+static int lua_set_udata_index(lua_State* state)
+{
+    LuaObject* udata = (LuaObject*)lua_touserdata(state,1);
+    lua_rawgeti(state, LUA_REGISTRYINDEX, udata->reg_key);
+    lua_insert(state,2);
+    lua_settable(state, 2);
+    printf("__set called\n");
+    return 0;
+}
+
+static const struct luaL_reg ulib_c [] = {
+ { "set", lua_set_udata},
+ { "get", lua_get_udata},
+ {NULL, NULL},
+};
+
+static const struct luaL_reg ulib [] = {
+ { "__set", lua_set_udata_index},
+ { "__get", lua_get_udata_index},
+ { "__get_index", lua_get_udata_index_table},
+ { NULL, NULL}
+};
+
+void lua_reg_udata(lua_State* state)
+{
+   luaL_newmetatable(state, "test.mydata");
+   lua_pushstring(state, "__index");
+   lua_pushcfunction(state, lua_get_udata_index);
+   lua_settable(state, -3);
+   lua_pushstring(state, "__newindex");
+   lua_pushcfunction(state, lua_set_udata_index);
+   lua_settable(state, -3);
+   luaL_newmetatable(state, "test.udata");
+   lua_pushstring(state, "__index");
+   lua_pushvalue(state, -2);  /* pushes the metatable */
+   lua_settable(state, -3);  /* metatable.__index = metatable */
+   luaL_openlib(state, NULL, ulib_c, 0);
+
+   luaL_openlib(state, "ulib", ulib, 0);
+}
+
 int gettid()
 {
    pid_t tid;
