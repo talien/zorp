@@ -31,4 +31,4 @@ libzorp_la_SOURCES = \
 	bllookup.c \
 	kzorp.c \
 	credentials.c \
-    luapolicy.c
+    luapolicy.c luaobject.c

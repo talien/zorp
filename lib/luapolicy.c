@@ -3,95 +3,13 @@
 #include <zorp/stream.h>
 #include <zorp/streamline.h>
 #include <zorp/streamfd.h>
+#include <zorp/proxygroup.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <zorp/luaobject.h>
+#include <zorp/proxy.h>
 
 lua_State* master_state;
-
-static int lua_create_udata(lua_State* state)
-{
-    LuaObject* udata = (LuaObject*)lua_newuserdata(state, sizeof(LuaObject));
-    luaL_getmetatable(state, "test.mydata");
-    lua_setmetatable(state, -2);
-    lua_newtable(state);
-    luaL_getmetatable(state, "test.udata");
-    lua_setmetatable(state, -2);
-    udata->reg_key = luaL_ref(state, LUA_REGISTRYINDEX);
-    return 1;
-}
-
-static int lua_get_udata(lua_State* state)
-{
-    LuaObject* udata = (LuaObject*)lua_touserdata(state,1);
-    lua_pushinteger(state, udata->value);
-    return 1;
-}
-
-static int lua_set_udata(lua_State* state)
-{
-    LuaObject* udata = (LuaObject*)lua_touserdata(state,1);
-    int value = lua_tointeger(state, 2); 
-    udata->value = value;
-    return 0;
-}
-
-static int lua_get_udata_index_table(lua_State* state)
-{
-    LuaObject* udata = (LuaObject*)lua_touserdata(state,1);
-    lua_rawgeti(state, LUA_REGISTRYINDEX, udata->reg_key);
-    return 1;
-}
-
-static int lua_get_udata_index(lua_State* state)
-{
-    LuaObject* udata = (LuaObject*)lua_touserdata(state,1);
-    lua_rawgeti(state, LUA_REGISTRYINDEX, udata->reg_key);
-    lua_insert(state,2);
-    lua_gettable(state, 2);
-    printf("__get called\n");
-    return 1;
-}
-
-static int lua_set_udata_index(lua_State* state)
-{
-    LuaObject* udata = (LuaObject*)lua_touserdata(state,1);
-    lua_rawgeti(state, LUA_REGISTRYINDEX, udata->reg_key);
-    lua_insert(state,2);
-    lua_settable(state, 2);
-    printf("__set called\n");
-    return 0;
-}
-
-static const struct luaL_reg ulib_c [] = {
- { "set", lua_set_udata},
- { "get", lua_get_udata},
- {NULL, NULL},
-};
-
-static const struct luaL_reg ulib [] = {
- { "__set", lua_set_udata_index},
- { "__get", lua_get_udata_index},
- { "__get_index", lua_get_udata_index_table},
- { NULL, NULL}
-};
-
-void lua_reg_udata(lua_State* state)
-{
-   luaL_newmetatable(state, "test.mydata");
-   lua_pushstring(state, "__index");
-   lua_pushcfunction(state, lua_get_udata_index);
-   lua_settable(state, -3);
-   lua_pushstring(state, "__newindex");
-   lua_pushcfunction(state, lua_set_udata_index);
-   lua_settable(state, -3);
-   luaL_newmetatable(state, "test.udata");
-   lua_pushstring(state, "__index");
-   lua_pushvalue(state, -2);  /* pushes the metatable */
-   lua_settable(state, -3);  /* metatable.__index = metatable */
-   luaL_openlib(state, NULL, ulib_c, 0);
-
-   luaL_openlib(state, "ulib", ulib, 0);
-}
 
 int gettid()
 {
@@ -103,32 +21,25 @@ int gettid()
 static int z_lua_stream_new_instance(lua_State* state)
 {
    ZStream* stream;
-   void* userdata;
    int fd = lua_tointeger(state, 1);
    const char* name = lua_tolstring(state, 2, NULL);
    stream = z_stream_fd_new(fd, name);
-   userdata = lua_newuserdata(state, sizeof(ZStream*));
-   *((ZStream**)userdata) = stream;
-   luaL_getmetatable(state, "Zorp.Stream");
-   lua_setmetatable(state, -2);
+   z_lua_create_policy_object(state, (void*)stream, "Zorp.Stream","Zorp.Stream.index");
    return 1;
 }
 
 static int z_lua_stream_new(lua_State* state, ZStream* stream)
 {
-   void* userdata;
-   userdata = lua_newuserdata(state, sizeof(ZStream*));
-   *((ZStream**)userdata) = stream;
-   luaL_getmetatable(state, "Zorp.Stream");
-   lua_setmetatable(state, -2);
-   z_stream_ref(stream);
+   z_stream_ref(stream);   
+   z_lua_create_policy_object(state, (void*)stream, "Zorp.Stream","Zorp.Stream.index");
    return 1;
 };
+
 
 static int z_lua_stream_read(lua_State* state)
 {
    int bytes_read, res;
-   ZStream* stream = *(ZStream**)lua_touserdata(state, 1);
+   ZStream* stream = (ZStream*)Z_LUA_GET_OBJECT(state, 1);
    int length = lua_tointeger(state, 2);
    gchar* buf = g_new0(char, length);
    res = z_stream_read(stream, buf, length, &bytes_read, NULL);
@@ -139,7 +50,7 @@ static int z_lua_stream_read(lua_State* state)
 
 static int z_lua_stream_get_fd(lua_State* state)
 {
-   ZStream* stream = *(ZStream**)lua_touserdata(state, 1);
+   ZStream* stream = (ZStream*)Z_LUA_GET_OBJECT(state, 1);
    int fd = z_stream_get_fd(stream);
    lua_pushinteger(state, fd);
    return 1;
@@ -153,7 +64,7 @@ static const struct luaL_reg z_lua_stream_methods [] = {
 
 static int z_lua_stream_destroy(lua_State* state)
 {
-   ZStream* stream = *(ZStream**)lua_touserdata(state, 1);
+   ZStream* stream =(ZStream*)Z_LUA_GET_OBJECT(state, 1);
    z_stream_unref(stream);
    z_log("nosession", CORE_INFO, 3, "Unrefing stream from policy");
    return 0;
@@ -161,40 +72,49 @@ static int z_lua_stream_destroy(lua_State* state)
 
 void z_lua_stream_register(lua_State* state)
 {
-  luaL_newmetatable(state, "Zorp.Stream");
-    
-  lua_pushstring(state, "__index");
-  lua_pushvalue(state, -2);  /* pushes the metatable */
-  lua_settable(state, -3);  /* metatable.__index = metatable */
-  lua_pushstring(state, "__gc");
-  lua_pushcfunction(state, z_lua_stream_destroy);
-  lua_settable(state, -3);
-  
-  luaL_openlib(state, NULL, z_lua_stream_methods, 0);
-    
+  z_lua_class_register(state, "Zorp.Stream", "Zorp.Stream.index", z_lua_stream_methods, z_lua_stream_destroy);
 }
 
 static int z_lua_proxy_group_start(lua_State* state)
 {
-   int table_value;
-   
+   //int table_value
+   ZProxyGroup* proxy_group = (ZProxyGroup*)Z_LUA_GET_OBJECT(state, 1);
+   ZStream* stream =(ZStream*)Z_LUA_GET_OBJECT(state, 2);
+   ZProxyParams params;
+   gchar* module_name = "plug";
+   gchar* proxy_name = "plug";
+   params.session_id = "svc:lofasz:1/rdp";
+   params.client = stream;
+   params.handler = NULL;
+   params.parent = NULL;
+   ZProxy* proxy = z_proxy_create_proxy(module_name, proxy_name, &params);
+   z_proxy_group_start_session(proxy_group, proxy);
+   return 0;   
 }
 
-static int z_lua_proxy_group_new(lua_State* state)
+int z_lua_proxy_group_new(lua_State* state)
 {
-   void* userdata;
    ZProxyGroup* proxy_group;
    int max_sessions = lua_tointeger(state, 1);
    proxy_group = z_proxy_group_new(max_sessions);
-   userdata = lua_newuserdata(state, sizeof(ZProxyGroup*));
-   *((ZProxyGroup**)userdata) = proxy_group;
-   luaL_getmetatable(state, "Zorp.ProxyGroup");
-   lua_setmetatable(state, -2);
+   z_lua_create_policy_object(state, (void*) proxy_group, "Zorp.ProxyGroup", "Zorp.ProxyGroup.index");
    return 1;
 }
 
+int z_lua_proxy_group_destroy(lua_State* state G_GNUC_UNUSED)
+{
+  return 0;
+}
+
 static const struct luaL_reg z_lua_proxy_group_methods [] = {
-    { 
+
+   {"start", z_lua_proxy_group_start},
+   { NULL, NULL } 
+};
+
+void z_lua_proxy_group_register(lua_State* state)
+{
+   z_lua_class_register(state, "Zorp.ProxyGroup", "Zorp.ProxyGroup.index", z_lua_proxy_group_methods, z_lua_proxy_group_destroy); 
 }
 
 static gboolean z_lua_dispatch_accept(ZConnection *conn G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
@@ -264,6 +184,7 @@ void register_lua_libs(lua_State* state)
    lua_register(state, "Dispatcher", z_lua_dispatch);
    lua_register(state, "ProxyGroup", z_lua_proxy_group_new);
    z_lua_stream_register(state);
+   z_lua_proxy_group_register(state);
 }
 
 ZPolicy* z_lua_policy_new(const char* policy_name)

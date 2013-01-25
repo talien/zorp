@@ -1,4 +1,5 @@
 #include <zorp/policy.h>
+#include <zorp/luaobject.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -8,11 +9,6 @@ typedef struct _ZLuaPolicy
    ZPolicy super;
    lua_State* policy_state;
 } ZLuaPolicy;
-
-typedef struct _LuaObject {
-   int reg_key;
-   int value;
-} LuaObject;
 
 ZPolicy* z_lua_policy_new(const char* policy_name);
 gboolean z_lua_policy_boot(ZPolicy* self);
