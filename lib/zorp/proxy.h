@@ -212,6 +212,7 @@ gboolean z_proxy_policy_config(ZProxy *);
 gboolean z_proxy_policy_startup(ZProxy *);
 void z_proxy_policy_shutdown(ZProxy *);
 void z_proxy_policy_destroy(ZProxy *self); 
+ZProxy* z_proxy_create_proxy(gchar* module_name, gchar* proxy_name, ZProxyParams* params);
 
 /* compatibility functions for ZPolicyDict based attribute handling */
 void z_proxy_var_new(ZProxy *self, const gchar *name, guint flags, ...);

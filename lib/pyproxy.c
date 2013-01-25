@@ -101,33 +101,6 @@ z_policy_proxy_bind_implementation(PyObject *s)
   module_name = PyString_AsString(self->module_name);
   proxy_name = PyString_AsString(self->proxy_name);
 
-  proxy_create = z_registry_get(proxy_name, &proxy_type);
-  if (!proxy_create)
-    {
-      if (!z_load_module(module_name))
-        {
-          /*LOG
-          This message indicates that Zorp was unable to find the required proxy module.
-          Check your installation, or contact your Zorp support for assistance.
-          */
-          z_log(NULL, CORE_ERROR, 1, "Cannot find proxy module; module='%s', proxy='%s, type='%d'",
-                module_name, proxy_name, proxy_type);
-          z_leave();
-          return FALSE;
-        }
-      proxy_create = z_registry_get(proxy_name, &proxy_type);
-    }
-  if (!proxy_create || (proxy_type != ZR_PROXY && proxy_type != ZR_PYPROXY))
-    {
-      /*LOG
-        This message indicates that Zorp was unable to find the required proxy module.
-        Check your installation, or contact your Zorp support for assistance.
-       */
-      z_log(NULL, CORE_ERROR, 1, "Cannot find proxy module; module='%s', proxy='%s, type='%d'", module_name, proxy_name, proxy_type);
-      z_leave();
-      return FALSE;
-    }
-  
   params.session_id = PyString_AsString(self->session_id);
   params.client = z_policy_stream_get_stream(self->client_stream);
   params.handler = (ZPolicyObj *) self;
@@ -139,10 +112,11 @@ z_policy_proxy_bind_implementation(PyObject *s)
   z_stream_unref(params.client);
 
   Py_BEGIN_ALLOW_THREADS;
-  self->proxy = (*(ZProxyCreateFunc) proxy_create)(&params);
+  //self->proxy = (*(ZProxyCreateFunc) proxy_create)(&params);
+  self->proxy = z_proxy_create_proxy(module_name, proxy_name, &params);
   Py_END_ALLOW_THREADS;
   
-
+  
   z_leave();
   return TRUE;
 }

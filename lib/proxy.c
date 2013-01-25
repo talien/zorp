@@ -39,6 +39,7 @@
 #include <zorp/io.h>
 #include <zorp/thread.h>
 #include <zorp/proxygroup.h>
+#include <zorp/registry.h>
 
 #include <zorp/policy.h>
 #include <zorp/pydict.h>
@@ -49,6 +50,7 @@
 #include <zorp/notification.h>
 #include <zorp/audit.h>
 #include <zorp/pyaudit.h>
+#include <zorp/modules.h>
 
 #include <stdarg.h>
 #include <sys/socket.h>
@@ -282,6 +284,40 @@ z_proxy_stop_request(const gchar *session_id)
 }
 
 
+ZProxy* z_proxy_create_proxy(gchar* module_name, gchar* proxy_name, ZProxyParams* params)
+{
+  int proxy_type = 0;
+  gpointer proxy_create;
+  proxy_create = z_registry_get(proxy_name, &proxy_type);
+  if (!proxy_create)
+    {
+      if (!z_load_module(module_name))
+        {
+          /*LOG
+          This message indicates that Zorp was unable to find the required proxy module.
+          Check your installation, or contact your Zorp support for assistance.
+          */
+          z_log(NULL, CORE_ERROR, 1, "Cannot find proxy module; module='%s', proxy='%s, type='%d'",
+                module_name, proxy_name, proxy_type);
+          z_leave();
+          return NULL;
+        }
+      proxy_create = z_registry_get(proxy_name, &proxy_type);
+    }
+  if (!proxy_create || (proxy_type != ZR_PROXY && proxy_type != ZR_PYPROXY))
+    {
+      /*LOG
+        This message indicates that Zorp was unable to find the required proxy module.
+        Check your installation, or contact your Zorp support for assistance.
+       */
+      z_log(NULL, CORE_ERROR, 1, "Cannot find proxy module; module='%s', proxy='%s, type='%d'", module_name, proxy_name, proxy_type);
+      z_leave();
+      return NULL;
+    }
+
+  return (*(ZProxyCreateFunc) proxy_create)(params);
+
+}
 
 
 
