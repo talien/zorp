@@ -88,6 +88,30 @@ void z_lua_stream_register(lua_State* state)
   luaL_openlib(state, NULL, z_lua_stream_methods, 0);
     
 }
+
+static int z_lua_proxy_group_start(lua_State* state)
+{
+   int table_value;
+   
+}
+
+static int z_lua_proxy_group_new(lua_State* state)
+{
+   void* userdata;
+   ZProxyGroup* proxy_group;
+   int max_sessions = lua_tointeger(state, 1);
+   proxy_group = z_proxy_group_new(max_sessions);
+   userdata = lua_newuserdata(state, sizeof(ZProxyGroup*));
+   *((ZProxyGroup**)userdata) = proxy_group;
+   luaL_getmetatable(state, "Zorp.ProxyGroup");
+   lua_setmetatable(state, -2);
+   return 1;
+}
+
+static const struct luaL_reg z_lua_proxy_group_methods [] = {
+    { 
+}
+
 static gboolean z_lua_dispatch_accept(ZConnection *conn G_GNUC_UNUSED, gpointer user_data G_GNUC_UNUSED)
 {
    z_log(NULL, CORE_INFO, 2, "Connection accepted, tid='%d'", gettid());
@@ -152,6 +176,7 @@ void register_lua_libs(lua_State* state)
    lua_register(state, "DBSockAddr", z_lua_dispatch_bind_new_sa);
    lua_register(state, "log", z_lua_log);
    lua_register(state, "Dispatcher", z_lua_dispatch);
+   lua_register(state, "ProxyGroup", z_lua_proxy_group_new);
    z_lua_stream_register(state);
 }
 
