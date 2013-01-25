@@ -137,10 +137,11 @@ static int z_lua_dispatch(lua_State* state)
     gint prio = 0;
     ZDispatchParams params;
     ZDispatchEntry* dispatch = NULL;
-    params.common.threaded = FALSE;
+    params.common.threaded = TRUE;
     params.common.mark_tproxy = FALSE; 
     params.common.transparent = FALSE;
     params.tcp.backlog = 255;
+    params.tcp.accept_one = FALSE;
     db = (ZDispatchBind*) lua_topointer(state, 1);
     z_log(NULL, CORE_INFO, 2, "Dispatcher created, tid='%d'", gettid());  
     dispatch = z_dispatch_register(session_id, db, &bound_addr, prio, &params, z_lua_dispatch_accept, NULL, z_lua_dispatch_destroy_notify);
