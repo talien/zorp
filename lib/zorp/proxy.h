@@ -100,7 +100,6 @@ typedef struct _ZChannelProps ZChannelProps;
 struct _ZProxyParams
 {
   const gchar *session_id;
-  ZPolicyObj *pyclient;
   ZStream *client;
   ZPolicyObj *handler;
   ZProxy *parent;

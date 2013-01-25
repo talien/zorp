@@ -129,7 +129,6 @@ z_policy_proxy_bind_implementation(PyObject *s)
     }
   
   params.session_id = PyString_AsString(self->session_id);
-  params.pyclient = self->client_stream;
   params.client = z_policy_stream_get_stream(self->client_stream);
   params.handler = (ZPolicyObj *) self;
   params.parent = self->parent_proxy;
